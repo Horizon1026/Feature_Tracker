@@ -102,8 +102,8 @@ bool KltBasic::TrackSingleLevel(const Image *ref_image,
             int num_of_valid_pixel = 0;
 
             // Compute each pixel in the patch, create H * v = b
-            for (int32_t drow = - options_.kPatchHalfSize; drow <= options_.kPatchHalfSize; ++drow) {
-                for (int32_t dcol = - options_.kPatchHalfSize; dcol <= options_.kPatchHalfSize; ++dcol) {
+            for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
+                for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
                     float row_i = static_cast<float>(drow) + ref_points[feature_id].y();
                     float col_i = static_cast<float>(dcol) + ref_points[feature_id].x();
                     float row_j = static_cast<float>(drow) + cur_points[feature_id].y();

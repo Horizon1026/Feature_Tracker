@@ -9,6 +9,8 @@
 #include "klt_datatype.h"
 #include "klt_basic.h"
 
+#define CONFIG_OPENCV_DRAW (1)
+
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
 
@@ -33,9 +35,11 @@ void test_image() {
         }
     }
 
+#if CONFIG_OPENCV_DRAW
     cv::Mat image(klt_image.rows(), klt_image.cols(), CV_8UC1, klt_image.image_data());
     cv::imshow("convert cv_image to klt_image", image);
     cv::waitKey(0);
+#endif
 }
 
 void test_pyramid() {
@@ -49,6 +53,7 @@ void test_pyramid() {
     pyramid.SetRawImage(cv_image.data, cv_image.rows, cv_image.cols);
     pyramid.CreateImagePyramid(5);
 
+#if CONFIG_OPENCV_DRAW
     for (uint32_t i = 0; i < pyramid.level(); ++i) {
         KLT_TRACKER::Image one_level = pyramid.GetImage(i);
         cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.image_data());
@@ -56,6 +61,7 @@ void test_pyramid() {
         cv::waitKey(1);
     }
     cv::waitKey(0);
+#endif
 }
 
 void test_klt_basic_single() {
@@ -80,12 +86,16 @@ void test_klt_basic_single() {
         ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
     }
 
+    klt_basic.options().kPatchRowHalfSize = 6;
+    klt_basic.options().kPatchColHalfSize = 6;
+
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
     klt_basic.TrackSingleLevel(&ref_image, &cur_image, ref_points, cur_points, status);
     end = std::chrono::system_clock::now();
     std::cout << "klt_basic.TrackSingleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
 
+#if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < new_corners.size(); i++) {
@@ -105,6 +115,7 @@ void test_klt_basic_single() {
     cv::imshow("Feature after tracking", show_cur_image);
 
     cv::waitKey(0);
+#endif
 }
 
 void test_klt_basic_multi() {
@@ -118,10 +129,10 @@ void test_klt_basic_multi() {
 
     KLT_TRACKER::ImagePyramid ref_pyramid, cur_pyramid;
     ref_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_ref_image.rows * cv_ref_image.cols * 2));
-    ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
+    ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> new_corners;
@@ -135,12 +146,16 @@ void test_klt_basic_multi() {
         ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
     }
 
+    klt_basic.options().kPatchRowHalfSize = 4;
+    klt_basic.options().kPatchColHalfSize = 4;
+
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
     klt_basic.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
     end = std::chrono::system_clock::now();
     std::cout << "klt_basic.TrackSingleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
 
+#if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < new_corners.size(); i++) {
@@ -160,12 +175,26 @@ void test_klt_basic_multi() {
     cv::imshow("Feature after multi tracking", show_cur_image);
 
     cv::waitKey(0);
+#endif
 }
 
 int main() {
+    uint32_t test_times = 10;
+
+#if CONFIG_OPENCV_DRAW
+    test_times = 1;
+#endif
+
     test_image();
     test_pyramid();
-    test_klt_basic_single();
-    test_klt_basic_multi();
+
+    for (uint32_t i = 0; i < test_times; ++i) {
+        test_klt_basic_single();
+    }
+
+    for (uint32_t i = 0; i < test_times; ++i) {
+        test_klt_basic_multi();
+    }
+
     return 0;
 }
