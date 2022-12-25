@@ -132,8 +132,6 @@ void test_klt_basic_multi() {
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    ref_pyramid.CreateImagePyramid(pyramid_level);
-    cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> new_corners;
     cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
@@ -151,9 +149,11 @@ void test_klt_basic_multi() {
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
     klt_basic.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
     end = std::chrono::system_clock::now();
-    std::cout << "klt_basic.TrackSingleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
+    std::cout << "klt_basic.TrackMultipleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -176,6 +176,9 @@ void test_klt_basic_multi() {
 
     cv::waitKey(0);
 #endif
+
+    free(ref_pyramid.pyramid_buf());
+    free(cur_pyramid.pyramid_buf());
 }
 
 int main() {
