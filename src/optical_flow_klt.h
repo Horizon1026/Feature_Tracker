@@ -1,5 +1,5 @@
-#ifndef _OPTICAL_FLOW_LK_H_
-#define _OPTICAL_FLOW_LK_H_
+#ifndef _OPTICAL_FLOW_KLT_H_
+#define _OPTICAL_FLOW_KLT_H_
 
 #include "optical_flow_datatype.h"
 #include <eigen3/Eigen/Eigen>
@@ -7,9 +7,9 @@
 
 namespace OPTICAL_FLOW {
 
-enum LkMethod : uint8_t {
-    LK_INVERSE_LSE = 0,
-    LK_DIRECT_LSE,
+enum KltMethod : uint8_t {
+    KLT_INVERSE = 0,
+    KLT_DIRECT,
 };
 
 typedef struct {
@@ -19,13 +19,13 @@ typedef struct {
     int32_t kPatchColHalfSize = 4;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
-    LkMethod kMethod = LK_INVERSE_LSE;
-} LkOptions;
+    KltMethod kMethod = KLT_INVERSE;
+} KltOptions;
 
-class OpticalFlowLk {
+class OpticalFlowKlt {
 public:
-    explicit OpticalFlowLk() = default;
-    virtual ~OpticalFlowLk() = default;
+    explicit OpticalFlowKlt() = default;
+    virtual ~OpticalFlowKlt() = default;
 
     bool TrackMultipleLevel(const ImagePyramid *ref_pyramid,
                             const ImagePyramid *cur_pyramid,
@@ -39,7 +39,7 @@ public:
                           std::vector<Eigen::Vector2f> &cur_points,
                           std::vector<TrackStatus> &status);
 
-    LkOptions &options() { return options_; }
+    KltOptions &options() { return options_; }
 
 private:
     void TrackOneFeatureInverse(const Image *ref_image,
@@ -55,7 +55,7 @@ private:
                                TrackStatus &status);
 
 private:
-    LkOptions options_;
+    KltOptions options_;
 };
 
 }

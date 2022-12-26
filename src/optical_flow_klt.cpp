@@ -1,15 +1,15 @@
-#include "optical_flow_lk.h"
+#include "optical_flow_klt.h"
 #include "optical_flow_datatype.h"
 
 #include <cmath>
 #include <iostream>
 
 namespace OPTICAL_FLOW {
-bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
-                                  const ImagePyramid *cur_pyramid,
-                                  const std::vector<Eigen::Vector2f> &ref_points,
-                                  std::vector<Eigen::Vector2f> &cur_points,
-                                  std::vector<TrackStatus> &status) {
+bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
+                                        const ImagePyramid *cur_pyramid,
+                                        const std::vector<Eigen::Vector2f> &ref_points,
+                                        std::vector<Eigen::Vector2f> &cur_points,
+                                        std::vector<TrackStatus> &status) {
     if (cur_pyramid == nullptr || ref_pyramid == nullptr || ref_points.empty()) {
         return false;
     }
@@ -59,7 +59,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     return true;
 }
 
-bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
+bool OpticalFlowKlt::TrackSingleLevel(const Image *ref_image,
                                      const Image *cur_image,
                                      const std::vector<Eigen::Vector2f> &ref_points,
                                      std::vector<Eigen::Vector2f> &cur_points,
@@ -90,10 +90,10 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
 
         switch (options_.kMethod) {
             default:
-            case LK_INVERSE_LSE:
+            case KLT_INVERSE:
                 TrackOneFeatureInverse(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
                 break;
-            case LK_DIRECT_LSE:
+            case KLT_DIRECT:
                 TrackOneFeatureDirect(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
                 break;
         }
@@ -106,15 +106,17 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
     return true;
 }
 
-void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
-                                           const Image *cur_image,
-                                           const Eigen::Vector2f &ref_point,
-                                           Eigen::Vector2f &cur_point,
-                                           TrackStatus &status) {
+void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
+                                            const Image *cur_image,
+                                            const Eigen::Vector2f &ref_point,
+                                            Eigen::Vector2f &cur_point,
+                                            TrackStatus &status) {
+    Eigen::Matrix<float, 6, 6> H;
+    Eigen::Matrix<float, 6, 1> b;
+
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
-        // H = (A.t * A).inv * A.t
-        Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
-        Eigen::Vector2f b = Eigen::Vector2f::Zero();
+        H.setZero();
+        b.setZero();
 
         float fx_i = 0.0f;
         float fy_i = 0.0f;
@@ -142,23 +144,64 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                     fy_i = temp_value[3] - temp_value[2];
                     ft_i = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx_i * fx_i;
-                    H(1, 1) += fy_i * fy_i;
-                    H(0, 1) += fx_i * fy_i;
+                    float &x = col_j;
+                    float &y = row_j;
 
-                    b(0) -= fx_i * ft_i;
-                    b(1) -= fy_i * ft_i;
+                    float xx = x * x;
+                    float yy = y * y;
+                    float fxfx = fx_i * fx_i;
+                    float fyfy = fy_i * fy_i;
+                    float xy = x * y;
+                    float fxfy = fx_i * fy_i;
+
+                    H(0, 0) += xx * fxfx;
+                    H(0, 1) += xx * fxfy;
+                    H(0, 2) += xy * fxfx;
+                    H(0, 3) += xy * fxfy;
+                    H(0, 4) += x * fxfx;
+                    H(0, 5) += x * fxfy;
+                    H(1, 1) += xx * fyfy;
+                    H(1, 2) += xy * fxfy;
+                    H(1, 3) += xy * fyfy;
+                    H(1, 4) += x * fxfy;
+                    H(1, 5) += x * fyfy;
+                    H(2, 2) += yy * fxfx;
+                    H(2, 3) += yy * fxfy;
+                    H(2, 4) += y * fxfx;
+                    H(2, 5) += y * fxfy;
+                    H(3, 3) += yy * fyfy;
+                    H(3, 4) += yy * fxfy;
+                    H(3, 5) += y * fyfy;
+                    H(4, 4) += fxfx;
+                    H(4, 5) += fxfy;
+                    H(5, 5) += fyfy;
+
+                    b(0) -= ft_i * x * fx_i;
+                    b(1) -= ft_i * x * fy_i;
+                    b(2) -= ft_i * y * fx_i;
+                    b(3) -= ft_i * y * fy_i;
+                    b(4) -= ft_i * fx_i;
+                    b(5) -= ft_i * fy_i;
 
                     residual += std::fabs(ft_i);
                     ++num_of_valid_pixel;
                 }
             }
         }
-        H(1, 0) = H(0, 1);
+
+        for (uint32_t i = 0; i < 6; ++i) {
+            for (uint32_t j = i; j < 6; ++j) {
+                if (i != j) {
+                    H(j, i) = H(i, j);
+                }
+            }
+        }
+
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * v = b, update cur_points.
-        Eigen::Vector2f v = H.inverse() * b;
+        // Solve H * z = b, update cur_points.
+        Eigen::Matrix<float, 6, 1> z = H.inverse() * b;
+        Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = NUM_ERROR;
@@ -186,15 +229,17 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
     }
 }
 
-void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
-                                          const Image *cur_image,
-                                          const Eigen::Vector2f &ref_point,
-                                          Eigen::Vector2f &cur_point,
-                                          TrackStatus &status) {
+void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
+                                           const Image *cur_image,
+                                           const Eigen::Vector2f &ref_point,
+                                           Eigen::Vector2f &cur_point,
+                                           TrackStatus &status) {
+    Eigen::Matrix<float, 6, 6> H;
+    Eigen::Matrix<float, 6, 1> b;
+
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
-        // H = (A.t * A).inv * A.t
-        Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
-        Eigen::Vector2f b = Eigen::Vector2f::Zero();
+        H.setZero();
+        b.setZero();
 
         float fx_i = 0.0f;
         float fy_i = 0.0f;
@@ -222,23 +267,64 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
                     fy_i = temp_value[3] - temp_value[2];
                     ft_i = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx_i * fx_i;
-                    H(1, 1) += fy_i * fy_i;
-                    H(0, 1) += fx_i * fy_i;
+                    float &x = col_j;
+                    float &y = row_j;
 
-                    b(0) -= fx_i * ft_i;
-                    b(1) -= fy_i * ft_i;
+                    float xx = x * x;
+                    float yy = y * y;
+                    float fxfx = fx_i * fx_i;
+                    float fyfy = fy_i * fy_i;
+                    float xy = x * y;
+                    float fxfy = fx_i * fy_i;
+
+                    H(0, 0) += xx * fxfx;
+                    H(0, 1) += xx * fxfy;
+                    H(0, 2) += xy * fxfx;
+                    H(0, 3) += xy * fxfy;
+                    H(0, 4) += x * fxfx;
+                    H(0, 5) += x * fxfy;
+                    H(1, 1) += xx * fyfy;
+                    H(1, 2) += xy * fxfy;
+                    H(1, 3) += xy * fyfy;
+                    H(1, 4) += x * fxfy;
+                    H(1, 5) += x * fyfy;
+                    H(2, 2) += yy * fxfx;
+                    H(2, 3) += yy * fxfy;
+                    H(2, 4) += y * fxfx;
+                    H(2, 5) += y * fxfy;
+                    H(3, 3) += yy * fyfy;
+                    H(3, 4) += yy * fxfy;
+                    H(3, 5) += y * fyfy;
+                    H(4, 4) += fxfx;
+                    H(4, 5) += fxfy;
+                    H(5, 5) += fyfy;
+
+                    b(0) -= ft_i * x * fx_i;
+                    b(1) -= ft_i * x * fy_i;
+                    b(2) -= ft_i * y * fx_i;
+                    b(3) -= ft_i * y * fy_i;
+                    b(4) -= ft_i * fx_i;
+                    b(5) -= ft_i * fy_i;
 
                     residual += std::fabs(ft_i);
                     ++num_of_valid_pixel;
                 }
             }
         }
-        H(1, 0) = H(0, 1);
+
+        for (uint32_t i = 0; i < 6; ++i) {
+            for (uint32_t j = i; j < 6; ++j) {
+                if (i != j) {
+                    H(j, i) = H(i, j);
+                }
+            }
+        }
+
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * v = b, update cur_points.
-        Eigen::Vector2f v = H.inverse() * b;
+        // Solve H * z = b, update cur_points.
+        Eigen::Matrix<float, 6, 1> z = H.inverse() * b;
+        Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = NUM_ERROR;
@@ -265,4 +351,5 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
         }
     }
 }
+
 }
