@@ -6,8 +6,8 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "klt_datatype.h"
-#include "klt_basic.h"
+#include "optical_flow_datatype.h"
+#include "optical_flow_lk.h"
 
 #define CONFIG_OPENCV_DRAW (1)
 
@@ -20,24 +20,24 @@ void test_image() {
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
-    KLT_TRACKER::Image klt_image;
-    klt_image.SetImage(cv_image.data, cv_image.rows, cv_image.cols);
-    std::cout << klt_image.rows() << std::endl;
-    std::cout << klt_image.cols() << std::endl;
+    OPTICAL_FLOW::Image image;
+    image.SetImage(cv_image.data, cv_image.rows, cv_image.cols);
+    std::cout << image.rows() << std::endl;
+    std::cout << image.cols() << std::endl;
 
     float value;
     uint16_t int_value;
     for (int i = 0; i < 2; ++i) {
         for (int j = 0; j < 2; ++j) {
-            klt_image.GetPixelValue(i, j, &int_value);
-            klt_image.GetPixelValue(i, j, &value);
-            std::cout << "test klt_image.GetPixelValue is " << int_value << ", " << value << std::endl;
+            image.GetPixelValue(i, j, &int_value);
+            image.GetPixelValue(i, j, &value);
+            std::cout << "test image.GetPixelValue is " << int_value << ", " << value << std::endl;
         }
     }
 
 #if CONFIG_OPENCV_DRAW
-    cv::Mat image(klt_image.rows(), klt_image.cols(), CV_8UC1, klt_image.image_data());
-    cv::imshow("convert cv_image to klt_image", image);
+    cv::Mat show_image(image.rows(), image.cols(), CV_8UC1, image.image_data());
+    cv::imshow("convert cv_image to image", show_image);
     cv::waitKey(0);
 #endif
 }
@@ -48,14 +48,14 @@ void test_pyramid() {
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
-    KLT_TRACKER::ImagePyramid pyramid;
+    OPTICAL_FLOW::ImagePyramid pyramid;
     pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_image.rows * cv_image.cols * 2));
     pyramid.SetRawImage(cv_image.data, cv_image.rows, cv_image.cols);
     pyramid.CreateImagePyramid(5);
 
 #if CONFIG_OPENCV_DRAW
     for (uint32_t i = 0; i < pyramid.level(); ++i) {
-        KLT_TRACKER::Image one_level = pyramid.GetImage(i);
+        OPTICAL_FLOW::Image one_level = pyramid.GetImage(i);
         cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.image_data());
         cv::imshow(std::to_string(i), image);
         cv::waitKey(1);
@@ -71,16 +71,16 @@ void test_klt_basic_single() {
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
-    KLT_TRACKER::Image cur_image, ref_image;
+    OPTICAL_FLOW::Image cur_image, ref_image;
     ref_image.SetImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
     cur_image.SetImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
 
     std::vector<cv::Point2f> new_corners;
     cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
 
-    KLT_TRACKER::KltBasic klt_basic;
+    OPTICAL_FLOW::OpticalFlowLk klt_basic;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
-    std::vector<KLT_TRACKER::TrackStatus> status;
+    std::vector<OPTICAL_FLOW::TrackStatus> status;
     ref_points.reserve(new_corners.size());
     for (uint32_t i = 0; i < new_corners.size(); ++i) {
         ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
@@ -106,7 +106,7 @@ void test_klt_basic_single() {
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < new_corners.size(); i++) {
-        if (status[i] != KLT_TRACKER::TRACKED) {
+        if (status[i] != OPTICAL_FLOW::TRACKED) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);
@@ -127,7 +127,7 @@ void test_klt_basic_multi() {
 
     constexpr int32_t pyramid_level = 4;
 
-    KLT_TRACKER::ImagePyramid ref_pyramid, cur_pyramid;
+    OPTICAL_FLOW::ImagePyramid ref_pyramid, cur_pyramid;
     ref_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_ref_image.rows * cv_ref_image.cols * 2));
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
@@ -136,9 +136,9 @@ void test_klt_basic_multi() {
     std::vector<cv::Point2f> new_corners;
     cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
 
-    KLT_TRACKER::KltBasic klt_basic;
+    OPTICAL_FLOW::OpticalFlowLk klt_basic;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
-    std::vector<KLT_TRACKER::TrackStatus> status;
+    std::vector<OPTICAL_FLOW::TrackStatus> status;
     ref_points.reserve(new_corners.size());
     for (uint32_t i = 0; i < new_corners.size(); ++i) {
         ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
@@ -166,7 +166,7 @@ void test_klt_basic_multi() {
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < new_corners.size(); i++) {
-        if (status[i] != KLT_TRACKER::TRACKED) {
+        if (status[i] != OPTICAL_FLOW::TRACKED) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);

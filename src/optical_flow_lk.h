@@ -1,11 +1,11 @@
-#ifndef _KLT_BASIC_H_
-#define _KLT_BASIC_H_
+#ifndef _OPTICAL_FLOW_LK_H_
+#define _OPTICAL_FLOW_LK_H_
 
-#include "klt_datatype.h"
-#include <vector>
+#include "optical_flow_datatype.h"
 #include <eigen3/Eigen/Eigen>
+#include <vector>
 
-namespace KLT_TRACKER {
+namespace OPTICAL_FLOW {
 
 typedef enum : uint8_t {
     TRACKED = 0,
@@ -22,12 +22,12 @@ typedef struct {
     int32_t kPatchColHalfSize = 4;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
-} KltBasicOptions;
+} LkOptions;
 
-class KltBasic {
+class OpticalFlowLk {
 public:
-    explicit KltBasic() = default;
-    virtual ~KltBasic() = default;
+    explicit OpticalFlowLk() = default;
+    virtual ~OpticalFlowLk() = default;
 
     bool TrackMultipleLevel(const ImagePyramid *ref_pyramid,
                             const ImagePyramid *cur_pyramid,
@@ -41,10 +41,10 @@ public:
                           std::vector<Eigen::Vector2f> &cur_points,
                           std::vector<TrackStatus> &status);
 
-    KltBasicOptions &options() { return options_; }
+    LkOptions &options() { return options_; }
 
 private:
-    KltBasicOptions options_;
+    LkOptions options_;
 };
 
 }

@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.10 )
 
-project( klt_tracker )
+project( OPTICAL_FLOW )
 
 set( CMAKE_BUILD_TYPE "Release" )
 set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall" )
@@ -12,18 +12,18 @@ find_package( Eigen3 REQUIRED )
 include_directories( ${PROJECT_SOURCE_DIR}/src )
 include_directories( ${PROJECT_SOURCE_DIR}/test )
 
-aux_source_directory( ${PROJECT_SOURCE_DIR}/src KLT_TRACKER )
+aux_source_directory( ${PROJECT_SOURCE_DIR}/src OPTICAL_FLOW )
 
-add_executable( test_klt_tracker
-    ${KLT_TRACKER}
-    test/test_klt_tracker.cpp
+add_executable( test_optical_flow
+    ${OPTICAL_FLOW}
+    test/test_optical_flow.cpp
 )
 
-add_library( klt_tracker
-    ${KLT_TRACKER}
+add_library( OPTICAL_FLOW
+    ${OPTICAL_FLOW}
 )
 
-target_link_libraries( test_klt_tracker
+target_link_libraries( test_optical_flow
     # TBB::tbb
     ${OpenCV_LIBS}
 )

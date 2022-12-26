@@ -1,9 +1,9 @@
-#ifndef _KLT_DATATYPE_H_
-#define _KLT_DATATYPE_H_
+#ifndef _OPTICAL_FLOW_DATATYPE_H_
+#define _OPTICAL_FLOW_DATATYPE_H_
 
 #include <cmath>
 
-namespace KLT_TRACKER {
+namespace OPTICAL_FLOW {
 
 using uint8_t = unsigned char;
 using uint16_t = unsigned short;

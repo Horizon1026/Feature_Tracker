@@ -1,11 +1,11 @@
-#include "klt_basic.h"
-#include "klt_datatype.h"
+#include "optical_flow_lk.h"
+#include "optical_flow_datatype.h"
 
 #include <cmath>
 #include <iostream>
 
-namespace KLT_TRACKER {
-bool KltBasic::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
+namespace OPTICAL_FLOW {
+bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
                                   const ImagePyramid *cur_pyramid,
                                   const std::vector<Eigen::Vector2f> &ref_points,
                                   std::vector<Eigen::Vector2f> &cur_points,
@@ -59,7 +59,7 @@ bool KltBasic::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     return true;
 }
 
-bool KltBasic::TrackSingleLevel(const Image *ref_image,
+bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
                                 const Image *cur_image,
                                 const std::vector<Eigen::Vector2f> &ref_points,
                                 std::vector<Eigen::Vector2f> &cur_points,

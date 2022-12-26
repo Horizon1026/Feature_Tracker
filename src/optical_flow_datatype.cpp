@@ -1,7 +1,7 @@
-#include "klt_datatype.h"
+#include "optical_flow_datatype.h"
 #include <algorithm>
 
-namespace KLT_TRACKER {
+namespace OPTICAL_FLOW {
 
 Image::Image(uint8_t *data, int32_t rows, int32_t cols) {
     SetImage(data, rows, cols);
