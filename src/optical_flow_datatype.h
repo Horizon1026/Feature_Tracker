@@ -15,6 +15,14 @@ using int32_t = int;
 
 inline constexpr static uint32_t kPyramidMaxLevel = 10;
 
+typedef enum : uint8_t {
+    TRACKED = 0,
+    NOT_TRACKED,
+    OUTSIDE,
+    LARGE_RESIDUAL,
+    NUM_ERROR,
+} TrackStatus;
+
 class Image {
 public:
     explicit Image() = default;

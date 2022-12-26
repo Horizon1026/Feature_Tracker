@@ -88,6 +88,7 @@ void test_klt_basic_single() {
 
     klt_basic.options().kPatchRowHalfSize = 6;
     klt_basic.options().kPatchColHalfSize = 6;
+    klt_basic.options().kMethod = OPTICAL_FLOW::INVERSE_LSE;
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
@@ -146,6 +147,7 @@ void test_klt_basic_multi() {
 
     klt_basic.options().kPatchRowHalfSize = 4;
     klt_basic.options().kPatchColHalfSize = 4;
+    klt_basic.options().kMethod = OPTICAL_FLOW::INVERSE_LSE;
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();

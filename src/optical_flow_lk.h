@@ -7,13 +7,10 @@
 
 namespace OPTICAL_FLOW {
 
-typedef enum : uint8_t {
-    TRACKED = 0,
-    NOT_TRACKED,
-    OUTSIDE,
-    LARGE_RESIDUAL,
-    NUM_ERROR,
-} TrackStatus;
+enum LkMethod : uint8_t {
+    INVERSE_LSE = 0,
+    DIRECT_LSE,
+};
 
 typedef struct {
     uint32_t kMaxTrackingPointsNumber = 200;
@@ -22,6 +19,7 @@ typedef struct {
     int32_t kPatchColHalfSize = 4;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
+    LkMethod kMethod = INVERSE_LSE;
 } LkOptions;
 
 class OpticalFlowLk {
@@ -42,6 +40,19 @@ public:
                           std::vector<TrackStatus> &status);
 
     LkOptions &options() { return options_; }
+
+private:
+    void TrackOneFeatureInverse(const Image *ref_image,
+                                const Image *cur_image,
+                                const Eigen::Vector2f &ref_points,
+                                Eigen::Vector2f &cur_points,
+                                TrackStatus &status);
+
+    void TrackOneFeatureDirect(const Image *ref_image,
+                               const Image *cur_image,
+                               const Eigen::Vector2f &ref_points,
+                               Eigen::Vector2f &cur_points,
+                               TrackStatus &status);
 
 private:
     LkOptions options_;
