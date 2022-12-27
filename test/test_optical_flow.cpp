@@ -10,7 +10,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (0)
+#define CONFIG_OPENCV_DRAW (1)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
@@ -21,7 +21,7 @@ void test_image() {
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
-    OPTICAL_FLOW::Image image;
+    Image image;
     image.SetImage(cv_image.data, cv_image.rows, cv_image.cols);
     std::cout << image.rows() << std::endl;
     std::cout << image.cols() << std::endl;
@@ -49,14 +49,14 @@ void test_pyramid() {
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
-    OPTICAL_FLOW::ImagePyramid pyramid;
+    ImagePyramid pyramid;
     pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_image.rows * cv_image.cols * 2));
     pyramid.SetRawImage(cv_image.data, cv_image.rows, cv_image.cols);
     pyramid.CreateImagePyramid(5);
 
 #if CONFIG_OPENCV_DRAW
     for (uint32_t i = 0; i < pyramid.level(); ++i) {
-        OPTICAL_FLOW::Image one_level = pyramid.GetImage(i);
+        Image one_level = pyramid.GetImage(i);
         cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.image_data());
         cv::imshow(std::to_string(i), image);
         cv::waitKey(1);
@@ -73,7 +73,7 @@ void test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
-    OPTICAL_FLOW::ImagePyramid ref_pyramid, cur_pyramid;
+    ImagePyramid ref_pyramid, cur_pyramid;
     ref_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_ref_image.rows * cv_ref_image.cols * 2));
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
@@ -138,7 +138,7 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
-    OPTICAL_FLOW::ImagePyramid ref_pyramid, cur_pyramid;
+    ImagePyramid ref_pyramid, cur_pyramid;
     ref_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_ref_image.rows * cv_ref_image.cols * 2));
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
