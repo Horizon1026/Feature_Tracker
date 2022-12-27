@@ -158,7 +158,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
         residual /= static_cast<float>(num_of_valid_pixel);
 
         // Solve H * v = b, update cur_points.
-        Eigen::Vector2f v = H.inverse() * b;
+        Eigen::Vector2f v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = NUM_ERROR;
@@ -238,7 +238,7 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
         residual /= static_cast<float>(num_of_valid_pixel);
 
         // Solve H * v = b, update cur_points.
-        Eigen::Vector2f v = H.inverse() * b;
+        Eigen::Vector2f v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = NUM_ERROR;
