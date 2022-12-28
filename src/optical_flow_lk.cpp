@@ -124,15 +124,12 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
         for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
             float row_i = static_cast<float>(drow) + ref_point.y();
             float col_i = static_cast<float>(dcol) + ref_point.x();
-            float row_j = static_cast<float>(drow) + cur_point.y();
-            float col_j = static_cast<float>(dcol) + cur_point.x();
             // Compute pixel gradient
             if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
                 ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
                 ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
                 ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
-                cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                ref_image->GetPixelValue(row_i, col_i, temp_value + 4)) {
                 fx_fy_ti.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
                                                       temp_value[3] - temp_value[2],
                                                       temp_value[4]));

@@ -132,8 +132,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
                 ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
                 ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
-                cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                ref_image->GetPixelValue(row_i, col_i, temp_value + 4)) {
                 fx_fy_ti.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
                                                       temp_value[3] - temp_value[2],
                                                       temp_value[4]));
@@ -145,9 +144,9 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
 
                 const float xx = x * x;
                 const float yy = y * y;
+                const float xy = x * y;
                 const float fxfx = fx * fx;
                 const float fyfy = fy * fy;
-                const float xy = x * y;
                 const float fxfy = fx * fy;
 
                 H(0, 0) += xx * fxfx;
@@ -157,16 +156,13 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 H(0, 4) += x * fxfx;
                 H(0, 5) += x * fxfy;
                 H(1, 1) += xx * fyfy;
-                H(1, 2) += xy * fxfy;
                 H(1, 3) += xy * fyfy;
-                H(1, 4) += x * fxfy;
                 H(1, 5) += x * fyfy;
                 H(2, 2) += yy * fxfx;
                 H(2, 3) += yy * fxfy;
                 H(2, 4) += y * fxfx;
                 H(2, 5) += y * fxfy;
                 H(3, 3) += yy * fyfy;
-                H(3, 4) += yy * fxfy;
                 H(3, 5) += y * fyfy;
                 H(4, 4) += fxfx;
                 H(4, 5) += fxfy;
@@ -177,6 +173,9 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
         }
     }
 
+    H(1, 2) = H(0, 3);
+    H(1, 4) = H(0, 5);
+    H(3, 4) = H(2, 3);
     for (uint32_t i = 0; i < 6; ++i) {
         for (uint32_t j = i; j < 6; ++j) {
             if (i != j) {
@@ -210,12 +209,15 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                     float &x = col_j;
                     float &y = row_j;
 
-                    b(0) -= ft * x * fx;
-                    b(1) -= ft * x * fy;
-                    b(2) -= ft * y * fx;
-                    b(3) -= ft * y * fy;
-                    b(4) -= ft * fx;
-                    b(5) -= ft * fy;
+                    const float ft_fx = ft * fx;
+                    const float ft_fy = ft * fy;
+
+                    b(0) -= ft_fx * x;
+                    b(1) -= ft_fy * x;
+                    b(2) -= ft_fx * y;
+                    b(3) -= ft_fy * y;
+                    b(4) -= ft_fx;
+                    b(5) -= ft_fy;
 
                     residual += std::fabs(ft);
                     ++num_of_valid_pixel;
