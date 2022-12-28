@@ -118,9 +118,9 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
         H.setZero();
         b.setZero();
 
-        float fx_i = 0.0f;
-        float fy_i = 0.0f;
-        float ft_i = 0.0f;
+        float fx = 0.0f;
+        float fy = 0.0f;
+        float ft = 0.0f;
         float temp_value[6] = {0};
 
         float residual = 0.0f;
@@ -140,19 +140,19 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                     ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
                     ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
                     cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx_i = temp_value[1] - temp_value[0];
-                    fy_i = temp_value[3] - temp_value[2];
-                    ft_i = temp_value[5] - temp_value[4];
+                    fx = temp_value[1] - temp_value[0];
+                    fy = temp_value[3] - temp_value[2];
+                    ft = temp_value[5] - temp_value[4];
 
                     float &x = col_j;
                     float &y = row_j;
 
                     float xx = x * x;
                     float yy = y * y;
-                    float fxfx = fx_i * fx_i;
-                    float fyfy = fy_i * fy_i;
+                    float fxfx = fx * fx;
+                    float fyfy = fy * fy;
                     float xy = x * y;
-                    float fxfy = fx_i * fy_i;
+                    float fxfy = fx * fy;
 
                     H(0, 0) += xx * fxfx;
                     H(0, 1) += xx * fxfy;
@@ -176,14 +176,14 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                     H(4, 5) += fxfy;
                     H(5, 5) += fyfy;
 
-                    b(0) -= ft_i * x * fx_i;
-                    b(1) -= ft_i * x * fy_i;
-                    b(2) -= ft_i * y * fx_i;
-                    b(3) -= ft_i * y * fy_i;
-                    b(4) -= ft_i * fx_i;
-                    b(5) -= ft_i * fy_i;
+                    b(0) -= ft * x * fx;
+                    b(1) -= ft * x * fy;
+                    b(2) -= ft * y * fx;
+                    b(3) -= ft * y * fy;
+                    b(4) -= ft * fx;
+                    b(5) -= ft * fy;
 
-                    residual += std::fabs(ft_i);
+                    residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
@@ -241,9 +241,9 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
         H.setZero();
         b.setZero();
 
-        float fx_i = 0.0f;
-        float fy_i = 0.0f;
-        float ft_i = 0.0f;
+        float fx = 0.0f;
+        float fy = 0.0f;
+        float ft = 0.0f;
         float temp_value[6] = {0};
 
         float residual = 0.0f;
@@ -257,25 +257,25 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
                 float row_j = static_cast<float>(drow) + cur_point.y();
                 float col_j = static_cast<float>(dcol) + cur_point.x();
                 // Compute pixel gradient
-                if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                    ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
+                if (cur_image->GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
+                    cur_image->GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
                     cur_image->GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
                     cur_image->GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
                     ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
                     cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx_i = temp_value[1] - temp_value[0];
-                    fy_i = temp_value[3] - temp_value[2];
-                    ft_i = temp_value[5] - temp_value[4];
+                    fx = temp_value[1] - temp_value[0];
+                    fy = temp_value[3] - temp_value[2];
+                    ft = temp_value[5] - temp_value[4];
 
                     float &x = col_j;
                     float &y = row_j;
 
                     float xx = x * x;
                     float yy = y * y;
-                    float fxfx = fx_i * fx_i;
-                    float fyfy = fy_i * fy_i;
+                    float fxfx = fx * fx;
+                    float fyfy = fy * fy;
                     float xy = x * y;
-                    float fxfy = fx_i * fy_i;
+                    float fxfy = fx * fy;
 
                     H(0, 0) += xx * fxfx;
                     H(0, 1) += xx * fxfy;
@@ -299,14 +299,14 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
                     H(4, 5) += fxfy;
                     H(5, 5) += fyfy;
 
-                    b(0) -= ft_i * x * fx_i;
-                    b(1) -= ft_i * x * fy_i;
-                    b(2) -= ft_i * y * fx_i;
-                    b(3) -= ft_i * y * fy_i;
-                    b(4) -= ft_i * fx_i;
-                    b(5) -= ft_i * fy_i;
+                    b(0) -= ft * x * fx;
+                    b(1) -= ft * x * fy;
+                    b(2) -= ft * y * fx;
+                    b(3) -= ft * y * fy;
+                    b(4) -= ft * fx;
+                    b(5) -= ft * fy;
 
-                    residual += std::fabs(ft_i);
+                    residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }

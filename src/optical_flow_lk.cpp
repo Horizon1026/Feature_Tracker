@@ -116,9 +116,9 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
         Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
         Eigen::Vector2f b = Eigen::Vector2f::Zero();
 
-        float fx_i = 0.0f;
-        float fy_i = 0.0f;
-        float ft_i = 0.0f;
+        float fx = 0.0f;
+        float fy = 0.0f;
+        float ft = 0.0f;
         float temp_value[6] = {0};
 
         float residual = 0.0f;
@@ -138,18 +138,18 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                     ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
                     ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
                     cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx_i = temp_value[1] - temp_value[0];
-                    fy_i = temp_value[3] - temp_value[2];
-                    ft_i = temp_value[5] - temp_value[4];
+                    fx = temp_value[1] - temp_value[0];
+                    fy = temp_value[3] - temp_value[2];
+                    ft = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx_i * fx_i;
-                    H(1, 1) += fy_i * fy_i;
-                    H(0, 1) += fx_i * fy_i;
+                    H(0, 0) += fx * fx;
+                    H(1, 1) += fy * fy;
+                    H(0, 1) += fx * fy;
 
-                    b(0) -= fx_i * ft_i;
-                    b(1) -= fy_i * ft_i;
+                    b(0) -= fx * ft;
+                    b(1) -= fy * ft;
 
-                    residual += std::fabs(ft_i);
+                    residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
@@ -196,9 +196,9 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
         Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
         Eigen::Vector2f b = Eigen::Vector2f::Zero();
 
-        float fx_i = 0.0f;
-        float fy_i = 0.0f;
-        float ft_i = 0.0f;
+        float fx = 0.0f;
+        float fy = 0.0f;
+        float ft = 0.0f;
         float temp_value[6] = {0};
 
         float residual = 0.0f;
@@ -212,24 +212,24 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
                 float row_j = static_cast<float>(drow) + cur_point.y();
                 float col_j = static_cast<float>(dcol) + cur_point.x();
                 // Compute pixel gradient
-                if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                    ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
+                if (cur_image->GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
+                    cur_image->GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
                     cur_image->GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
                     cur_image->GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
                     ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
                     cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx_i = temp_value[1] - temp_value[0];
-                    fy_i = temp_value[3] - temp_value[2];
-                    ft_i = temp_value[5] - temp_value[4];
+                    fx = temp_value[1] - temp_value[0];
+                    fy = temp_value[3] - temp_value[2];
+                    ft = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx_i * fx_i;
-                    H(1, 1) += fy_i * fy_i;
-                    H(0, 1) += fx_i * fy_i;
+                    H(0, 0) += fx * fx;
+                    H(1, 1) += fy * fy;
+                    H(0, 1) += fx * fy;
 
-                    b(0) -= fx_i * ft_i;
-                    b(1) -= fy_i * ft_i;
+                    b(0) -= fx * ft;
+                    b(1) -= fy * ft;
 
-                    residual += std::fabs(ft_i);
+                    residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }

@@ -11,15 +11,18 @@ find_package( Eigen3 REQUIRED )
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility )
 
 # include_directories( "/usr/include/eigen3" )
-include_directories( ${SLAM_UTILITY_PATH}/src )
+include_directories( ${SLAM_UTILITY_PATH}/src/datatype )
+include_directories( ${SLAM_UTILITY_PATH}/src/log )
 include_directories( ${PROJECT_SOURCE_DIR}/src )
 include_directories( ${PROJECT_SOURCE_DIR}/test )
 
-aux_source_directory( ${SLAM_UTILITY_PATH}/src SLAM_UTILITY )
-aux_source_directory( ${PROJECT_SOURCE_DIR}/src OPTICAL_FLOW )
+aux_source_directory( ${SLAM_UTILITY_PATH}/src/datatype     SLAM_UTILITY_DATATYPE )
+aux_source_directory( ${SLAM_UTILITY_PATH}/src/log          SLAM_UTILITY_LOG )
+aux_source_directory( ${PROJECT_SOURCE_DIR}/src             OPTICAL_FLOW )
 
 add_executable( test_optical_flow
-    ${SLAM_UTILITY}
+    ${SLAM_UTILITY_DATATYPE}
+    ${SLAM_UTILITY_LOG}
     ${OPTICAL_FLOW}
     test/test_optical_flow.cpp
 )

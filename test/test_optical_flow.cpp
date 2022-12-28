@@ -157,7 +157,7 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     klt.options().kPatchRowHalfSize = pyramid_level;
     klt.options().kPatchColHalfSize = pyramid_level;
-    klt.options().kMethod = OPTICAL_FLOW::KLT_DIRECT;
+    klt.options().kMethod = OPTICAL_FLOW::KLT_INVERSE;
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
