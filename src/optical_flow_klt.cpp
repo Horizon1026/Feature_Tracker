@@ -2,7 +2,6 @@
 #include "optical_flow_datatype.h"
 
 #include <cmath>
-#include <iostream>
 
 namespace OPTICAL_FLOW {
 bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
@@ -60,10 +59,10 @@ bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
 }
 
 bool OpticalFlowKlt::TrackSingleLevel(const Image *ref_image,
-                                     const Image *cur_image,
-                                     const std::vector<Eigen::Vector2f> &ref_points,
-                                     std::vector<Eigen::Vector2f> &cur_points,
-                                     std::vector<TrackStatus> &status) {
+                                      const Image *cur_image,
+                                      const std::vector<Eigen::Vector2f> &ref_points,
+                                      std::vector<Eigen::Vector2f> &cur_points,
+                                      std::vector<TrackStatus> &status) {
     if (cur_image == nullptr || ref_image == nullptr || ref_points.empty()) {
         return false;
     }
@@ -114,6 +113,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
     Eigen::Matrix<float, 6, 6> H;
     Eigen::Matrix<float, 6, 1> b;
 
+    Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
+
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
         H.setZero();
         b.setZero();
@@ -131,8 +132,11 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
             for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
                 float row_i = static_cast<float>(drow) + ref_point.y();
                 float col_i = static_cast<float>(dcol) + ref_point.x();
-                float row_j = static_cast<float>(drow) + cur_point.y();
-                float col_j = static_cast<float>(dcol) + cur_point.x();
+
+                Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
+                float row_j = affined_dcol_drow.y() + cur_point.y();
+                float col_j = affined_dcol_drow.x() + cur_point.x();
+
                 // Compute pixel gradient
                 if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
                     ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
@@ -211,6 +215,10 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
         cur_point.x() += v(0);
         cur_point.y() += v(1);
 
+        // Update affine translation matrix.
+        A.col(0) += z.head<2>();
+        A.col(1) += z.segment<2>(2);
+
         if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
             status = OUTSIDE;
@@ -237,6 +245,8 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
     Eigen::Matrix<float, 6, 6> H;
     Eigen::Matrix<float, 6, 1> b;
 
+    Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
+
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
         H.setZero();
         b.setZero();
@@ -254,8 +264,11 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
             for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
                 float row_i = static_cast<float>(drow) + ref_point.y();
                 float col_i = static_cast<float>(dcol) + ref_point.x();
-                float row_j = static_cast<float>(drow) + cur_point.y();
-                float col_j = static_cast<float>(dcol) + cur_point.x();
+
+                Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
+                float row_j = affined_dcol_drow.y() + cur_point.y();
+                float col_j = affined_dcol_drow.x() + cur_point.x();
+
                 // Compute pixel gradient
                 if (cur_image->GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
                     cur_image->GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
@@ -333,6 +346,10 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
 
         cur_point.x() += v(0);
         cur_point.y() += v(1);
+
+        // Update affine translation matrix.
+        A.col(0) += z.head<2>();
+        A.col(1) += z.segment<2>(2);
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {

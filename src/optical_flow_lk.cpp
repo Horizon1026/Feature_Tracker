@@ -2,14 +2,13 @@
 #include "optical_flow_datatype.h"
 
 #include <cmath>
-#include <iostream>
 
 namespace OPTICAL_FLOW {
 bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
-                                  const ImagePyramid *cur_pyramid,
-                                  const std::vector<Eigen::Vector2f> &ref_points,
-                                  std::vector<Eigen::Vector2f> &cur_points,
-                                  std::vector<TrackStatus> &status) {
+                                       const ImagePyramid *cur_pyramid,
+                                       const std::vector<Eigen::Vector2f> &ref_points,
+                                       std::vector<Eigen::Vector2f> &cur_points,
+                                       std::vector<TrackStatus> &status) {
     if (cur_pyramid == nullptr || ref_pyramid == nullptr || ref_points.empty()) {
         return false;
     }

@@ -10,7 +10,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (1)
+#define CONFIG_OPENCV_DRAW (0)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
@@ -157,7 +157,7 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     klt.options().kPatchRowHalfSize = pyramid_level;
     klt.options().kPatchColHalfSize = pyramid_level;
-    klt.options().kMethod = OPTICAL_FLOW::KLT_INVERSE;
+    klt.options().kMethod = OPTICAL_FLOW::KLT_DIRECT;
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
