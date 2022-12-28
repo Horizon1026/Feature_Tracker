@@ -116,6 +116,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
 
     // Precompute H, fx, fy and ti.
     std::vector<Eigen::Vector3f> fx_fy_ti;
+    Eigen::Vector3f inf_vec3(INFINITY, INFINITY, INFINITY);
     const int32_t patch_size = options_.kPatchRowHalfSize * 2 + 1;
     fx_fy_ti.reserve(patch_size * patch_size);
     float temp_value[6] = {0};
@@ -141,7 +142,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                 H(1, 1) += fy * fy;
                 H(0, 1) += fx * fy;
             } else {
-                fx_fy_ti.emplace_back(Eigen::Vector3f::Zero());
+                fx_fy_ti.emplace_back(inf_vec3);
             }
         }
     }
@@ -163,7 +164,8 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                 float col_j = static_cast<float>(dcol) + cur_point.x();
 
                 // Compute pixel gradient
-                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5) &&
+                    !std::isinf(fx_fy_ti[idx].x())) {
                     const float fx = fx_fy_ti[idx].x();
                     const float fy = fx_fy_ti[idx].y();
                     ft = temp_value[5] - fx_fy_ti[idx].z();

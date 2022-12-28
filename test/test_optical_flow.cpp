@@ -192,7 +192,7 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
 }
 
 int main() {
-    uint32_t test_times = 100;
+    uint32_t test_times = 500;
     uint8_t optical_flow_method = 0;
 
 #if CONFIG_OPENCV_DRAW

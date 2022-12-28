@@ -116,6 +116,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
 
     // Precompute H, fx, fy and ti.
     std::vector<Eigen::Vector3f> fx_fy_ti;
+    Eigen::Vector3f inf_vec3(INFINITY, INFINITY, INFINITY);
     const int32_t patch_size = options_.kPatchRowHalfSize * 2 + 1;
     fx_fy_ti.reserve(patch_size * patch_size);
     float temp_value[6] = {0};
@@ -168,7 +169,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 H(4, 5) += fxfy;
                 H(5, 5) += fyfy;
             } else {
-                fx_fy_ti.emplace_back(Eigen::Vector3f::Zero());
+                fx_fy_ti.emplace_back(inf_vec3);
             }
         }
     }
@@ -201,7 +202,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 float col_j = affined_dcol_drow.x() + cur_point.x();
 
                 // Compute pixel gradient
-                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5) &&
+                    !std::isinf(fx_fy_ti[idx].x())) {
                     const float fx = fx_fy_ti[idx].x();
                     const float fy = fx_fy_ti[idx].y();
                     ft = temp_value[5] - fx_fy_ti[idx].z();
@@ -209,15 +211,12 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                     float &x = col_j;
                     float &y = row_j;
 
-                    const float ft_fx = ft * fx;
-                    const float ft_fy = ft * fy;
-
-                    b(0) -= ft_fx * x;
-                    b(1) -= ft_fy * x;
-                    b(2) -= ft_fx * y;
-                    b(3) -= ft_fy * y;
-                    b(4) -= ft_fx;
-                    b(5) -= ft_fy;
+                    b(0) -= ft * x * fx;
+                    b(1) -= ft * x * fy;
+                    b(2) -= ft * y * fx;
+                    b(3) -= ft * y * fy;
+                    b(4) -= ft * fx;
+                    b(5) -= ft * fy;
 
                     residual += std::fabs(ft);
                     ++num_of_valid_pixel;
