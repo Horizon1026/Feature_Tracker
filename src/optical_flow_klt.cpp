@@ -110,75 +110,105 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                                             const Eigen::Vector2f &ref_point,
                                             Eigen::Vector2f &cur_point,
                                             TrackStatus &status) {
-    Eigen::Matrix<float, 6, 6> H;
-    Eigen::Matrix<float, 6, 1> b;
-
+    Eigen::Matrix<float, 6, 6> H = Eigen::Matrix<float, 6, 6>::Zero();
+    Eigen::Matrix<float, 6, 1> b = Eigen::Matrix<float, 6, 1>::Zero();
     Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
 
+    // Precompute H, fx, fy and ti.
+    std::vector<Eigen::Vector3f> fx_fy_ti;
+    const int32_t patch_size = options_.kPatchRowHalfSize * 2 + 1;
+    fx_fy_ti.reserve(patch_size * patch_size);
+    float temp_value[6] = {0};
+
+    for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
+        for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+            float row_i = static_cast<float>(drow) + ref_point.y();
+            float col_i = static_cast<float>(dcol) + ref_point.x();
+            float row_j = static_cast<float>(drow) + cur_point.y();
+            float col_j = static_cast<float>(dcol) + cur_point.x();
+
+            // Compute pixel gradient
+            if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
+                ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
+                ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
+                ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
+                ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
+                cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                fx_fy_ti.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
+                                                      temp_value[3] - temp_value[2],
+                                                      temp_value[4]));
+
+                const float &fx = fx_fy_ti.back().x();
+                const float &fy = fx_fy_ti.back().y();
+                const float &x = col_j;
+                const float &y = row_j;
+
+                const float xx = x * x;
+                const float yy = y * y;
+                const float fxfx = fx * fx;
+                const float fyfy = fy * fy;
+                const float xy = x * y;
+                const float fxfy = fx * fy;
+
+                H(0, 0) += xx * fxfx;
+                H(0, 1) += xx * fxfy;
+                H(0, 2) += xy * fxfx;
+                H(0, 3) += xy * fxfy;
+                H(0, 4) += x * fxfx;
+                H(0, 5) += x * fxfy;
+                H(1, 1) += xx * fyfy;
+                H(1, 2) += xy * fxfy;
+                H(1, 3) += xy * fyfy;
+                H(1, 4) += x * fxfy;
+                H(1, 5) += x * fyfy;
+                H(2, 2) += yy * fxfx;
+                H(2, 3) += yy * fxfy;
+                H(2, 4) += y * fxfx;
+                H(2, 5) += y * fxfy;
+                H(3, 3) += yy * fyfy;
+                H(3, 4) += yy * fxfy;
+                H(3, 5) += y * fyfy;
+                H(4, 4) += fxfx;
+                H(4, 5) += fxfy;
+                H(5, 5) += fyfy;
+            } else {
+                fx_fy_ti.emplace_back(Eigen::Vector3f::Zero());
+            }
+        }
+    }
+
+    for (uint32_t i = 0; i < 6; ++i) {
+        for (uint32_t j = i; j < 6; ++j) {
+            if (i != j) {
+                H(j, i) = H(i, j);
+            }
+        }
+    }
+
+    // Iterate to compute optical flow.
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
-        H.setZero();
         b.setZero();
 
-        float fx = 0.0f;
-        float fy = 0.0f;
         float ft = 0.0f;
-        float temp_value[6] = {0};
-
         float residual = 0.0f;
         int num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
+        uint32_t idx = 0;
         for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
-                float row_i = static_cast<float>(drow) + ref_point.y();
-                float col_i = static_cast<float>(dcol) + ref_point.x();
-
                 Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
                 float row_j = affined_dcol_drow.y() + cur_point.y();
                 float col_j = affined_dcol_drow.x() + cur_point.x();
 
                 // Compute pixel gradient
-                if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                    ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
-                    ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
-                    ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                    ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
-                    cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx = temp_value[1] - temp_value[0];
-                    fy = temp_value[3] - temp_value[2];
-                    ft = temp_value[5] - temp_value[4];
+                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                    const float fx = fx_fy_ti[idx].x();
+                    const float fy = fx_fy_ti[idx].y();
+                    ft = temp_value[5] - fx_fy_ti[idx].z();
 
                     float &x = col_j;
                     float &y = row_j;
-
-                    float xx = x * x;
-                    float yy = y * y;
-                    float fxfx = fx * fx;
-                    float fyfy = fy * fy;
-                    float xy = x * y;
-                    float fxfy = fx * fy;
-
-                    H(0, 0) += xx * fxfx;
-                    H(0, 1) += xx * fxfy;
-                    H(0, 2) += xy * fxfx;
-                    H(0, 3) += xy * fxfy;
-                    H(0, 4) += x * fxfx;
-                    H(0, 5) += x * fxfy;
-                    H(1, 1) += xx * fyfy;
-                    H(1, 2) += xy * fxfy;
-                    H(1, 3) += xy * fyfy;
-                    H(1, 4) += x * fxfy;
-                    H(1, 5) += x * fyfy;
-                    H(2, 2) += yy * fxfx;
-                    H(2, 3) += yy * fxfy;
-                    H(2, 4) += y * fxfx;
-                    H(2, 5) += y * fxfy;
-                    H(3, 3) += yy * fyfy;
-                    H(3, 4) += yy * fxfy;
-                    H(3, 5) += y * fyfy;
-                    H(4, 4) += fxfx;
-                    H(4, 5) += fxfy;
-                    H(5, 5) += fyfy;
 
                     b(0) -= ft * x * fx;
                     b(1) -= ft * x * fy;
@@ -190,14 +220,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                     residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
-            }
-        }
 
-        for (uint32_t i = 0; i < 6; ++i) {
-            for (uint32_t j = i; j < 6; ++j) {
-                if (i != j) {
-                    H(j, i) = H(i, j);
-                }
+                ++idx;
             }
         }
 

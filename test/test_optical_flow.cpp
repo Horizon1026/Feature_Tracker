@@ -65,9 +65,7 @@ void test_pyramid() {
 #endif
 }
 
-void test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
-    std::cout << ">> test_lk_multi" << std::endl;
-    std::cout << "  pyramid_level is " << pyramid_level << ", patch_size is " << patch_size << std::endl;
+float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
 
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
@@ -78,6 +76,8 @@ void test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> new_corners;
     cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
@@ -92,15 +92,13 @@ void test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     lk.options().kPatchRowHalfSize = pyramid_level;
     lk.options().kPatchColHalfSize = pyramid_level;
-    lk.options().kMethod = OPTICAL_FLOW::LK_INVERSE_LSE;
+    lk.options().kMethod = static_cast<OPTICAL_FLOW::LkMethod>(method);
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
-    ref_pyramid.CreateImagePyramid(pyramid_level);
-    cur_pyramid.CreateImagePyramid(pyramid_level);
     lk.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
     end = std::chrono::system_clock::now();
-    std::cout << "lk.TrackMultipleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
+    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -126,13 +124,11 @@ void test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     free(ref_pyramid.pyramid_buf());
     free(cur_pyramid.pyramid_buf());
+
+    return cost_time;
 }
 
-
-
-void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
-    std::cout << ">> test_klt_multi" << std::endl;
-    std::cout << "  pyramid_level is " << pyramid_level << ", patch_size is " << patch_size << std::endl;
+float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
 
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
@@ -143,6 +139,8 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> new_corners;
     cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
@@ -157,15 +155,13 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     klt.options().kPatchRowHalfSize = pyramid_level;
     klt.options().kPatchColHalfSize = pyramid_level;
-    klt.options().kMethod = OPTICAL_FLOW::KLT_DIRECT;
+    klt.options().kMethod = static_cast<OPTICAL_FLOW::KltMethod>(method);
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
     begin = std::chrono::system_clock::now();
-    ref_pyramid.CreateImagePyramid(pyramid_level);
-    cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
     end = std::chrono::system_clock::now();
-    std::cout << "klt.TrackMultipleLevel cost time " << std::chrono::duration<double>(end - begin).count() * 1000 << " ms." << std::endl;
+    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -191,10 +187,13 @@ void test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 
     free(ref_pyramid.pyramid_buf());
     free(cur_pyramid.pyramid_buf());
+
+    return cost_time;
 }
 
 int main() {
-    uint32_t test_times = 10;
+    uint32_t test_times = 100;
+    uint8_t optical_flow_method = 0;
 
 #if CONFIG_OPENCV_DRAW
     test_times = 1;
@@ -203,13 +202,17 @@ int main() {
     // test_image();
     // test_pyramid();
 
+    float cost_time = 0.0f;
     for (uint32_t i = 0; i < test_times; ++i) {
-        test_lk_multi(4, 6);
+        cost_time += test_lk_multi(4, 6, optical_flow_method);
     }
+    std::cout << "lk.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
 
+    cost_time = 0.0f;
     for (uint32_t i = 0; i < test_times; ++i) {
-        test_klt_multi(4, 6);
+        cost_time += test_klt_multi(4, 6, optical_flow_method);
     }
+    std::cout << "klt.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
 
     return 0;
 }
