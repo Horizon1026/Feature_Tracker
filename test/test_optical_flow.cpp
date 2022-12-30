@@ -16,8 +16,6 @@ std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
 
 void test_image() {
-    std::cout << ">> test_image" << std::endl;
-
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
@@ -44,8 +42,6 @@ void test_image() {
 }
 
 void test_pyramid() {
-    std::cout << ">> test_pyramid" << std::endl;
-
     cv::Mat cv_image;
     cv_image = cv::imread(test_ref_image_file_name, 0);
 
@@ -66,7 +62,6 @@ void test_pyramid() {
 }
 
 float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
-
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
@@ -79,15 +74,15 @@ float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t m
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
 
-    std::vector<cv::Point2f> new_corners;
-    cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
+    std::vector<cv::Point2f> ref_corners;
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
 
     OPTICAL_FLOW::OpticalFlowLk lk;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
     std::vector<OPTICAL_FLOW::TrackStatus> status;
-    ref_points.reserve(new_corners.size());
-    for (uint32_t i = 0; i < new_corners.size(); ++i) {
-        ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
+    ref_points.reserve(ref_corners.size());
+    for (uint32_t i = 0; i < ref_corners.size(); ++i) {
+        ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
     lk.options().kPatchRowHalfSize = pyramid_level;
@@ -103,14 +98,14 @@ float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t m
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < new_corners.size(); i++) {
+    for (unsigned long i = 0; i < ref_corners.size(); i++) {
         cv::circle(show_ref_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), 2, cv::Scalar(255, 255, 0), 3);
     }
     cv::imshow("LK : Feature before multi tracking", show_ref_image);
 
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < new_corners.size(); i++) {
+    for (unsigned long i = 0; i < ref_corners.size(); i++) {
         if (status[i] != OPTICAL_FLOW::TRACKED) {
             continue;
         }
@@ -129,7 +124,6 @@ float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t m
 }
 
 float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
-
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
@@ -142,15 +136,15 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
 
-    std::vector<cv::Point2f> new_corners;
-    cv::goodFeaturesToTrack(cv_ref_image, new_corners, 200, 0.01, 20);
+    std::vector<cv::Point2f> ref_corners;
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
 
     OPTICAL_FLOW::OpticalFlowKlt klt;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
     std::vector<OPTICAL_FLOW::TrackStatus> status;
-    ref_points.reserve(new_corners.size());
-    for (uint32_t i = 0; i < new_corners.size(); ++i) {
-        ref_points.emplace_back(Eigen::Vector2f(new_corners[i].x, new_corners[i].y));
+    ref_points.reserve(ref_corners.size());
+    for (uint32_t i = 0; i < ref_corners.size(); ++i) {
+        ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
     klt.options().kPatchRowHalfSize = pyramid_level;
@@ -166,14 +160,14 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < new_corners.size(); i++) {
+    for (unsigned long i = 0; i < ref_corners.size(); i++) {
         cv::circle(show_ref_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), 2, cv::Scalar(255, 255, 0), 3);
     }
     cv::imshow("KLT : Feature before multi tracking", show_ref_image);
 
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < new_corners.size(); i++) {
+    for (unsigned long i = 0; i < ref_corners.size(); i++) {
         if (status[i] != OPTICAL_FLOW::TRACKED) {
             continue;
         }
@@ -187,6 +181,49 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
 
     free(ref_pyramid.pyramid_buf());
     free(cur_pyramid.pyramid_buf());
+
+    return cost_time;
+}
+
+float test_opencv_lk(int32_t pyramid_level = 4, int32_t patch_size = 4) {
+    cv::Mat cv_ref_image, cv_cur_image;
+    cv_ref_image = cv::imread(test_ref_image_file_name, 0);
+    cv_cur_image = cv::imread(test_cur_image_file_name, 0);
+
+    std::vector<cv::Point2f> ref_corners, cur_corners;
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
+
+    std::vector<uchar> status;
+    std::vector<float> errors;
+
+    std::chrono::time_point<std::chrono::system_clock> begin, end;
+    begin = std::chrono::system_clock::now();
+    cv::calcOpticalFlowPyrLK(cv_ref_image, cv_cur_image, ref_corners, cur_corners, status, errors,
+        cv::Size(2 * patch_size + 1, 2 * patch_size + 1), pyramid_level - 1);
+    end = std::chrono::system_clock::now();
+    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
+
+#if CONFIG_OPENCV_DRAW
+    cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
+    cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
+    for (unsigned long i = 0; i < ref_corners.size(); i++) {
+        cv::circle(show_ref_image, ref_corners[i], 2, cv::Scalar(255, 255, 0), 3);
+    }
+    cv::imshow("OpenCvLk : Feature before multi tracking", show_ref_image);
+
+    cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
+    cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
+    for (unsigned long i = 0; i < cur_corners.size(); i++) {
+        if (status[i] != 1) {
+            continue;
+        }
+        cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 0, 255), 3);
+        cv::line(show_cur_image, ref_corners[i], cur_corners[i], cv::Scalar(0, 255, 0), 2);
+    }
+    cv::imshow("OpenCvLk : Feature after multi tracking", show_cur_image);
+
+    cv::waitKey(0);
+#endif
 
     return cost_time;
 }
@@ -213,6 +250,13 @@ int main() {
         cost_time += test_klt_multi(4, 6, optical_flow_method);
     }
     std::cout << "klt.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
+
+    cost_time = 0.0f;
+    cv::setNumThreads(0);
+    for (uint32_t i = 0; i < test_times; ++i) {
+        cost_time += test_opencv_lk(4, 6);
+    }
+    std::cout << "cv::calcOpticalFlowPyrLK average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
 
     return 0;
 }
