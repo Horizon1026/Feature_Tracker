@@ -11,7 +11,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (1)
+#define CONFIG_OPENCV_DRAW (0)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
@@ -72,8 +72,6 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    ref_pyramid.CreateImagePyramid(pyramid_level);
-    cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> ref_corners;
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
@@ -90,11 +88,13 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     lk.options().kPatchColHalfSize = patch_size;
     lk.options().kMethod = static_cast<OPTICAL_FLOW::LkMethod>(method);
 
-    std::chrono::time_point<std::chrono::system_clock> begin, end;
-    begin = std::chrono::system_clock::now();
+    clock_t begin, end;
+    begin = clock();
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
     lk.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
-    end = std::chrono::system_clock::now();
-    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
+    end = clock();
+    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -134,8 +134,6 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cur_pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols * 2));
     cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    ref_pyramid.CreateImagePyramid(pyramid_level);
-    cur_pyramid.CreateImagePyramid(pyramid_level);
 
     std::vector<cv::Point2f> ref_corners;
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
@@ -152,11 +150,13 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     klt.options().kPatchColHalfSize = patch_size;
     klt.options().kMethod = static_cast<OPTICAL_FLOW::KltMethod>(method);
 
-    std::chrono::time_point<std::chrono::system_clock> begin, end;
-    begin = std::chrono::system_clock::now();
+    clock_t begin, end;
+    begin = clock();
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
-    end = std::chrono::system_clock::now();
-    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
+    end = clock();
+    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -197,12 +197,12 @@ float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
     std::vector<uchar> status;
     std::vector<float> errors;
 
-    std::chrono::time_point<std::chrono::system_clock> begin, end;
-    begin = std::chrono::system_clock::now();
+    clock_t begin, end;
+    begin = clock();
     cv::calcOpticalFlowPyrLK(cv_ref_image, cv_cur_image, ref_corners, cur_corners, status, errors,
         cv::Size(2 * patch_size + 1, 2 * patch_size + 1), pyramid_level - 1);
-    end = std::chrono::system_clock::now();
-    const float cost_time = std::chrono::duration<double>(end - begin).count() * 1000;
+    end = clock();
+    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
 #if CONFIG_OPENCV_DRAW
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
@@ -230,7 +230,7 @@ float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
 }
 
 int main() {
-    uint32_t test_times = 200;
+    uint32_t test_times = 300;
     uint8_t optical_flow_method = 0;
     int32_t pyramid_level = 4;
     int32_t half_patch_size = 6;

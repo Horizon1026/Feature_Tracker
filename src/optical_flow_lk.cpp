@@ -1,7 +1,8 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_datatype.h"
-#include "log_api.h"
 #include <cmath>
+
+#include "log_api.h"
 
 namespace OPTICAL_FLOW {
 bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
@@ -43,6 +44,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     for (int32_t level_idx = ref_pyramid->level() - 1; level_idx > -1; --level_idx) {
         Image ref_image = ref_pyramid->GetImage(level_idx);
         Image cur_image = cur_pyramid->GetImage(level_idx);
+
         TrackSingleLevel(&ref_image, &cur_image, scaled_ref_points, cur_points, status);
 
         if (level_idx == 0) {
@@ -81,7 +83,8 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
     }
 
     // Track per feature.
-    for (uint32_t feature_id = 0; feature_id < ref_points.size(); ++feature_id) {
+    uint32_t max_feature_id = ref_points.size() < options_.kMaxTrackingPointsNumber ? ref_points.size() : options_.kMaxTrackingPointsNumber;
+    for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
         if (status[feature_id] > NOT_TRACKED) {
             continue;
@@ -190,8 +193,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
             break;
         }
 
-        cur_point.x() += v(0);
-        cur_point.y() += v(1);
+        cur_point += v;
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
@@ -270,8 +272,7 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
             break;
         }
 
-        cur_point.x() += v(0);
-        cur_point.y() += v(1);
+        cur_point += v;
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
