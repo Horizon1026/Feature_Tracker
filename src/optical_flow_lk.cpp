@@ -1,6 +1,6 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_datatype.h"
-
+#include "log_api.h"
 #include <cmath>
 
 namespace OPTICAL_FLOW {
@@ -20,7 +20,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     std::vector<Eigen::Vector2f> scaled_ref_points;
     scaled_ref_points.reserve(ref_points.size());
 
-    int32_t scale = (2 << (ref_pyramid->level() - 1)) / 2;
+    const int32_t scale = (2 << (ref_pyramid->level() - 1)) / 2;
     for (uint32_t i = 0; i < ref_points.size(); ++i) {
         scaled_ref_points.emplace_back(ref_points[i] / static_cast<float>(scale));
     }
@@ -116,7 +116,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
 
     // Precompute H, fx, fy and ti.
     std::vector<Eigen::Vector3f> fx_fy_ti;
-    Eigen::Vector3f inf_vec3(INFINITY, INFINITY, INFINITY);
+    const Eigen::Vector3f inf_vec3(INFINITY, INFINITY, INFINITY);
     const int32_t patch_size = options_.kPatchRowHalfSize * 2 + 1;
     fx_fy_ti.reserve(patch_size * patch_size);
     float temp_value[6] = {0};

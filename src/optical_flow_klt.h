@@ -15,8 +15,8 @@ enum KltMethod : uint8_t {
 typedef struct {
     uint32_t kMaxTrackingPointsNumber = 200;
     uint32_t kMaxIteration = 10;
-    int32_t kPatchRowHalfSize = 4;
-    int32_t kPatchColHalfSize = 4;
+    int32_t kPatchRowHalfSize = 6;
+    int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
     KltMethod kMethod = KLT_INVERSE;

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <thread>
 
 #include "opencv2/opencv.hpp"
 
@@ -10,7 +11,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (0)
+#define CONFIG_OPENCV_DRAW (1)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
@@ -61,7 +62,7 @@ void test_pyramid() {
 #endif
 }
 
-float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
+float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
@@ -85,8 +86,8 @@ float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t m
         ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
-    lk.options().kPatchRowHalfSize = pyramid_level;
-    lk.options().kPatchColHalfSize = pyramid_level;
+    lk.options().kPatchRowHalfSize = patch_size;
+    lk.options().kPatchColHalfSize = patch_size;
     lk.options().kMethod = static_cast<OPTICAL_FLOW::LkMethod>(method);
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
@@ -123,7 +124,7 @@ float test_lk_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t m
     return cost_time;
 }
 
-float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t method = 0) {
+float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
@@ -147,8 +148,8 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
         ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
-    klt.options().kPatchRowHalfSize = pyramid_level;
-    klt.options().kPatchColHalfSize = pyramid_level;
+    klt.options().kPatchRowHalfSize = patch_size;
+    klt.options().kPatchColHalfSize = patch_size;
     klt.options().kMethod = static_cast<OPTICAL_FLOW::KltMethod>(method);
 
     std::chrono::time_point<std::chrono::system_clock> begin, end;
@@ -185,7 +186,7 @@ float test_klt_multi(int32_t pyramid_level = 4, int32_t patch_size = 4, uint8_t 
     return cost_time;
 }
 
-float test_opencv_lk(int32_t pyramid_level = 4, int32_t patch_size = 4) {
+float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
@@ -229,8 +230,10 @@ float test_opencv_lk(int32_t pyramid_level = 4, int32_t patch_size = 4) {
 }
 
 int main() {
-    uint32_t test_times = 500;
+    uint32_t test_times = 200;
     uint8_t optical_flow_method = 0;
+    int32_t pyramid_level = 4;
+    int32_t half_patch_size = 6;
 
 #if CONFIG_OPENCV_DRAW
     test_times = 1;
@@ -239,22 +242,28 @@ int main() {
     // test_image();
     // test_pyramid();
 
+    std::thread test_lk([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {
+        float cost_time = 0.0f;
+        for (uint32_t i = 0; i < test_time; ++i) {
+            cost_time += test_lk_multi(pyramid_level, half_patch_size, optical_flow_method);
+        }
+        std::cout << "lk.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_time) << " ms." << std::endl;
+    }, pyramid_level, half_patch_size, optical_flow_method, test_times);
+    test_lk.join();
+
+    std::thread test_klt([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {
+        float cost_time = 0.0f;
+        for (uint32_t i = 0; i < test_time; ++i) {
+            cost_time += test_klt_multi(pyramid_level, half_patch_size, optical_flow_method);
+        }
+        std::cout << "klt.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_time) << " ms." << std::endl;
+    }, pyramid_level, half_patch_size, optical_flow_method, test_times);
+    test_klt.join();
+
     float cost_time = 0.0f;
-    for (uint32_t i = 0; i < test_times; ++i) {
-        cost_time += test_lk_multi(4, 6, optical_flow_method);
-    }
-    std::cout << "lk.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
-
-    cost_time = 0.0f;
-    for (uint32_t i = 0; i < test_times; ++i) {
-        cost_time += test_klt_multi(4, 6, optical_flow_method);
-    }
-    std::cout << "klt.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
-
-    cost_time = 0.0f;
     cv::setNumThreads(0);
     for (uint32_t i = 0; i < test_times; ++i) {
-        cost_time += test_opencv_lk(4, 6);
+        cost_time += test_opencv_lk(pyramid_level, half_patch_size);
     }
     std::cout << "cv::calcOpticalFlowPyrLK average cost time " << cost_time / static_cast<float>(test_times) << " ms." << std::endl;
 
