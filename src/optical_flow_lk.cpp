@@ -31,7 +31,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
             fx_fy_ti_.reserve(size);
         }
 
-        pixel_values_in_patch_.resize(patch_rows, patch_cols);
+        pixel_values_in_patch_.resize(patch_rows + 2, patch_cols + 2);
     }
 
     // Set predict and reference with scale.
@@ -132,6 +132,7 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
 
     float row_i = ref_point.y();
     float col_i = ref_point.x();
+
     Vec3 one_fx_fy_ti;
 
     bool no_need_check = row_i - 1.0f - options_.kPatchRowHalfSize > kZero &&
@@ -139,8 +140,22 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
                          col_i - 1.0f - options_.kPatchColHalfSize > kZero &&
                          col_i + 2.0f + options_.kPatchColHalfSize < ref_image->cols() - kZero;
 
-    pixel_values_in_patch_.setConstant(1e-1f);
+    int32_t row_i_buf = 0;
+    int32_t col_i_buf = 0;
+    pixel_values_in_patch_.setConstant(-1);
 
+    /*
+        The pixels need to compute gradient is like this:
+        [ ] [x] [ ]         [ ] [x] [i] [ ]
+        [x] [x] [x]   ->    [x] [o] [o] [i]
+        [ ] [x] [ ]         [ ] [x] [i] [ ]
+        When (drow, dcol) is moved in a small patch, the above will move one step too. Then two pixel value is computed repeatedly,
+        which is shown above with 'o'.
+        So, pixel_values_in_patch_ is used to avoid repeatedly computation. GetPixelValueFromeBuffer() will priorly get value from
+        pixel_values_in_patch_, unless the pixel value hasn't been computed.
+    */
+
+    float temp_value[5] = { 0 };
     for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
         for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
             row_i = static_cast<float>(drow) + ref_point.y();
@@ -150,9 +165,18 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
                 (row_i - 1.0f > kZero && row_i + 2.0f < ref_image->rows() - kZero &&
                  col_i - 1.0f > kZero && col_i + 2.0f < ref_image->cols() - kZero)) {
 
-                one_fx_fy_ti(0) = ref_image->GetPixelValueNoCheck(row_i, col_i + 1.0f) - ref_image->GetPixelValueNoCheck(row_i, col_i - 1.0f);
-                one_fx_fy_ti(1) = ref_image->GetPixelValueNoCheck(row_i + 1.0f, col_i) - ref_image->GetPixelValueNoCheck(row_i - 1.0f, col_i);
-                one_fx_fy_ti(2) = ref_image->GetPixelValueNoCheck(row_i, col_i);
+                row_i_buf = drow + options_.kPatchRowHalfSize + 1;
+                col_i_buf = dcol + options_.kPatchColHalfSize + 1;
+
+                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf, row_i, col_i, temp_value);
+                GetPixelValueFromeBuffer(ref_image, row_i_buf + 1, col_i_buf, row_i + 1.0f, col_i, temp_value + 1);
+                GetPixelValueFromeBuffer(ref_image, row_i_buf - 1, col_i_buf, row_i - 1.0f, col_i, temp_value + 2);
+                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf + 1, row_i, col_i + 1.0f, temp_value + 3);
+                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf - 1, row_i, col_i - 1.0f, temp_value + 4);
+
+                one_fx_fy_ti(0) = temp_value[3] - temp_value[4];
+                one_fx_fy_ti(1) = temp_value[1] - temp_value[2];
+                one_fx_fy_ti(2) = temp_value[0];
                 fx_fy_ti_.emplace_back(one_fx_fy_ti);
 
                 const float &fx = one_fx_fy_ti.x();

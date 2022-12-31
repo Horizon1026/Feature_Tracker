@@ -43,24 +43,18 @@ public:
 
 private:
     inline void GetPixelValueFromeBuffer(const Image *image,
-                                         const int32_t row_idx_buf,
-                                         const int32_t col_idx_buf,
-                                         const float row_image,
-                                         const float col_image,
-                                         float *value) {
-        if (row_idx_buf < 0 || row_idx_buf > pixel_values_in_patch_.rows() - 1 ||
-            col_idx_buf < 0 || col_idx_buf > pixel_values_in_patch_.cols() - 1) {
-            *value = image->GetPixelValueNoCheck(row_image, col_image);
-            return;
-        }
-
+                                          const int32_t row_idx_buf,
+                                          const int32_t col_idx_buf,
+                                          const float row_image,
+                                          const float col_image,
+                                          float *value) {
         float temp = pixel_values_in_patch_(row_idx_buf, col_idx_buf);
 
         if (temp > 0) {
             *value = temp;
         } else {
             *value = image->GetPixelValueNoCheck(row_image, col_image);
-            temp = *value;
+            pixel_values_in_patch_(row_idx_buf, col_idx_buf) = *value;
         }
     }
 

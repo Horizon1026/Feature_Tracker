@@ -11,7 +11,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (1)
+#define CONFIG_OPENCV_DRAW (0)
 #define FEATURES_TO_TRACK (200)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
