@@ -11,7 +11,7 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (0)
+#define CONFIG_OPENCV_DRAW (1)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
