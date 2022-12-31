@@ -29,14 +29,14 @@ public:
 
     bool TrackMultipleLevel(const ImagePyramid *ref_pyramid,
                             const ImagePyramid *cur_pyramid,
-                            const std::vector<Eigen::Vector2f> &ref_points,
-                            std::vector<Eigen::Vector2f> &cur_points,
+                            const std::vector<Vec2> &ref_points,
+                            std::vector<Vec2> &cur_points,
                             std::vector<TrackStatus> &status);
 
     bool TrackSingleLevel(const Image *ref_image,
                           const Image *cur_image,
-                          const std::vector<Eigen::Vector2f> &ref_points,
-                          std::vector<Eigen::Vector2f> &cur_points,
+                          const std::vector<Vec2> &ref_points,
+                          std::vector<Vec2> &cur_points,
                           std::vector<TrackStatus> &status);
 
     LkOptions &options() { return options_; }
@@ -44,18 +44,19 @@ public:
 private:
     void TrackOneFeatureInverse(const Image *ref_image,
                                 const Image *cur_image,
-                                const Eigen::Vector2f &ref_points,
-                                Eigen::Vector2f &cur_points,
+                                const Vec2 &ref_points,
+                                Vec2 &cur_points,
                                 TrackStatus &status);
 
     void TrackOneFeatureDirect(const Image *ref_image,
                                const Image *cur_image,
-                               const Eigen::Vector2f &ref_points,
-                               Eigen::Vector2f &cur_points,
+                               const Vec2 &ref_points,
+                               Vec2 &cur_points,
                                TrackStatus &status);
 
 private:
     LkOptions options_;
+    std::vector<Vec3> fx_fy_ti_;
 };
 
 }

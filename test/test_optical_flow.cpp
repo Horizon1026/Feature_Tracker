@@ -11,7 +11,8 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (1)
+#define CONFIG_OPENCV_DRAW (0)
+#define FEATURES_TO_TRACK (200)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
 std::string test_cur_image_file_name = "../example/cur_image.png";
@@ -74,7 +75,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
 
     std::vector<cv::Point2f> ref_corners;
-    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
     OPTICAL_FLOW::OpticalFlowLk lk;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
@@ -136,7 +137,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
 
     std::vector<cv::Point2f> ref_corners;
-    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
     OPTICAL_FLOW::OpticalFlowKlt klt;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
@@ -192,7 +193,7 @@ float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
     std::vector<cv::Point2f> ref_corners, cur_corners;
-    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, 200, 0.01, 20);
+    cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
     std::vector<uchar> status;
     std::vector<float> errors;
@@ -261,7 +262,7 @@ int main() {
     test_klt.join();
 
     float cost_time = 0.0f;
-    cv::setNumThreads(0);
+    cv::setNumThreads(1);
     for (uint32_t i = 0; i < test_times; ++i) {
         cost_time += test_opencv_lk(pyramid_level, half_patch_size);
     }
@@ -269,3 +270,10 @@ int main() {
 
     return 0;
 }
+
+/*
+    clock_t begin, end;
+    begin = clock();
+    end = clock();
+    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
+*/

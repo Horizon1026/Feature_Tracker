@@ -4,6 +4,10 @@
 #include <cmath>
 
 namespace OPTICAL_FLOW {
+namespace {
+inline static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
+}
+
 bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
                                         const ImagePyramid *cur_pyramid,
                                         const std::vector<Eigen::Vector2f> &ref_points,
@@ -14,6 +18,16 @@ bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     }
     if (cur_pyramid->level() != ref_pyramid->level()) {
         return false;
+    }
+
+    // Initial fx_fy_ti_ for inverse tracker.
+    if (options_.kMethod == KLT_INVERSE) {
+        const int32_t patch_rows = 2 * options_.kPatchRowHalfSize + 1;
+        const int32_t patch_cols = 2 * options_.kPatchColHalfSize + 1;
+        const uint32_t size = patch_rows + patch_cols;
+        if (fx_fy_ti_.capacity() < size) {
+            fx_fy_ti_.reserve(size);
+        }
     }
 
     // Set predict and reference with scale.
@@ -116,11 +130,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
     Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
 
     // Precompute H, fx, fy and ti.
-    std::vector<Eigen::Vector3f> fx_fy_ti;
-    Eigen::Vector3f inf_vec3(INFINITY, INFINITY, INFINITY);
-    const int32_t patch_size = options_.kPatchRowHalfSize * 2 + 1;
-    fx_fy_ti.reserve(patch_size * patch_size);
-    float temp_value[6] = {0};
+    fx_fy_ti_.clear();
+    float temp_value[6] = { 0 };
 
     for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
         for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
@@ -135,12 +146,12 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
                 ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
                 ref_image->GetPixelValue(row_i, col_i, temp_value + 4)) {
-                fx_fy_ti.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
-                                                      temp_value[3] - temp_value[2],
-                                                      temp_value[4]));
+                fx_fy_ti_.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
+                                                       temp_value[3] - temp_value[2],
+                                                       temp_value[4]));
 
-                const float &fx = fx_fy_ti.back().x();
-                const float &fy = fx_fy_ti.back().y();
+                const float &fx = fx_fy_ti_.back().x();
+                const float &fy = fx_fy_ti_.back().y();
                 const float &x = col_j;
                 const float &y = row_j;
 
@@ -170,7 +181,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
                 H(4, 5) += fxfy;
                 H(5, 5) += fyfy;
             } else {
-                fx_fy_ti.emplace_back(inf_vec3);
+                fx_fy_ti_.emplace_back(kInfinityVec3);
             }
         }
     }
@@ -204,10 +215,10 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image *ref_image,
 
                 // Compute pixel gradient
                 if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5) &&
-                    !std::isinf(fx_fy_ti[idx].x())) {
-                    const float fx = fx_fy_ti[idx].x();
-                    const float fy = fx_fy_ti[idx].y();
-                    ft = temp_value[5] - fx_fy_ti[idx].z();
+                    !std::isinf(fx_fy_ti_[idx].x())) {
+                    const float fx = fx_fy_ti_[idx].x();
+                    const float fy = fx_fy_ti_[idx].y();
+                    ft = temp_value[5] - fx_fy_ti_[idx].z();
 
                     float &x = col_j;
                     float &y = row_j;
@@ -280,7 +291,7 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image *ref_image,
         float fx = 0.0f;
         float fy = 0.0f;
         float ft = 0.0f;
-        float temp_value[6] = {0};
+        float temp_value[6] = { 0 };
 
         float residual = 0.0f;
         int num_of_valid_pixel = 0;

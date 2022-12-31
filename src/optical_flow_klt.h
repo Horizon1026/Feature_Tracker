@@ -56,6 +56,7 @@ private:
 
 private:
     KltOptions options_;
+    std::vector<Vec3> fx_fy_ti_;
 };
 
 }

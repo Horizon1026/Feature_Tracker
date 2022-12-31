@@ -32,3 +32,16 @@ target_link_libraries( test_optical_flow
     # TBB::tbb
     ${OpenCV_LIBS}
 )
+
+add_executable( test_lk_greftools
+    ${SLAM_UTILITY_DATATYPE}
+    ${SLAM_UTILITY_LOG}
+    ${OPTICAL_FLOW}
+    test/test_lk_greftools.cpp
+)
+
+target_link_libraries( test_lk_greftools
+    # TBB::tbb
+    ${OpenCV_LIBS}
+    tcmalloc profiler
+)
