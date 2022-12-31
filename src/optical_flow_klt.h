@@ -13,7 +13,7 @@ enum KltMethod : uint8_t {
 };
 
 typedef struct {
-    uint32_t kMaxTrackingPointsNumber = 200;
+    uint32_t kMaxTrackPointsNumber = 200;
     uint32_t kMaxIteration = 10;
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;

@@ -83,7 +83,7 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
     }
 
     // Track per feature.
-    uint32_t max_feature_id = ref_points.size() < options_.kMaxTrackingPointsNumber ? ref_points.size() : options_.kMaxTrackingPointsNumber;
+    uint32_t max_feature_id = ref_points.size() < options_.kMaxTrackPointsNumber ? ref_points.size() : options_.kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
         if (status[feature_id] > NOT_TRACKED) {
