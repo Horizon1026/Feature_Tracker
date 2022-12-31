@@ -129,12 +129,10 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
                                       const Vec2 &ref_point,
                                       Mat2 &H) {
     fx_fy_ti_.clear();
+    Vec3 one_fx_fy_ti;
 
     float row_i = ref_point.y();
     float col_i = ref_point.x();
-
-    Vec3 one_fx_fy_ti;
-
     bool no_need_check = row_i - 1.0f - options_.kPatchRowHalfSize > kZero &&
                          row_i + 2.0f + options_.kPatchRowHalfSize < ref_image->rows() - kZero &&
                          col_i - 1.0f - options_.kPatchColHalfSize > kZero &&
@@ -201,10 +199,13 @@ float OpticalFlowLk::ComputeResidual(const Image *cur_image,
                                      Vec2 &b) {
     float residual = 0.0f;
     int num_of_valid_pixel = 0;
-    float ft = 0.0f;
-    float row_j = 0.0f;
-    float col_j = 0.0f;
-    float tj = 0.0f;
+
+    float row_j = cur_point.y();
+    float col_j = cur_point.x();
+    bool no_need_check = row_j - options_.kPatchRowHalfSize > kZero &&
+                         row_j + 1.0f + options_.kPatchRowHalfSize < cur_image->rows() - kZero &&
+                         col_j - options_.kPatchColHalfSize > kZero &&
+                         col_j + 1.0f + options_.kPatchColHalfSize < cur_image->cols() - kZero;
 
     // Compute each pixel in the patch, create H * v = b.
     uint32_t idx = 0;
@@ -213,18 +214,23 @@ float OpticalFlowLk::ComputeResidual(const Image *cur_image,
             row_j = static_cast<float>(drow) + cur_point.y();
             col_j = static_cast<float>(dcol) + cur_point.x();
 
-            // Compute pixel gradient
-            if (cur_image->GetPixelValue(row_j, col_j, &tj) &&
-                !std::isinf(fx_fy_ti_[idx].x())) {
+            if ((no_need_check ||
+                 (row_j > kZero && row_j + 1.0f < cur_image->rows() - kZero &&
+                  col_j > kZero && col_j + 1.0f < cur_image->cols() - kZero)) &&
+                 !std::isinf(fx_fy_ti_[idx].x())) {
+
+                // Compute pixel gradient
+                const float tj = cur_image->GetPixelValueNoCheck(row_j, col_j);
                 const float &fx = fx_fy_ti_[idx].x();
                 const float &fy = fx_fy_ti_[idx].y();
-                ft = tj - fx_fy_ti_[idx].z();
+                const float ft = tj - fx_fy_ti_[idx].z();
 
                 b(0) -= fx * ft;
                 b(1) -= fy * ft;
 
                 residual += std::fabs(ft);
                 ++num_of_valid_pixel;
+
             }
 
             ++idx;

@@ -18,7 +18,7 @@ struct KltOptions {
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
-    float kMaxConvergeResidual = 1e-2f;
+    float kMaxConvergeResidual = 2.0f;
     KltMethod kMethod = KLT_INVERSE;
 };
 
