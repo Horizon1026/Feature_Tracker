@@ -18,7 +18,7 @@ struct LkOptions {
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
-    float kMaxConvergeResidual = 1e-2f;
+    float kMaxConvergeResidual = 2.0f;
     LkMethod kMethod = LK_INVERSE_LSE;
 };
 
@@ -42,6 +42,36 @@ public:
     LkOptions &options() { return options_; }
 
 private:
+    inline void GetPixelValueFromeBuffer(const Image *image,
+                                         const int32_t row_idx_buf,
+                                         const int32_t col_idx_buf,
+                                         const float row_image,
+                                         const float col_image,
+                                         float *value) {
+        if (row_idx_buf < 0 || row_idx_buf > pixel_values_in_patch_.rows() - 1 ||
+            col_idx_buf < 0 || col_idx_buf > pixel_values_in_patch_.cols() - 1) {
+            *value = image->GetPixelValueNoCheck(row_image, col_image);
+            return;
+        }
+
+        float temp = pixel_values_in_patch_(row_idx_buf, col_idx_buf);
+
+        if (temp > 0) {
+            *value = temp;
+        } else {
+            *value = image->GetPixelValueNoCheck(row_image, col_image);
+            temp = *value;
+        }
+    }
+
+    void PrecomputeHessian(const Image *ref_image,
+                           const Vec2 &ref_point,
+                           Mat2 &H);
+
+    float ComputeResidual(const Image *cur_image,
+                          const Vec2 &cur_point,
+                          Vec2 &b);
+
     void TrackOneFeatureInverse(const Image *ref_image,
                                 const Image *cur_image,
                                 const Vec2 &ref_points,
@@ -57,6 +87,7 @@ private:
 private:
     LkOptions options_;
     std::vector<Vec3> fx_fy_ti_;
+    Mat pixel_values_in_patch_;
 };
 
 }

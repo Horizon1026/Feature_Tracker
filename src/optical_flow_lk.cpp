@@ -22,7 +22,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
         return false;
     }
 
-    // Initial fx_fy_ti_ for inverse tracker.
+    // Initial fx_fy_ti_ and pixel_values_in_patch_ for inverse tracker.
     if (options_.kMethod == LK_INVERSE_LSE) {
         const int32_t patch_rows = 2 * options_.kPatchRowHalfSize + 1;
         const int32_t patch_cols = 2 * options_.kPatchColHalfSize + 1;
@@ -30,6 +30,8 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
         if (fx_fy_ti_.capacity() < size) {
             fx_fy_ti_.reserve(size);
         }
+
+        pixel_values_in_patch_.resize(patch_rows, patch_cols);
     }
 
     // Set predict and reference with scale.
@@ -123,6 +125,96 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
     return true;
 }
 
+void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
+                                      const Vec2 &ref_point,
+                                      Mat2 &H) {
+    fx_fy_ti_.clear();
+
+    float row_i = ref_point.y();
+    float col_i = ref_point.x();
+    Vec3 one_fx_fy_ti;
+
+    bool no_need_check = row_i - 1.0f - options_.kPatchRowHalfSize > kZero &&
+                         row_i + 2.0f + options_.kPatchRowHalfSize < ref_image->rows() - kZero &&
+                         col_i - 1.0f - options_.kPatchColHalfSize > kZero &&
+                         col_i + 2.0f + options_.kPatchColHalfSize < ref_image->cols() - kZero;
+
+    pixel_values_in_patch_.setConstant(1e-1f);
+
+    for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
+        for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+            row_i = static_cast<float>(drow) + ref_point.y();
+            col_i = static_cast<float>(dcol) + ref_point.x();
+
+            if (no_need_check ||
+                (row_i - 1.0f > kZero && row_i + 2.0f < ref_image->rows() - kZero &&
+                 col_i - 1.0f > kZero && col_i + 2.0f < ref_image->cols() - kZero)) {
+
+                one_fx_fy_ti(0) = ref_image->GetPixelValueNoCheck(row_i, col_i + 1.0f) - ref_image->GetPixelValueNoCheck(row_i, col_i - 1.0f);
+                one_fx_fy_ti(1) = ref_image->GetPixelValueNoCheck(row_i + 1.0f, col_i) - ref_image->GetPixelValueNoCheck(row_i - 1.0f, col_i);
+                one_fx_fy_ti(2) = ref_image->GetPixelValueNoCheck(row_i, col_i);
+                fx_fy_ti_.emplace_back(one_fx_fy_ti);
+
+                const float &fx = one_fx_fy_ti.x();
+                const float &fy = one_fx_fy_ti.y();
+
+                H(0, 0) += fx * fx;
+                H(1, 1) += fy * fy;
+                H(0, 1) += fx * fy;
+
+                continue;
+            }
+
+            fx_fy_ti_.emplace_back(kInfinityVec3);
+        }
+    }
+
+    H(1, 0) = H(0, 1);
+}
+
+float OpticalFlowLk::ComputeResidual(const Image *cur_image,
+                                     const Vec2 &cur_point,
+                                     Vec2 &b) {
+    float residual = 0.0f;
+    int num_of_valid_pixel = 0;
+    float ft = 0.0f;
+    float row_j = 0.0f;
+    float col_j = 0.0f;
+    float tj = 0.0f;
+
+    // Compute each pixel in the patch, create H * v = b.
+    uint32_t idx = 0;
+    for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
+        for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+            row_j = static_cast<float>(drow) + cur_point.y();
+            col_j = static_cast<float>(dcol) + cur_point.x();
+
+            // Compute pixel gradient
+            if (cur_image->GetPixelValue(row_j, col_j, &tj) &&
+                !std::isinf(fx_fy_ti_[idx].x())) {
+                const float &fx = fx_fy_ti_[idx].x();
+                const float &fy = fx_fy_ti_[idx].y();
+                ft = tj - fx_fy_ti_[idx].z();
+
+                b(0) -= fx * ft;
+                b(1) -= fy * ft;
+
+                residual += std::fabs(ft);
+                ++num_of_valid_pixel;
+            }
+
+            ++idx;
+        }
+    }
+
+    if (num_of_valid_pixel) {
+        residual /= static_cast<float>(num_of_valid_pixel);
+    } else {
+        residual = options_.kMaxConvergeResidual;
+    }
+    return residual;
+}
+
 void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                                            const Image *cur_image,
                                            const Vec2 &ref_point,
@@ -133,73 +225,14 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
     Vec2 b = Vec2::Zero();
 
     // Precompute H, fx, fy and ti.
-    fx_fy_ti_.clear();
-    float temp_value[6] = { 0 };
-
-    float row_i = 0.0f;
-    float col_i = 0.0f;
-    for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
-        for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
-            row_i = static_cast<float>(drow) + ref_point.y();
-            col_i = static_cast<float>(dcol) + ref_point.x();
-            // Compute pixel gradient
-            if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
-                ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
-                ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                ref_image->GetPixelValue(row_i, col_i, temp_value + 4)) {
-                fx_fy_ti_.emplace_back(Vec3(temp_value[1] - temp_value[0],
-                                            temp_value[3] - temp_value[2],
-                                            temp_value[4]));
-
-                const float &fx = fx_fy_ti_.back().x();
-                const float &fy = fx_fy_ti_.back().y();
-
-                H(0, 0) += fx * fx;
-                H(1, 1) += fy * fy;
-                H(0, 1) += fx * fy;
-            } else {
-                fx_fy_ti_.emplace_back(kInfinityVec3);
-            }
-        }
-    }
-    H(1, 0) = H(0, 1);
+    PrecomputeHessian(ref_image, ref_point, H);
 
     // Iterate to compute optical flow.
-    float ft = 0.0f;
-    float row_j = 0.0f;
-    float col_j = 0.0f;
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
         b.setZero();
 
-        float residual = 0.0f;
-        int num_of_valid_pixel = 0;
-
-        // Compute each pixel in the patch, create H * v = b.
-        uint32_t idx = 0;
-        for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
-            for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
-                row_j = static_cast<float>(drow) + cur_point.y();
-                col_j = static_cast<float>(dcol) + cur_point.x();
-
-                // Compute pixel gradient
-                if (cur_image->GetPixelValue(row_j, col_j, temp_value + 5) &&
-                    !std::isinf(fx_fy_ti_[idx].x())) {
-                    const float &fx = fx_fy_ti_[idx].x();
-                    const float &fy = fx_fy_ti_[idx].y();
-                    ft = temp_value[5] - fx_fy_ti_[idx].z();
-
-                    b(0) -= fx * ft;
-                    b(1) -= fy * ft;
-
-                    residual += std::fabs(ft);
-                    ++num_of_valid_pixel;
-                }
-
-                ++idx;
-            }
-        }
-        residual /= static_cast<float>(num_of_valid_pixel);
+        // Compute b and residual.
+        float residual = ComputeResidual(cur_image, cur_point, b);
 
         // Solve H * v = b, update cur_points.
         Vec2 v = H.ldlt().solve(b);
@@ -211,21 +244,20 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
 
         cur_point += v;
 
-        if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
-            cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
-            status = OUTSIDE;
-            break;
-        }
-
         if (v.squaredNorm() < options_.kMaxConvergeStep) {
             status = TRACKED;
             break;
         }
 
-        if (residual < options_.kMaxConvergeResidual && num_of_valid_pixel) {
+        if (residual < options_.kMaxConvergeResidual) {
             status = TRACKED;
             break;
         }
+    }
+
+    if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() - 1 ||
+        cur_point.y() < 0 || cur_point.y() > cur_image->rows() - 1) {
+        status = OUTSIDE;
     }
 }
 

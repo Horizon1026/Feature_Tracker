@@ -4,6 +4,7 @@
 #include "datatype_basic.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
+#include "math_kinematics.h"
 
 namespace OPTICAL_FLOW {
 

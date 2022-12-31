@@ -43,6 +43,7 @@ void test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method, ui
 
     ProfilerStart("test.prof");
     for (SLAM_UTILITY::uint32_t i = 0; i < times; ++i) {
+        cur_points.clear();
         ref_pyramid.CreateImagePyramid(pyramid_level);
         cur_pyramid.CreateImagePyramid(pyramid_level);
         lk.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
