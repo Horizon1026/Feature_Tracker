@@ -12,7 +12,7 @@ enum LkMethod : uint8_t {
     LK_DIRECT_LSE,
 };
 
-typedef struct {
+struct LkOptions {
     uint32_t kMaxTrackPointsNumber = 200;
     uint32_t kMaxIteration = 10;
     int32_t kPatchRowHalfSize = 6;
@@ -20,7 +20,7 @@ typedef struct {
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
     LkMethod kMethod = LK_INVERSE_LSE;
-} LkOptions;
+};
 
 class OpticalFlowLk {
 public:

@@ -12,7 +12,7 @@ enum KltMethod : uint8_t {
     KLT_DIRECT,
 };
 
-typedef struct {
+struct KltOptions {
     uint32_t kMaxTrackPointsNumber = 200;
     uint32_t kMaxIteration = 10;
     int32_t kPatchRowHalfSize = 6;
@@ -20,7 +20,7 @@ typedef struct {
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 1e-2f;
     KltMethod kMethod = KLT_INVERSE;
-} KltOptions;
+};
 
 class OpticalFlowKlt {
 public:
