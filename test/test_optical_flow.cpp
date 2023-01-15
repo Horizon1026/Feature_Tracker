@@ -7,11 +7,13 @@
 
 #include "opencv2/opencv.hpp"
 
+#include "log_api.h"
+
 #include "optical_flow_datatype.h"
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define CONFIG_OPENCV_DRAW (0)
+#define CONFIG_OPENCV_DRAW (1)
 #define FEATURES_TO_TRACK (200)
 
 std::string test_ref_image_file_name = "../example/ref_image.png";
@@ -232,7 +234,7 @@ float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
 
 int main() {
     uint32_t test_times = 300;
-    uint8_t optical_flow_method = 0;
+    uint8_t optical_flow_method = 2;
     int32_t pyramid_level = 4;
     int32_t half_patch_size = 6;
 

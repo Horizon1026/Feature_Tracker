@@ -20,8 +20,8 @@ bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
         return false;
     }
 
-    // Initial fx_fy_ti_ for inverse tracker.
-    if (options_.kMethod == KLT_INVERSE) {
+    // Initial fx_fy_ti_ for fast inverse tracker.
+    if (options_.kMethod == KLT_FAST) {
         const int32_t patch_rows = 2 * options_.kPatchRowHalfSize + 1;
         const int32_t patch_cols = 2 * options_.kPatchColHalfSize + 1;
         const uint32_t size = patch_rows + patch_cols;

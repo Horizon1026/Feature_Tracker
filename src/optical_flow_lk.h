@@ -10,6 +10,7 @@ namespace OPTICAL_FLOW {
 enum LkMethod : uint8_t {
     LK_INVERSE_LSE = 0,
     LK_DIRECT_LSE,
+    LK_FAST,
 };
 
 struct LkOptions {
@@ -19,7 +20,7 @@ struct LkOptions {
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 2.0f;
-    LkMethod kMethod = LK_INVERSE_LSE;
+    LkMethod kMethod = LK_FAST;
 };
 
 class OpticalFlowLk {
@@ -42,6 +43,24 @@ public:
     LkOptions &options() { return options_; }
 
 private:
+    void TrackOneFeatureFast(const Image *ref_image,
+                             const Image *cur_image,
+                             const Vec2 &ref_points,
+                             Vec2 &cur_points,
+                             TrackStatus &status);
+
+    void TrackOneFeatureInverse(const Image *ref_image,
+                                const Image *cur_image,
+                                const Vec2 &ref_points,
+                                Vec2 &cur_points,
+                                TrackStatus &status);
+
+    void TrackOneFeatureDirect(const Image *ref_image,
+                               const Image *cur_image,
+                               const Vec2 &ref_points,
+                               Vec2 &cur_points,
+                               TrackStatus &status);
+
     inline void GetPixelValueFromeBuffer(const Image *image,
                                          const int32_t row_idx_buf,
                                          const int32_t col_idx_buf,
@@ -65,18 +84,6 @@ private:
     float ComputeResidual(const Image *cur_image,
                           const Vec2 &cur_point,
                           Vec2 &b);
-
-    void TrackOneFeatureInverse(const Image *ref_image,
-                                const Image *cur_image,
-                                const Vec2 &ref_points,
-                                Vec2 &cur_points,
-                                TrackStatus &status);
-
-    void TrackOneFeatureDirect(const Image *ref_image,
-                               const Image *cur_image,
-                               const Vec2 &ref_points,
-                               Vec2 &cur_points,
-                               TrackStatus &status);
 
 private:
     LkOptions options_;

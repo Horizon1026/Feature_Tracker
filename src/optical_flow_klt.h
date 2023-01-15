@@ -10,6 +10,7 @@ namespace OPTICAL_FLOW {
 enum KltMethod : uint8_t {
     KLT_INVERSE = 0,
     KLT_DIRECT,
+    KLT_FAST,
 };
 
 struct KltOptions {
