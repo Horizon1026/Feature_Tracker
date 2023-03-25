@@ -3,6 +3,8 @@
 
 #include <cmath>
 
+#include "slam_operations.h"
+
 namespace OPTICAL_FLOW {
 namespace {
 inline static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);

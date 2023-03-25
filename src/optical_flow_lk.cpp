@@ -2,7 +2,7 @@
 #include "optical_flow_datatype.h"
 #include <cmath>
 
-#include "log_api.h"
+#include "slam_operations.h"
 
 namespace OPTICAL_FLOW {
 
