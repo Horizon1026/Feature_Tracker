@@ -3,11 +3,10 @@ cmake_minimum_required( VERSION 3.10 )
 project( optical_flow )
 
 set( CMAKE_BUILD_TYPE "Release" )
-set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall" )
+set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall -lpthread" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 find_package( OpenCV REQUIRED )
-find_package( Eigen3 REQUIRED )
 
 # Add slam utility
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility )
@@ -29,12 +28,3 @@ target_link_libraries( test_optical_flow
     lib_optical_flow_tracker
 )
 
-add_executable( test_lk_greftools
-    test/test_lk_greftools.cpp
-)
-target_link_libraries( test_lk_greftools
-    ${OpenCV_LIBS}
-    tcmalloc profiler
-    lib_slam_utility
-    lib_optical_flow_tracker
-)
