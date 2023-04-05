@@ -39,7 +39,7 @@ void test_image() {
     }
 
 #if CONFIG_OPENCV_DRAW
-    cv::Mat show_image(image.rows(), image.cols(), CV_8UC1, image.image_data());
+    cv::Mat show_image(image.rows(), image.cols(), CV_8UC1, image.data());
     cv::imshow("convert cv_image to image", show_image);
     cv::waitKey(0);
 #endif
@@ -57,7 +57,7 @@ void test_pyramid() {
 #if CONFIG_OPENCV_DRAW
     for (uint32_t i = 0; i < pyramid.level(); ++i) {
         Image one_level = pyramid.GetImage(i);
-        cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.image_data());
+        cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.data());
         cv::imshow(std::to_string(i), image);
         cv::waitKey(1);
     }

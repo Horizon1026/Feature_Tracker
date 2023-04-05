@@ -82,7 +82,7 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image *ref_image,
     if (cur_image == nullptr || ref_image == nullptr || ref_points.empty()) {
         return false;
     }
-    if (cur_image->image_data() == nullptr || ref_image->image_data() == nullptr) {
+    if (cur_image->data() == nullptr || ref_image->data() == nullptr) {
         return false;
     }
 
