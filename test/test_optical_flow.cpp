@@ -121,8 +121,8 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::waitKey(0);
 #endif
 
-    free(ref_pyramid.pyramid_buf());
-    free(cur_pyramid.pyramid_buf());
+    free(ref_pyramid.data());
+    free(cur_pyramid.data());
 
     return cost_time;
 }
@@ -183,8 +183,8 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cv::waitKey(0);
 #endif
 
-    free(ref_pyramid.pyramid_buf());
-    free(cur_pyramid.pyramid_buf());
+    free(ref_pyramid.data());
+    free(cur_pyramid.data());
 
     return cost_time;
 }
