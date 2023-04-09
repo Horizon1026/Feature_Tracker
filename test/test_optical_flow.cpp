@@ -110,7 +110,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        if (status[i] != OPTICAL_FLOW::TRACKED) {
+        if (status[i] != OPTICAL_FLOW::TrackStatus::TRACKED) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);
@@ -172,7 +172,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        if (status[i] != OPTICAL_FLOW::TRACKED) {
+        if (status[i] != OPTICAL_FLOW::TrackStatus::TRACKED) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);

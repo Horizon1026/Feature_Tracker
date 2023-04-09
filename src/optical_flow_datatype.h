@@ -8,13 +8,13 @@
 
 namespace OPTICAL_FLOW {
 
-typedef enum : uint8_t {
+enum class TrackStatus : uint8_t {
     NOT_TRACKED = 0,
     TRACKED = 1,
     OUTSIDE = 2,
     LARGE_RESIDUAL = 3,
     NUM_ERROR = 4,
-} TrackStatus;
+};
 
 }
 

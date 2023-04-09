@@ -52,7 +52,7 @@ bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
     // If sizeof ref_points is not equal to status, view it as all features haven't been tracked.
     if (scaled_ref_points.size() != status.size()) {
-        status.resize(scaled_ref_points.size(), NOT_TRACKED);
+        status.resize(scaled_ref_points.size(), TrackStatus::NOT_TRACKED);
     }
 
     // Track per level.
@@ -93,14 +93,14 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
 
     // If sizeof ref_points is not equal to status, view it as all features haven't been tracked.
     if (ref_points.size() != status.size()) {
-        status.resize(ref_points.size(), NOT_TRACKED);
+        status.resize(ref_points.size(), TrackStatus::NOT_TRACKED);
     }
 
     // Track per feature.
     uint32_t max_feature_id = ref_points.size() < options_.kMaxTrackPointsNumber ? ref_points.size() : options_.kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
-        if (status[feature_id] > NOT_TRACKED) {
+        if (status[feature_id] > TrackStatus::NOT_TRACKED) {
             continue;
         }
 
@@ -114,8 +114,8 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
                 break;
         }
 
-        if (status[feature_id] == NOT_TRACKED) {
-            status[feature_id] = LARGE_RESIDUAL;
+        if (status[feature_id] == TrackStatus::NOT_TRACKED) {
+            status[feature_id] = TrackStatus::LARGE_RESIDUAL;
         }
     }
 
@@ -247,7 +247,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
         Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
-            status = NUM_ERROR;
+            status = TrackStatus::NUM_ERROR;
             break;
         }
 
@@ -260,17 +260,17 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
-            status = OUTSIDE;
+            status = TrackStatus::OUTSIDE;
             break;
         }
 
         if (v.squaredNorm() < options_.kMaxConvergeStep) {
-            status = TRACKED;
+            status = TrackStatus::TRACKED;
             break;
         }
 
         if (residual < options_.kMaxConvergeResidual && num_of_valid_pixel) {
-            status = TRACKED;
+            status = TrackStatus::TRACKED;
             break;
         }
     }
@@ -379,7 +379,7 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
         Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
-            status = NUM_ERROR;
+            status = TrackStatus::NUM_ERROR;
             break;
         }
 
@@ -392,17 +392,17 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
-            status = OUTSIDE;
+            status = TrackStatus::OUTSIDE;
             break;
         }
 
         if (v.squaredNorm() < options_.kMaxConvergeStep) {
-            status = TRACKED;
+            status = TrackStatus::TRACKED;
             break;
         }
 
         if (residual < options_.kMaxConvergeResidual && num_of_valid_pixel) {
-            status = TRACKED;
+            status = TrackStatus::TRACKED;
             break;
         }
     }
