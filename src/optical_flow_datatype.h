@@ -9,11 +9,11 @@
 namespace OPTICAL_FLOW {
 
 typedef enum : uint8_t {
-    TRACKED = 0,
-    NOT_TRACKED,
-    OUTSIDE,
-    LARGE_RESIDUAL,
-    NUM_ERROR,
+    NOT_TRACKED = 0,
+    TRACKED = 1,
+    OUTSIDE = 2,
+    LARGE_RESIDUAL = 3,
+    NUM_ERROR = 4,
 } TrackStatus;
 
 }
