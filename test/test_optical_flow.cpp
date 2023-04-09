@@ -95,7 +95,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     begin = clock();
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    lk.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
+    lk.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_points, cur_points, status);
     end = clock();
     const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
@@ -157,7 +157,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     begin = clock();
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    klt.TrackMultipleLevel(&ref_pyramid, &cur_pyramid, ref_points, cur_points, status);
+    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_points, cur_points, status);
     end = clock();
     const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
@@ -242,7 +242,7 @@ int main() {
     test_times = 1;
 #endif
 
-    // test_image();
+    test_image();
     test_pyramid();
 
     std::thread test_lk([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {

@@ -28,14 +28,14 @@ public:
     explicit OpticalFlowKlt() = default;
     virtual ~OpticalFlowKlt() = default;
 
-    bool TrackMultipleLevel(const ImagePyramid *ref_pyramid,
-                            const ImagePyramid *cur_pyramid,
+    bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                            const ImagePyramid &cur_pyramid,
                             const std::vector<Eigen::Vector2f> &ref_points,
                             std::vector<Eigen::Vector2f> &cur_points,
                             std::vector<TrackStatus> &status);
 
-    bool TrackSingleLevel(const Image *ref_image,
-                          const Image *cur_image,
+    bool TrackSingleLevel(const Image &ref_image,
+                          const Image &cur_image,
                           const std::vector<Eigen::Vector2f> &ref_points,
                           std::vector<Eigen::Vector2f> &cur_points,
                           std::vector<TrackStatus> &status);
@@ -43,14 +43,14 @@ public:
     KltOptions &options() { return options_; }
 
 private:
-    void TrackOneFeatureInverse(const Image *ref_image,
-                                const Image *cur_image,
+    void TrackOneFeatureInverse(const Image &ref_image,
+                                const Image &cur_image,
                                 const Eigen::Vector2f &ref_points,
                                 Eigen::Vector2f &cur_points,
                                 TrackStatus &status);
 
-    void TrackOneFeatureDirect(const Image *ref_image,
-                               const Image *cur_image,
+    void TrackOneFeatureDirect(const Image &ref_image,
+                               const Image &cur_image,
                                const Eigen::Vector2f &ref_points,
                                Eigen::Vector2f &cur_points,
                                TrackStatus &status);

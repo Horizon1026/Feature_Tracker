@@ -10,15 +10,15 @@ namespace {
 inline static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
-bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
-                                       const ImagePyramid *cur_pyramid,
+bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                                       const ImagePyramid &cur_pyramid,
                                        const std::vector<Vec2> &ref_points,
                                        std::vector<Vec2> &cur_points,
                                        std::vector<TrackStatus> &status) {
-    if (cur_pyramid == nullptr || ref_pyramid == nullptr || ref_points.empty()) {
+    if (ref_points.empty()) {
         return false;
     }
-    if (cur_pyramid->level() != ref_pyramid->level()) {
+    if (cur_pyramid.level() != ref_pyramid.level()) {
         return false;
     }
 
@@ -38,7 +38,7 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     std::vector<Vec2> scaled_ref_points;
     scaled_ref_points.reserve(ref_points.size());
 
-    const int32_t scale = (2 << (ref_pyramid->level() - 1)) / 2;
+    const int32_t scale = (2 << (ref_pyramid.level() - 1)) / 2;
     for (uint32_t i = 0; i < ref_points.size(); ++i) {
         scaled_ref_points.emplace_back(ref_points[i] / static_cast<float>(scale));
     }
@@ -58,11 +58,11 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     }
 
     // Track per level.
-    for (int32_t level_idx = ref_pyramid->level() - 1; level_idx > -1; --level_idx) {
-        Image ref_image = ref_pyramid->GetImage(level_idx);
-        Image cur_image = cur_pyramid->GetImage(level_idx);
+    for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
+        Image ref_image = ref_pyramid.GetImage(level_idx);
+        Image cur_image = cur_pyramid.GetImage(level_idx);
 
-        TrackSingleLevel(&ref_image, &cur_image, scaled_ref_points, cur_points, status);
+        TrackSingleLevel(ref_image, cur_image, scaled_ref_points, cur_points, status);
 
         if (level_idx == 0) {
             break;
@@ -77,15 +77,15 @@ bool OpticalFlowLk::TrackMultipleLevel(const ImagePyramid *ref_pyramid,
     return true;
 }
 
-bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
-                                     const Image *cur_image,
+bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
+                                     const Image &cur_image,
                                      const std::vector<Vec2> &ref_points,
                                      std::vector<Vec2> &cur_points,
                                      std::vector<TrackStatus> &status) {
-    if (cur_image == nullptr || ref_image == nullptr || ref_points.empty()) {
+    if (ref_points.empty()) {
         return false;
     }
-    if (cur_image->data() == nullptr || ref_image->data() == nullptr) {
+    if (cur_image.data() == nullptr || ref_image.data() == nullptr) {
         return false;
     }
 
@@ -128,7 +128,7 @@ bool OpticalFlowLk::TrackSingleLevel(const Image *ref_image,
     return true;
 }
 
-void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
+void OpticalFlowLk::PrecomputeHessian(const Image &ref_image,
                                       const Vec2 &ref_point,
                                       Mat2 &H) {
     fx_fy_ti_.clear();
@@ -137,9 +137,9 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
     float row_i = ref_point.y();
     float col_i = ref_point.x();
     bool no_need_check = row_i - 1.0f - options_.kPatchRowHalfSize > kZero &&
-                         row_i + 2.0f + options_.kPatchRowHalfSize < ref_image->rows() - kZero &&
+                         row_i + 2.0f + options_.kPatchRowHalfSize < ref_image.rows() - kZero &&
                          col_i - 1.0f - options_.kPatchColHalfSize > kZero &&
-                         col_i + 2.0f + options_.kPatchColHalfSize < ref_image->cols() - kZero;
+                         col_i + 2.0f + options_.kPatchColHalfSize < ref_image.cols() - kZero;
 
     int32_t row_i_buf = 0;
     int32_t col_i_buf = 0;
@@ -163,8 +163,8 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
             col_i = static_cast<float>(dcol) + ref_point.x();
 
             if (no_need_check ||
-                (row_i - 1.0f > kZero && row_i + 2.0f < ref_image->rows() - kZero &&
-                 col_i - 1.0f > kZero && col_i + 2.0f < ref_image->cols() - kZero)) {
+                (row_i - 1.0f > kZero && row_i + 2.0f < ref_image.rows() - kZero &&
+                 col_i - 1.0f > kZero && col_i + 2.0f < ref_image.cols() - kZero)) {
 
                 row_i_buf = drow + options_.kPatchRowHalfSize + 1;
                 col_i_buf = dcol + options_.kPatchColHalfSize + 1;
@@ -197,7 +197,7 @@ void OpticalFlowLk::PrecomputeHessian(const Image *ref_image,
     H(1, 0) = H(0, 1);
 }
 
-float OpticalFlowLk::ComputeResidual(const Image *cur_image,
+float OpticalFlowLk::ComputeResidual(const Image &cur_image,
                                      const Vec2 &cur_point,
                                      Vec2 &b) {
     float residual = 0.0f;
@@ -206,9 +206,9 @@ float OpticalFlowLk::ComputeResidual(const Image *cur_image,
     float row_j = cur_point.y();
     float col_j = cur_point.x();
     bool no_need_check = row_j - options_.kPatchRowHalfSize > kZero &&
-                         row_j + 1.0f + options_.kPatchRowHalfSize < cur_image->rows() - kZero &&
+                         row_j + 1.0f + options_.kPatchRowHalfSize < cur_image.rows() - kZero &&
                          col_j - options_.kPatchColHalfSize > kZero &&
-                         col_j + 1.0f + options_.kPatchColHalfSize < cur_image->cols() - kZero;
+                         col_j + 1.0f + options_.kPatchColHalfSize < cur_image.cols() - kZero;
 
     // Compute each pixel in the patch, create H * v = b.
     uint32_t idx = 0;
@@ -218,12 +218,12 @@ float OpticalFlowLk::ComputeResidual(const Image *cur_image,
             col_j = static_cast<float>(dcol) + cur_point.x();
 
             if ((no_need_check ||
-                 (row_j > kZero && row_j + 1.0f < cur_image->rows() - kZero &&
-                  col_j > kZero && col_j + 1.0f < cur_image->cols() - kZero)) &&
+                 (row_j > kZero && row_j + 1.0f < cur_image.rows() - kZero &&
+                  col_j > kZero && col_j + 1.0f < cur_image.cols() - kZero)) &&
                  !std::isinf(fx_fy_ti_[idx].x())) {
 
                 // Compute pixel gradient
-                const float tj = cur_image->GetPixelValueNoCheck(row_j, col_j);
+                const float tj = cur_image.GetPixelValueNoCheck(row_j, col_j);
                 const float &fx = fx_fy_ti_[idx].x();
                 const float &fy = fx_fy_ti_[idx].y();
                 const float ft = tj - fx_fy_ti_[idx].z();
@@ -248,8 +248,8 @@ float OpticalFlowLk::ComputeResidual(const Image *cur_image,
     return residual;
 }
 
-void OpticalFlowLk::TrackOneFeatureFast(const Image *ref_image,
-                                        const Image *cur_image,
+void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
+                                        const Image &cur_image,
                                         const Vec2 &ref_point,
                                         Vec2 &cur_point,
                                         TrackStatus &status) {
@@ -288,14 +288,14 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image *ref_image,
         }
     }
 
-    if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() - 1 ||
-        cur_point.y() < 0 || cur_point.y() > cur_image->rows() - 1) {
+    if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() - 1 ||
+        cur_point.y() < 0 || cur_point.y() > cur_image.rows() - 1) {
         status = OUTSIDE;
     }
 }
 
-void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
-                                           const Image *cur_image,
+void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
+                                           const Image &cur_image,
                                            const Vec2 &ref_point,
                                            Vec2 &cur_point,
                                            TrackStatus &status) {
@@ -320,12 +320,12 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
                 float row_j = static_cast<float>(drow) + cur_point.y();
                 float col_j = static_cast<float>(dcol) + cur_point.x();
                 // Compute pixel gradient
-                if (ref_image->GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                    ref_image->GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
-                    ref_image->GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
-                    ref_image->GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                    ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
-                    cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                if (ref_image.GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
+                    ref_image.GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
+                    ref_image.GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
+                    ref_image.GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
+                    ref_image.GetPixelValue(row_i, col_i, temp_value + 4) &&
+                    cur_image.GetPixelValue(row_j, col_j, temp_value + 5)) {
                     fx = temp_value[1] - temp_value[0];
                     fy = temp_value[3] - temp_value[2];
                     ft = temp_value[5] - temp_value[4];
@@ -355,8 +355,8 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
 
         cur_point += v;
 
-        if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
-            cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
+        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
+            cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
             status = OUTSIDE;
             break;
         }
@@ -373,8 +373,8 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image *ref_image,
     }
 }
 
-void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
-                                          const Image *cur_image,
+void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
+                                          const Image &cur_image,
                                           const Vec2 &ref_point,
                                           Vec2 &cur_point,
                                           TrackStatus &status) {
@@ -399,12 +399,12 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
                 float row_j = static_cast<float>(drow) + cur_point.y();
                 float col_j = static_cast<float>(dcol) + cur_point.x();
                 // Compute pixel gradient
-                if (cur_image->GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
-                    cur_image->GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
-                    cur_image->GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
-                    cur_image->GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
-                    ref_image->GetPixelValue(row_i, col_i, temp_value + 4) &&
-                    cur_image->GetPixelValue(row_j, col_j, temp_value + 5)) {
+                if (cur_image.GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
+                    cur_image.GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
+                    cur_image.GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
+                    cur_image.GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
+                    ref_image.GetPixelValue(row_i, col_i, temp_value + 4) &&
+                    cur_image.GetPixelValue(row_j, col_j, temp_value + 5)) {
                     fx = temp_value[1] - temp_value[0];
                     fy = temp_value[3] - temp_value[2];
                     ft = temp_value[5] - temp_value[4];
@@ -434,8 +434,8 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
 
         cur_point += v;
 
-        if (cur_point.x() < 0 || cur_point.x() > cur_image->cols() ||
-            cur_point.y() < 0 || cur_point.y() > cur_image->rows()) {
+        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
+            cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
             status = OUTSIDE;
             break;
         }
@@ -451,4 +451,5 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image *ref_image,
         }
     }
 }
+
 }
