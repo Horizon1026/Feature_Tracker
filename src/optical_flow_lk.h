@@ -32,13 +32,13 @@ public:
                             const ImagePyramid &cur_pyramid,
                             const std::vector<Vec2> &ref_points,
                             std::vector<Vec2> &cur_points,
-                            std::vector<TrackStatus> &status);
+                            std::vector<uint8_t> &status);
 
     bool TrackSingleLevel(const Image &ref_image,
                           const Image &cur_image,
                           const std::vector<Vec2> &ref_points,
                           std::vector<Vec2> &cur_points,
-                          std::vector<TrackStatus> &status);
+                          std::vector<uint8_t> &status);
 
     LkOptions &options() { return options_; }
 
@@ -47,19 +47,19 @@ private:
                              const Image &cur_image,
                              const Vec2 &ref_points,
                              Vec2 &cur_points,
-                             TrackStatus &status);
+                             uint8_t &status);
 
     void TrackOneFeatureInverse(const Image &ref_image,
                                 const Image &cur_image,
                                 const Vec2 &ref_points,
                                 Vec2 &cur_points,
-                                TrackStatus &status);
+                                uint8_t &status);
 
     void TrackOneFeatureDirect(const Image &ref_image,
                                const Image &cur_image,
                                const Vec2 &ref_points,
                                Vec2 &cur_points,
-                               TrackStatus &status);
+                               uint8_t &status);
 
     inline void GetPixelValueFromeBuffer(const Image &image,
                                          const int32_t row_idx_buf,

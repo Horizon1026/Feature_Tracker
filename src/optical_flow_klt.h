@@ -32,13 +32,13 @@ public:
                             const ImagePyramid &cur_pyramid,
                             const std::vector<Eigen::Vector2f> &ref_points,
                             std::vector<Eigen::Vector2f> &cur_points,
-                            std::vector<TrackStatus> &status);
+                            std::vector<uint8_t> &status);
 
     bool TrackSingleLevel(const Image &ref_image,
                           const Image &cur_image,
                           const std::vector<Eigen::Vector2f> &ref_points,
                           std::vector<Eigen::Vector2f> &cur_points,
-                          std::vector<TrackStatus> &status);
+                          std::vector<uint8_t> &status);
 
     KltOptions &options() { return options_; }
 
@@ -47,13 +47,13 @@ private:
                                 const Image &cur_image,
                                 const Eigen::Vector2f &ref_points,
                                 Eigen::Vector2f &cur_points,
-                                TrackStatus &status);
+                                uint8_t &status);
 
     void TrackOneFeatureDirect(const Image &ref_image,
                                const Image &cur_image,
                                const Eigen::Vector2f &ref_points,
                                Eigen::Vector2f &cur_points,
-                               TrackStatus &status);
+                               uint8_t &status);
 
 private:
     KltOptions options_;
