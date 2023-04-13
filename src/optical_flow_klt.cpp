@@ -1,73 +1,21 @@
 #include "optical_flow_klt.h"
-#include "optical_flow_datatype.h"
-
+#include "slam_operations.h"
 #include <cmath>
 
-#include "slam_operations.h"
-
 namespace OPTICAL_FLOW {
+
 namespace {
-inline static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
+    static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
-bool OpticalFlowKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
-                                        const ImagePyramid &cur_pyramid,
-                                        const std::vector<Eigen::Vector2f> &ref_points,
-                                        std::vector<Eigen::Vector2f> &cur_points,
-                                        std::vector<uint8_t> &status) {
-    if (ref_points.empty()) {
-        return false;
-    }
-    if (cur_pyramid.level() != ref_pyramid.level()) {
-        return false;
-    }
-
+bool OpticalFlowKlt::PrepareForTracking() {
     // Initial fx_fy_ti_ for fast inverse tracker.
-    if (options_.kMethod == KLT_FAST) {
-        const int32_t patch_rows = 2 * options_.kPatchRowHalfSize + 1;
-        const int32_t patch_cols = 2 * options_.kPatchColHalfSize + 1;
+    if (options().kMethod == KLT_FAST) {
+        const int32_t patch_rows = 2 * options().kPatchRowHalfSize + 1;
+        const int32_t patch_cols = 2 * options().kPatchColHalfSize + 1;
         const uint32_t size = patch_rows + patch_cols;
         if (fx_fy_ti_.capacity() < size) {
             fx_fy_ti_.reserve(size);
-        }
-    }
-
-    // Set predict and reference with scale.
-    std::vector<Eigen::Vector2f> scaled_ref_points;
-    scaled_ref_points.reserve(ref_points.size());
-
-    int32_t scale = (2 << (ref_pyramid.level() - 1)) / 2;
-    for (uint32_t i = 0; i < ref_points.size(); ++i) {
-        scaled_ref_points.emplace_back(ref_points[i] / static_cast<float>(scale));
-    }
-
-    // If sizeof ref_points is not equal to cur_points, view it as no prediction.
-    if (scaled_ref_points.size() != cur_points.size()) {
-        cur_points = scaled_ref_points;
-    } else {
-        for (uint32_t i = 0; i < cur_points.size(); ++i) {
-            cur_points[i] /= static_cast<float>(scale);
-        }
-    }
-
-    // If sizeof ref_points is not equal to status, view it as all features haven't been tracked.
-    if (scaled_ref_points.size() != status.size()) {
-        status.resize(scaled_ref_points.size(), static_cast<uint8_t>(static_cast<uint8_t>(TrackStatus::NOT_TRACKED)));
-    }
-
-    // Track per level.
-    for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
-        Image ref_image = ref_pyramid.GetImage(level_idx);
-        Image cur_image = cur_pyramid.GetImage(level_idx);
-        TrackSingleLevel(ref_image, cur_image, scaled_ref_points, cur_points, status);
-
-        if (level_idx == 0) {
-            break;
-        }
-
-        for (uint32_t i = 0; i < scaled_ref_points.size(); ++i) {
-            scaled_ref_points[i] *= 2.0f;
-            cur_points[i] *= 2.0f;
         }
     }
 
@@ -79,32 +27,15 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
                                       const std::vector<Eigen::Vector2f> &ref_points,
                                       std::vector<Eigen::Vector2f> &cur_points,
                                       std::vector<uint8_t> &status) {
-    if (ref_points.empty()) {
-        return false;
-    }
-    if (cur_image.data() == nullptr || ref_image.data() == nullptr) {
-        return false;
-    }
-
-    // If sizeof ref_points is not equal to cur_points, view it as no prediction.
-    if (ref_points.size() != cur_points.size()) {
-        cur_points = ref_points;
-    }
-
-    // If sizeof ref_points is not equal to status, view it as all features haven't been tracked.
-    if (ref_points.size() != status.size()) {
-        status.resize(ref_points.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
-    }
-
     // Track per feature.
-    uint32_t max_feature_id = ref_points.size() < options_.kMaxTrackPointsNumber ? ref_points.size() : options_.kMaxTrackPointsNumber;
+    uint32_t max_feature_id = ref_points.size() < options().kMaxTrackPointsNumber ? ref_points.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
         if (status[feature_id] > static_cast<uint8_t>(TrackStatus::NOT_TRACKED)) {
             continue;
         }
 
-        switch (options_.kMethod) {
+        switch (options().kMethod) {
             default:
             case KLT_INVERSE:
                 TrackOneFeatureInverse(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
@@ -135,8 +66,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
     fx_fy_ti_.clear();
     float temp_value[6] = { 0 };
 
-    for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
-        for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+    for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+        for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
             float row_i = static_cast<float>(drow) + ref_point.y();
             float col_i = static_cast<float>(dcol) + ref_point.x();
             float row_j = static_cast<float>(drow) + cur_point.y();
@@ -200,7 +131,7 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
     }
 
     // Iterate to compute optical flow.
-    for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
+    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         b.setZero();
 
         float ft = 0.0f;
@@ -209,8 +140,8 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
 
         // Compute each pixel in the patch, create H * v = b
         uint32_t idx = 0;
-        for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
-            for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                 Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
                 float row_j = affined_dcol_drow.y() + cur_point.y();
                 float col_j = affined_dcol_drow.x() + cur_point.x();
@@ -264,12 +195,12 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
             break;
         }
 
-        if (v.squaredNorm() < options_.kMaxConvergeStep) {
+        if (v.squaredNorm() < options().kMaxConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }
 
-        if (residual < options_.kMaxConvergeResidual && num_of_valid_pixel) {
+        if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }
@@ -286,7 +217,7 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
 
     Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
 
-    for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
+    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         H.setZero();
         b.setZero();
 
@@ -299,8 +230,8 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
         int num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
-        for (int32_t drow = - options_.kPatchRowHalfSize; drow <= options_.kPatchRowHalfSize; ++drow) {
-            for (int32_t dcol = - options_.kPatchColHalfSize; dcol <= options_.kPatchColHalfSize; ++dcol) {
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                 float row_i = static_cast<float>(drow) + ref_point.y();
                 float col_i = static_cast<float>(dcol) + ref_point.x();
 
@@ -396,12 +327,12 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
             break;
         }
 
-        if (v.squaredNorm() < options_.kMaxConvergeStep) {
+        if (v.squaredNorm() < options().kMaxConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }
 
-        if (residual < options_.kMaxConvergeResidual && num_of_valid_pixel) {
+        if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }

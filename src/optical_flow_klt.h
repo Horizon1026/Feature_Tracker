@@ -1,62 +1,39 @@
 #ifndef _OPTICAL_FLOW_KLT_H_
 #define _OPTICAL_FLOW_KLT_H_
 
-#include "optical_flow_datatype.h"
-#include <eigen3/Eigen/Eigen>
+#include "optical_flow.h"
 #include <vector>
 
 namespace OPTICAL_FLOW {
 
-enum KltMethod : uint8_t {
-    KLT_INVERSE = 0,
-    KLT_DIRECT,
-    KLT_FAST,
-};
+class OpticalFlowKlt : public OpticalFlow {
 
-struct KltOptions {
-    uint32_t kMaxTrackPointsNumber = 200;
-    uint32_t kMaxIteration = 10;
-    int32_t kPatchRowHalfSize = 6;
-    int32_t kPatchColHalfSize = 6;
-    float kMaxConvergeStep = 1e-2f;
-    float kMaxConvergeResidual = 2.0f;
-    KltMethod kMethod = KLT_INVERSE;
-};
-
-class OpticalFlowKlt {
 public:
-    explicit OpticalFlowKlt() = default;
+    OpticalFlowKlt() : OpticalFlow() {}
     virtual ~OpticalFlowKlt() = default;
 
-    bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
-                            const ImagePyramid &cur_pyramid,
-                            const std::vector<Eigen::Vector2f> &ref_points,
-                            std::vector<Eigen::Vector2f> &cur_points,
-                            std::vector<uint8_t> &status);
+    virtual bool TrackSingleLevel(const Image &ref_image,
+                                  const Image &cur_image,
+                                  const std::vector<Vec2> &ref_points,
+                                  std::vector<Vec2> &cur_points,
+                                  std::vector<uint8_t> &status) override;
 
-    bool TrackSingleLevel(const Image &ref_image,
-                          const Image &cur_image,
-                          const std::vector<Eigen::Vector2f> &ref_points,
-                          std::vector<Eigen::Vector2f> &cur_points,
-                          std::vector<uint8_t> &status);
-
-    KltOptions &options() { return options_; }
+    virtual bool PrepareForTracking() override;
 
 private:
     void TrackOneFeatureInverse(const Image &ref_image,
                                 const Image &cur_image,
-                                const Eigen::Vector2f &ref_points,
-                                Eigen::Vector2f &cur_points,
+                                const Vec2 &ref_points,
+                                Vec2 &cur_points,
                                 uint8_t &status);
 
     void TrackOneFeatureDirect(const Image &ref_image,
                                const Image &cur_image,
-                               const Eigen::Vector2f &ref_points,
-                               Eigen::Vector2f &cur_points,
+                               const Vec2 &ref_points,
+                               Vec2 &cur_points,
                                uint8_t &status);
 
 private:
-    KltOptions options_;
     std::vector<Vec3> fx_fy_ti_;
 };
 

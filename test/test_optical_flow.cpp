@@ -9,7 +9,6 @@
 
 #include "log_api.h"
 
-#include "optical_flow_datatype.h"
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
@@ -89,7 +88,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
 
     lk.options().kPatchRowHalfSize = patch_size;
     lk.options().kPatchColHalfSize = patch_size;
-    lk.options().kMethod = static_cast<OPTICAL_FLOW::LkMethod>(method);
+    lk.options().kMethod = static_cast<OPTICAL_FLOW::Method>(method);
 
     clock_t begin, end;
     begin = clock();
@@ -151,7 +150,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
 
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
-    klt.options().kMethod = static_cast<OPTICAL_FLOW::KltMethod>(method);
+    klt.options().kMethod = static_cast<OPTICAL_FLOW::Method>(method);
 
     clock_t begin, end;
     begin = clock();
