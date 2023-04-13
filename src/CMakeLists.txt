@@ -1,15 +1,15 @@
 aux_source_directory( . AUX_SRC_OPTICAL_FLOW_TRACKER )
 
+# Add all components of slam utility.
+set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
 if ( NOT TARGET lib_slam_utility_datatype )
-    add_subdirectory( datatype ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_datatype )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/datatype ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_datatype )
 endif()
-
 if ( NOT TARGET lib_slam_utility_math )
-    add_subdirectory( math ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_math )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/math ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_math )
 endif()
-
 if ( NOT TARGET lib_slam_utility_operate )
-    add_subdirectory( operate ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_operate )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/operate ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_operate )
 endif()
 
 add_library( lib_optical_flow_tracker ${AUX_SRC_OPTICAL_FLOW_TRACKER} )
