@@ -6,7 +6,7 @@
 #include "datatype_image_pyramid.h"
 #include "math_kinematics.h"
 
-namespace OPTICAL_FLOW {
+namespace FEATURE_TRACKER {
 
 enum class TrackStatus : uint8_t {
     NOT_TRACKED = 0,

@@ -1,6 +1,6 @@
 #include "optical_flow.h"
 
-namespace OPTICAL_FLOW {
+namespace FEATURE_TRACKER {
 
 bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                      const ImagePyramid &cur_pyramid,

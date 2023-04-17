@@ -78,7 +78,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     std::vector<cv::Point2f> ref_corners;
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
-    OPTICAL_FLOW::OpticalFlowLk lk;
+    FEATURE_TRACKER::OpticalFlowLk lk;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
     std::vector<uint8_t> status;
     ref_points.reserve(ref_corners.size());
@@ -88,7 +88,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
 
     lk.options().kPatchRowHalfSize = patch_size;
     lk.options().kPatchColHalfSize = patch_size;
-    lk.options().kMethod = static_cast<OPTICAL_FLOW::Method>(method);
+    lk.options().kMethod = static_cast<FEATURE_TRACKER::Method>(method);
 
     clock_t begin, end;
     begin = clock();
@@ -109,7 +109,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        if (status[i] != static_cast<uint8_t>(OPTICAL_FLOW::TrackStatus::TRACKED)) {
+        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);
@@ -140,7 +140,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     std::vector<cv::Point2f> ref_corners;
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
-    OPTICAL_FLOW::OpticalFlowKlt klt;
+    FEATURE_TRACKER::OpticalFlowKlt klt;
     std::vector<Eigen::Vector2f> ref_points, cur_points;
     std::vector<uint8_t> status;
     ref_points.reserve(ref_corners.size());
@@ -150,7 +150,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
 
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
-    klt.options().kMethod = static_cast<OPTICAL_FLOW::Method>(method);
+    klt.options().kMethod = static_cast<FEATURE_TRACKER::Method>(method);
 
     clock_t begin, end;
     begin = clock();
@@ -171,7 +171,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        if (status[i] != static_cast<uint8_t>(OPTICAL_FLOW::TrackStatus::TRACKED)) {
+        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
             continue;
         }
         cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);

@@ -4,7 +4,7 @@
 #include "optical_flow.h"
 #include <vector>
 
-namespace OPTICAL_FLOW {
+namespace FEATURE_TRACKER {
 
 class OpticalFlowLk : public OpticalFlow {
 

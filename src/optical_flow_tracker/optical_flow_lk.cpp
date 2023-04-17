@@ -2,7 +2,7 @@
 #include "slam_operations.h"
 #include <cmath>
 
-namespace OPTICAL_FLOW {
+namespace FEATURE_TRACKER {
 
 namespace {
     static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
