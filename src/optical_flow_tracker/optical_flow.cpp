@@ -52,8 +52,8 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
     // Track per level.
     for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
-        const Image ref_image = ref_pyramid.GetImage(level_idx);
-        const Image cur_image = cur_pyramid.GetImage(level_idx);
+        const Image &ref_image = ref_pyramid.GetImageConst(level_idx);
+        const Image &cur_image = cur_pyramid.GetImageConst(level_idx);
 
         TrackSingleLevel(ref_image, cur_image, scaled_ref_points, cur_points, status);
 
