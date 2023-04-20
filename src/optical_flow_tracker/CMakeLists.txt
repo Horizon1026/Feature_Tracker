@@ -16,7 +16,10 @@ if ( NOT TARGET lib_slam_utility_log )
 endif()
 
 add_library( lib_optical_flow_tracker ${AUX_SRC_OPTICAL_FLOW_TRACKER} )
-target_include_directories( lib_optical_flow_tracker PUBLIC . )
+target_include_directories( lib_optical_flow_tracker PUBLIC
+    .
+    ..
+)
 target_link_libraries( lib_optical_flow_tracker
     lib_slam_utility_datatype
     lib_slam_utility_math

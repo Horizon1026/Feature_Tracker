@@ -16,7 +16,10 @@ if ( NOT TARGET lib_slam_utility_log )
 endif()
 
 add_library( lib_descriptor_matcher ${AUX_SRC_DESCRIPTOR_MATCHER} )
-target_include_directories( lib_descriptor_matcher PUBLIC . )
+target_include_directories( lib_descriptor_matcher PUBLIC
+    .
+    ..
+)
 target_link_libraries( lib_descriptor_matcher
     lib_slam_utility_datatype
     lib_slam_utility_math

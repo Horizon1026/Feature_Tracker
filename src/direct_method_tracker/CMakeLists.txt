@@ -16,7 +16,10 @@ if ( NOT TARGET lib_slam_utility_log )
 endif()
 
 add_library( lib_direct_method_tracker ${AUX_SRC_DIRECT_METHOD_TRACKER} )
-target_include_directories( lib_direct_method_tracker PUBLIC . )
+target_include_directories( lib_direct_method_tracker PUBLIC
+    .
+    ..
+)
 target_link_libraries( lib_direct_method_tracker
     lib_slam_utility_datatype
     lib_slam_utility_math

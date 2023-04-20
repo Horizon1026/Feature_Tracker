@@ -5,18 +5,11 @@
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
 #include "math_kinematics.h"
+#include "feature_tracker.h"
 
 namespace FEATURE_TRACKER {
 
-enum class TrackStatus : uint8_t {
-    NOT_TRACKED = 0,
-    TRACKED = 1,
-    OUTSIDE = 2,
-    LARGE_RESIDUAL = 3,
-    NUM_ERROR = 4,
-};
-
-enum Method : uint8_t {
+enum OpticalFlowMethod : uint8_t {
     LK_INVERSE = 0,
     LK_DIRECT = 1,
     LK_FAST = 2,
@@ -25,14 +18,14 @@ enum Method : uint8_t {
     KLT_FAST = 5,
 };
 
-struct Options {
+struct OpticalFlowOptions {
     uint32_t kMaxTrackPointsNumber = 200;
     uint32_t kMaxIteration = 10;
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 2.0f;
-    Method kMethod = LK_FAST;
+    OpticalFlowMethod kMethod = LK_FAST;
 };
 
 class OpticalFlow {
@@ -56,10 +49,10 @@ public:
 
     virtual bool PrepareForTracking() = 0;
 
-    Options &options() { return options_; }
+    OpticalFlowOptions &options() { return options_; }
 
 private:
-    Options options_;
+    OpticalFlowOptions options_;
 
 };
 
