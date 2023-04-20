@@ -15,8 +15,8 @@
 #define CONFIG_OPENCV_DRAW (1)
 #define FEATURES_TO_TRACK (200)
 
-std::string test_ref_image_file_name = "../example/ref_image.png";
-std::string test_cur_image_file_name = "../example/cur_image.png";
+std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
+std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 
 void test_image() {
     cv::Mat cv_image;
@@ -231,7 +231,7 @@ float test_opencv_lk(int32_t pyramid_level, int32_t patch_size) {
     return cost_time;
 }
 
-int main() {
+int main(int argc, char **argv) {
     uint32_t test_times = 300;
     uint8_t optical_flow_method = 2;
     int32_t pyramid_level = 4;
