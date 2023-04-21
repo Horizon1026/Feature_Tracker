@@ -26,11 +26,11 @@ bool OpticalFlowLk::PrepareForTracking() {
 
 bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
                                      const Image &cur_image,
-                                     const std::vector<Vec2> &ref_points,
-                                     std::vector<Vec2> &cur_points,
+                                     const std::vector<Vec2> &ref_pixel_uv,
+                                     std::vector<Vec2> &cur_pixel_uv,
                                      std::vector<uint8_t> &status) {
     // Track per feature.
-    uint32_t max_feature_id = ref_points.size() < options().kMaxTrackPointsNumber ? ref_points.size() : options().kMaxTrackPointsNumber;
+    uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
         if (status[feature_id] > static_cast<uint8_t>(TrackStatus::TRACKED)) {
@@ -39,14 +39,14 @@ bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
 
         switch (options().kMethod) {
             case LK_INVERSE:
-                TrackOneFeatureInverse(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
+                TrackOneFeatureInverse(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
             case LK_DIRECT:
-                TrackOneFeatureDirect(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
+                TrackOneFeatureDirect(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
             case LK_FAST:
             default:
-                TrackOneFeatureFast(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
+                TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
         }
 
@@ -197,7 +197,7 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
         // Compute b and residual.
         float residual = ComputeResidual(cur_image, cur_point, b);
 
-        // Solve H * v = b, update cur_points.
+        // Solve H * v = b, update cur_pixel_uv.
         Vec2 v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
@@ -275,7 +275,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
         H(1, 0) = H(0, 1);
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * v = b, update cur_points.
+        // Solve H * v = b, update cur_pixel_uv.
         Vec2 v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
@@ -354,7 +354,7 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
         H(1, 0) = H(0, 1);
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * v = b, update cur_points.
+        // Solve H * v = b, update cur_pixel_uv.
         Vec2 v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {

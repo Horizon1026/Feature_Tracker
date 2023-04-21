@@ -79,11 +79,11 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
     FEATURE_TRACKER::OpticalFlowLk lk;
-    std::vector<Eigen::Vector2f> ref_points, cur_points;
+    std::vector<Eigen::Vector2f> ref_pixel_uv, cur_pixel_uv;
     std::vector<uint8_t> status;
-    ref_points.reserve(ref_corners.size());
+    ref_pixel_uv.reserve(ref_corners.size());
     for (uint32_t i = 0; i < ref_corners.size(); ++i) {
-        ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
+        ref_pixel_uv.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
     lk.options().kPatchRowHalfSize = patch_size;
@@ -94,7 +94,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     begin = clock();
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    lk.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_points, cur_points, status);
+    lk.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     end = clock();
     const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
@@ -102,7 +102,7 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        cv::circle(show_ref_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), 2, cv::Scalar(255, 255, 0), 3);
+        cv::circle(show_ref_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), 2, cv::Scalar(255, 255, 0), 3);
     }
     cv::imshow("LK : Feature before multi tracking", show_ref_image);
 
@@ -112,8 +112,8 @@ float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
         if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
             continue;
         }
-        cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);
-        cv::line(show_cur_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), cv::Point2f(cur_points[i].x(), cur_points[i].y()), cv::Scalar(0, 255, 0), 2);
+        cv::circle(show_cur_image, cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), 2, cv::Scalar(0, 0, 255), 3);
+        cv::line(show_cur_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), cv::Scalar(0, 255, 0), 2);
     }
     cv::imshow("LK : Feature after multi tracking", show_cur_image);
 
@@ -141,11 +141,11 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cv::goodFeaturesToTrack(cv_ref_image, ref_corners, FEATURES_TO_TRACK, 0.01, 20);
 
     FEATURE_TRACKER::OpticalFlowKlt klt;
-    std::vector<Eigen::Vector2f> ref_points, cur_points;
+    std::vector<Eigen::Vector2f> ref_pixel_uv, cur_pixel_uv;
     std::vector<uint8_t> status;
-    ref_points.reserve(ref_corners.size());
+    ref_pixel_uv.reserve(ref_corners.size());
     for (uint32_t i = 0; i < ref_corners.size(); ++i) {
-        ref_points.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
+        ref_pixel_uv.emplace_back(Eigen::Vector2f(ref_corners[i].x, ref_corners[i].y));
     }
 
     klt.options().kPatchRowHalfSize = patch_size;
@@ -156,7 +156,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     begin = clock();
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_points, cur_points, status);
+    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     end = clock();
     const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
 
@@ -164,7 +164,7 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
     cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
     cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < ref_corners.size(); i++) {
-        cv::circle(show_ref_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), 2, cv::Scalar(255, 255, 0), 3);
+        cv::circle(show_ref_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), 2, cv::Scalar(255, 255, 0), 3);
     }
     cv::imshow("KLT : Feature before multi tracking", show_ref_image);
 
@@ -174,8 +174,8 @@ float test_klt_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) 
         if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
             continue;
         }
-        cv::circle(show_cur_image, cv::Point2f(cur_points[i].x(), cur_points[i].y()), 2, cv::Scalar(0, 0, 255), 3);
-        cv::line(show_cur_image, cv::Point2f(ref_points[i].x(), ref_points[i].y()), cv::Point2f(cur_points[i].x(), cur_points[i].y()), cv::Scalar(0, 255, 0), 2);
+        cv::circle(show_cur_image, cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), 2, cv::Scalar(0, 0, 255), 3);
+        cv::line(show_cur_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), cv::Scalar(0, 255, 0), 2);
     }
     cv::imshow("KLT : Feature after multi tracking", show_cur_image);
 

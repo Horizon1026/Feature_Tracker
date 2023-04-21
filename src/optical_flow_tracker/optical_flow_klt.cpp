@@ -24,11 +24,11 @@ bool OpticalFlowKlt::PrepareForTracking() {
 
 bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
                                       const Image &cur_image,
-                                      const std::vector<Eigen::Vector2f> &ref_points,
-                                      std::vector<Eigen::Vector2f> &cur_points,
+                                      const std::vector<Vec2> &ref_pixel_uv,
+                                      std::vector<Vec2> &cur_pixel_uv,
                                       std::vector<uint8_t> &status) {
     // Track per feature.
-    uint32_t max_feature_id = ref_points.size() < options().kMaxTrackPointsNumber ? ref_points.size() : options().kMaxTrackPointsNumber;
+    uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
         if (status[feature_id] > static_cast<uint8_t>(TrackStatus::TRACKED)) {
@@ -38,10 +38,10 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
         switch (options().kMethod) {
             default:
             case KLT_INVERSE:
-                TrackOneFeatureInverse(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
+                TrackOneFeatureInverse(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
             case KLT_DIRECT:
-                TrackOneFeatureDirect(ref_image, cur_image, ref_points[feature_id], cur_points[feature_id], status[feature_id]);
+                TrackOneFeatureDirect(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
         }
 
@@ -55,12 +55,12 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
 
 void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
                                             const Image &cur_image,
-                                            const Eigen::Vector2f &ref_point,
-                                            Eigen::Vector2f &cur_point,
+                                            const Vec2 &ref_point,
+                                            Vec2 &cur_point,
                                             uint8_t &status) {
-    Eigen::Matrix<float, 6, 6> H = Eigen::Matrix<float, 6, 6>::Zero();
-    Eigen::Matrix<float, 6, 1> b = Eigen::Matrix<float, 6, 1>::Zero();
-    Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
+    Mat6 H = Mat6::Zero();
+    Vec6 b = Vec6::Zero();
+    Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
 
     // Precompute H, fx, fy and ti.
     fx_fy_ti_.clear();
@@ -79,9 +79,9 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
                 ref_image.GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
                 ref_image.GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
                 ref_image.GetPixelValue(row_i, col_i, temp_value + 4)) {
-                fx_fy_ti_.emplace_back(Eigen::Vector3f(temp_value[1] - temp_value[0],
-                                                       temp_value[3] - temp_value[2],
-                                                       temp_value[4]));
+                fx_fy_ti_.emplace_back(Vec3(temp_value[1] - temp_value[0],
+                                            temp_value[3] - temp_value[2],
+                                            temp_value[4]));
 
                 const float &fx = fx_fy_ti_.back().x();
                 const float &fy = fx_fy_ti_.back().y();
@@ -136,13 +136,13 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
 
         float ft = 0.0f;
         float residual = 0.0f;
-        int num_of_valid_pixel = 0;
+        int32_t num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
         uint32_t idx = 0;
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
-                Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
+                Vec2 affined_dcol_drow = A * Vec2(dcol, drow);
                 float row_j = affined_dcol_drow.y() + cur_point.y();
                 float col_j = affined_dcol_drow.x() + cur_point.x();
 
@@ -173,9 +173,9 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
 
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * z = b, update cur_points.
-        Eigen::Matrix<float, 6, 1> z = H.ldlt().solve(b);
-        Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
+        // Solve H * z = b, update cur_pixel_uv.
+        Vec6 z = H.ldlt().solve(b);
+        Vec2 v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
@@ -209,13 +209,12 @@ void OpticalFlowKlt::TrackOneFeatureInverse(const Image &ref_image,
 
 void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
                                            const Image &cur_image,
-                                           const Eigen::Vector2f &ref_point,
-                                           Eigen::Vector2f &cur_point,
+                                           const Vec2 &ref_point,
+                                           Vec2 &cur_point,
                                            uint8_t &status) {
-    Eigen::Matrix<float, 6, 6> H;
-    Eigen::Matrix<float, 6, 1> b;
-
-    Eigen::Matrix2f A = Eigen::Matrix2f::Identity();    /* Affine trasform matrix. */
+    Mat6 H;
+    Vec6 b;
+    Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
 
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         H.setZero();
@@ -227,7 +226,7 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
         float temp_value[6] = { 0 };
 
         float residual = 0.0f;
-        int num_of_valid_pixel = 0;
+        int32_t num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
@@ -235,7 +234,7 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
                 float row_i = static_cast<float>(drow) + ref_point.y();
                 float col_i = static_cast<float>(dcol) + ref_point.x();
 
-                Eigen::Vector2f affined_dcol_drow = A * Eigen::Vector2f(dcol, drow);
+                Vec2 affined_dcol_drow = A * Vec2(dcol, drow);
                 float row_j = affined_dcol_drow.y() + cur_point.y();
                 float col_j = affined_dcol_drow.x() + cur_point.x();
 
@@ -305,9 +304,9 @@ void OpticalFlowKlt::TrackOneFeatureDirect(const Image &ref_image,
 
         residual /= static_cast<float>(num_of_valid_pixel);
 
-        // Solve H * z = b, update cur_points.
-        Eigen::Matrix<float, 6, 1> z = H.ldlt().solve(b);
-        Eigen::Vector2f v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
+        // Solve H * z = b, update cur_pixel_uv.
+        Vec6 z = H.ldlt().solve(b);
+        Vec2 v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);

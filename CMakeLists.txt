@@ -24,10 +24,25 @@ if ( NOT TARGET lib_optical_flow_tracker )
     add_subdirectory( src/optical_flow_tracker ${PROJECT_SOURCE_DIR}/build/lib_optical_flow_tracker )
 endif()
 
+# Add direct method tracker.
+if ( NOT TARGET lib_direct_method_tracker )
+    add_subdirectory( src/direct_method_tracker ${PROJECT_SOURCE_DIR}/build/lib_direct_method_tracker )
+endif()
+
+# Create executable target to test optical flow.
 add_executable( test_optical_flow
     test/test_optical_flow.cpp
 )
 target_link_libraries( test_optical_flow
     ${OpenCV_LIBS}
     lib_optical_flow_tracker
+)
+
+# Create executable target to test direct method.
+add_executable( test_direct_method
+    test/test_direct_method.cpp
+)
+target_link_libraries( test_direct_method
+    ${OpenCV_LIBS}
+    lib_direct_method_tracker
 )

@@ -37,19 +37,20 @@ public:
 
     bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                             const ImagePyramid &cur_pyramid,
-                            const std::vector<Eigen::Vector2f> &ref_points,
-                            std::vector<Eigen::Vector2f> &cur_points,
+                            const std::vector<Vec2> &ref_pixel_uv,
+                            std::vector<Vec2> &cur_pixel_uv,
                             std::vector<uint8_t> &status);
 
+    OpticalFlowOptions &options() { return options_; }
+
+private:
     virtual bool TrackSingleLevel(const Image &ref_image,
                                   const Image &cur_image,
-                                  const std::vector<Eigen::Vector2f> &ref_points,
-                                  std::vector<Eigen::Vector2f> &cur_points,
+                                  const std::vector<Vec2> &ref_pixel_uv,
+                                  std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) = 0;
 
     virtual bool PrepareForTracking() = 0;
-
-    OpticalFlowOptions &options() { return options_; }
 
 private:
     OpticalFlowOptions options_;
