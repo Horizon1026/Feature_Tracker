@@ -28,26 +28,24 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     PrepareForTracking();
 
     // Set predict and reference with scale.
-    std::vector<Vec2> scaled_ref_points;
-    scaled_ref_points.reserve(ref_pixel_uv.size());
-
-    const int32_t scale = (2 << (ref_pyramid.level() - 1)) / 2;
+    scaled_ref_points_.reserve(ref_pixel_uv.size());
+    const float scale = static_cast<float>(1 << (ref_pyramid.level() - 1));
     for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
-        scaled_ref_points.emplace_back(ref_pixel_uv[i] / static_cast<float>(scale));
+        scaled_ref_points_.emplace_back(ref_pixel_uv[i] / scale);
     }
 
     // If sizeof ref_pixel_uv is not equal to cur_pixel_uv, view it as no prediction.
-    if (scaled_ref_points.size() != cur_pixel_uv.size()) {
-        cur_pixel_uv = scaled_ref_points;
+    if (scaled_ref_points_.size() != cur_pixel_uv.size()) {
+        cur_pixel_uv = scaled_ref_points_;
     } else {
         for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
-            cur_pixel_uv[i] /= static_cast<float>(scale);
+            cur_pixel_uv[i] /= scale;
         }
     }
 
     // If sizeof ref_pixel_uv is not equal to status, view it as all features haven't been tracked.
-    if (scaled_ref_points.size() != status.size()) {
-        status.resize(scaled_ref_points.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
+    if (scaled_ref_points_.size() != status.size()) {
+        status.resize(scaled_ref_points_.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
     }
 
     // Track per level.
@@ -55,14 +53,14 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
         const Image &ref_image = ref_pyramid.GetImageConst(level_idx);
         const Image &cur_image = cur_pyramid.GetImageConst(level_idx);
 
-        TrackSingleLevel(ref_image, cur_image, scaled_ref_points, cur_pixel_uv, status);
+        TrackSingleLevel(ref_image, cur_image, scaled_ref_points_, cur_pixel_uv, status);
 
         if (level_idx == 0) {
             break;
         }
 
-        for (uint32_t i = 0; i < scaled_ref_points.size(); ++i) {
-            scaled_ref_points[i] *= 2.0f;
+        for (uint32_t i = 0; i < scaled_ref_points_.size(); ++i) {
+            scaled_ref_points_[i] *= 2.0f;
             cur_pixel_uv[i] *= 2.0f;
         }
     }

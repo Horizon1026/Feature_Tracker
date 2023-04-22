@@ -55,6 +55,9 @@ private:
 private:
     OpticalFlowOptions options_;
 
+    // Scaled reference points pixel position for multi-level tracking.
+    std::vector<Vec2> scaled_ref_points_ = {};
+
 };
 
 }
