@@ -94,7 +94,56 @@ bool DirectMethod::TrackSingleLevel(const Image &ref_image,
                                     std::vector<Vec2> &cur_pixel_uv,
                                     Quat &q_rc,
                                     Vec3 &p_rc) {
-    // TODO:
+    // Track all features together.
+    switch (options().kMethod) {
+        case kInverse:
+        	TrackAllFeaturesInverse(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc);
+            break;
+        case kDirect:
+         	TrackAllFeaturesDirect(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc);
+            break;
+        case kFast:
+		default:
+        	TrackAllFeaturesFast(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc);
+         	break;
+    }
+
+    return true;
+}
+
+
+bool DirectMethod::TrackAllFeaturesInverse(const Image &ref_image,
+                                 		   const Image &cur_image,
+                                 		   const std::array<float, 4> &K,
+                                		   const std::vector<Vec3> &p_c_in_ref,
+                                	 	   const std::vector<Vec2> &ref_pixel_uv,
+                                           std::vector<Vec2> &cur_pixel_uv,
+                                           Quat &q_rc,
+                                           Vec3 &p_rc) {
+
+    return true;
+}
+
+bool DirectMethod::TrackAllFeaturesDirect(const Image &ref_image,
+                                          const Image &cur_image,
+                                          const std::array<float, 4> &K,
+                                          const std::vector<Vec3> &p_c_in_ref,
+                                          const std::vector<Vec2> &ref_pixel_uv,
+                                          std::vector<Vec2> &cur_pixel_uv,
+                                          Quat &q_rc,
+                                          Vec3 &p_rc) {
+
+    return true;
+}
+
+bool DirectMethod::TrackAllFeaturesFast(const Image &ref_image,
+                                        const Image &cur_image,
+                                        const std::array<float, 4> &K,
+                              			const std::vector<Vec3> &p_c_in_ref,
+                              			const std::vector<Vec2> &ref_pixel_uv,
+                              			std::vector<Vec2> &cur_pixel_uv,
+                              			Quat &q_rc,
+                              			Vec3 &p_rc) {
 
     return true;
 }

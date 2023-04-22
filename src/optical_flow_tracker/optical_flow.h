@@ -10,12 +10,12 @@
 namespace FEATURE_TRACKER {
 
 enum OpticalFlowMethod : uint8_t {
-    LK_INVERSE = 0,
-    LK_DIRECT = 1,
-    LK_FAST = 2,
-    KLT_INVERSE = 3,
-    KLT_DIRECT = 4,
-    KLT_FAST = 5,
+    kLkInverse = 0,
+    kLkDirect = 1,
+    kLkFast = 2,
+    kKltInverse = 3,
+    kKltDirect = 4,
+    kKltFast = 5,
 };
 
 struct OpticalFlowOptions {
@@ -25,7 +25,7 @@ struct OpticalFlowOptions {
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 2.0f;
-    OpticalFlowMethod kMethod = LK_FAST;
+    OpticalFlowMethod kMethod = kLkFast;
 };
 
 class OpticalFlow {

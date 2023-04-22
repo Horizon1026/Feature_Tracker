@@ -13,9 +13,9 @@
 namespace FEATURE_TRACKER {
 
 enum DirectMethodMethod : uint8_t {
-    INVERSE = 0,
-    DIRECT = 1,
-    FAST = 2,
+    kInverse = 0,
+    kDirect = 1,
+    kFast = 2,
 };
 
 struct DirectMethodOptions {
@@ -25,7 +25,7 @@ struct DirectMethodOptions {
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
     float kMaxConvergeResidual = 2.0f;
-    DirectMethodMethod kMethod = DIRECT;
+    DirectMethodMethod kMethod = kDirect;
 };
 
 class DirectMethod {
@@ -58,7 +58,6 @@ public:
     DirectMethodOptions &options() { return options_; }
 
 private:
-
     virtual bool TrackSingleLevel(const Image &ref_image,
                                   const Image &cur_image,
                                   const std::array<float, 4> &K,
@@ -67,6 +66,33 @@ private:
                                   std::vector<Vec2> &cur_pixel_uv,
                                   Quat &q_rc,
                                   Vec3 &p_rc);
+
+    bool TrackAllFeaturesInverse(const Image &ref_image,
+                                 const Image &cur_image,
+                                 const std::array<float, 4> &K,
+                                 const std::vector<Vec3> &p_c_in_ref,
+                                 const std::vector<Vec2> &ref_pixel_uv,
+                                 std::vector<Vec2> &cur_pixel_uv,
+                                 Quat &q_rc,
+                                 Vec3 &p_rc);
+
+    bool TrackAllFeaturesDirect(const Image &ref_image,
+                                const Image &cur_image,
+                                const std::array<float, 4> &K,
+                                const std::vector<Vec3> &p_c_in_ref,
+                                const std::vector<Vec2> &ref_pixel_uv,
+                                std::vector<Vec2> &cur_pixel_uv,
+                                Quat &q_rc,
+                                Vec3 &p_rc);
+
+    bool TrackAllFeaturesFast(const Image &ref_image,
+                              const Image &cur_image,
+                              const std::array<float, 4> &K,
+                              const std::vector<Vec3> &p_c_in_ref,
+                              const std::vector<Vec2> &ref_pixel_uv,
+                              std::vector<Vec2> &cur_pixel_uv,
+                              Quat &q_rc,
+                              Vec3 &p_rc);
 
 private:
     DirectMethodOptions options_;

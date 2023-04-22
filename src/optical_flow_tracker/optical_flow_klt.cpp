@@ -10,7 +10,7 @@ namespace {
 
 bool OpticalFlowKlt::PrepareForTracking() {
     // Initial fx_fy_ti_ for fast inverse tracker.
-    if (options().kMethod == KLT_FAST) {
+    if (options().kMethod == kKltFast) {
         const int32_t patch_rows = 2 * options().kPatchRowHalfSize + 1;
         const int32_t patch_cols = 2 * options().kPatchColHalfSize + 1;
         const uint32_t size = patch_rows + patch_cols;
@@ -37,10 +37,10 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
 
         switch (options().kMethod) {
             default:
-            case KLT_INVERSE:
+            case kKltInverse:
                 TrackOneFeatureInverse(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
-            case KLT_DIRECT:
+            case kKltDirect:
                 TrackOneFeatureDirect(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
         }
