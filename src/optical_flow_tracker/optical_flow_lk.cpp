@@ -131,7 +131,7 @@ float OpticalFlowLk::ComputeResidual(const Image &cur_image,
                                      const Vec2 &cur_point,
                                      Vec2 &b) {
     float residual = 0.0f;
-    int num_of_valid_pixel = 0;
+    int32_t num_of_valid_pixel = 0;
 
     float row_j = cur_point.y();
     float col_j = cur_point.x();
@@ -240,7 +240,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
         float temp_value[6] = { 0 };
 
         float residual = 0.0f;
-        int num_of_valid_pixel = 0;
+        int32_t num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
@@ -278,7 +278,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
         // Solve H * v = b, update cur_pixel_uv.
         Vec2 v = H.ldlt().solve(b);
 
-        if (std::isnan(v(0)) || std::isnan(v(1))) {
+        if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
             break;
         }
@@ -319,7 +319,7 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
         float temp_value[6] = { 0 };
 
         float residual = 0.0f;
-        int num_of_valid_pixel = 0;
+        int32_t num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {

@@ -18,52 +18,6 @@
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 
-void test_image() {
-    cv::Mat cv_image;
-    cv_image = cv::imread(test_ref_image_file_name, 0);
-
-    Image image;
-    image.SetImage(cv_image.data, cv_image.rows, cv_image.cols);
-    std::cout << image.rows() << std::endl;
-    std::cout << image.cols() << std::endl;
-
-    float value;
-    uint16_t int_value;
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
-            image.GetPixelValue(i, j, &int_value);
-            image.GetPixelValue(i, j, &value);
-            std::cout << "test image.GetPixelValue is " << int_value << ", " << value << std::endl;
-        }
-    }
-
-#if CONFIG_OPENCV_DRAW
-    cv::Mat show_image(image.rows(), image.cols(), CV_8UC1, image.data());
-    cv::imshow("convert cv_image to image", show_image);
-    cv::waitKey(0);
-#endif
-}
-
-void test_pyramid() {
-    cv::Mat cv_image;
-    cv_image = cv::imread(test_ref_image_file_name, 0);
-
-    ImagePyramid pyramid;
-    pyramid.SetPyramidBuff((uint8_t *)malloc(sizeof(uint8_t) * cv_image.rows * cv_image.cols));
-    pyramid.SetRawImage(cv_image.data, cv_image.rows, cv_image.cols);
-    pyramid.CreateImagePyramid(5);
-
-#if CONFIG_OPENCV_DRAW
-    for (uint32_t i = 0; i < pyramid.level(); ++i) {
-        Image one_level = pyramid.GetImage(i);
-        cv::Mat image(one_level.rows(), one_level.cols(), CV_8UC1, one_level.data());
-        cv::imshow(std::to_string(i), image);
-        cv::waitKey(1);
-    }
-    cv::waitKey(0);
-#endif
-}
-
 float test_lk_multi(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
@@ -240,9 +194,6 @@ int main(int argc, char **argv) {
 #if CONFIG_OPENCV_DRAW
     test_times = 1;
 #endif
-
-    test_image();
-    test_pyramid();
 
     std::thread test_lk([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {
         float cost_time = 0.0f;
