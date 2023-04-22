@@ -22,7 +22,7 @@ struct DirectMethodOptions {
     uint32_t kMaxIteration = 10;
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
-    float kMaxConvergeStep = 1e-2f;
+    float kMaxConvergeStep = 1e-6f;
     float kMaxConvergeResidual = 2.0f;
     DirectMethodMethod kMethod = kDirect;
 };

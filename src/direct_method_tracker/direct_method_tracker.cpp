@@ -48,11 +48,9 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                       Quat &q_rc,
                                       Vec3 &p_rc) {
     if (ref_pixel_uv.empty()) {
-        LogInfo("ref_pixel_uv is empty.");
         return false;
     }
     if (cur_pyramid.level() != ref_pyramid.level()) {
-        LogInfo("cur_pyramid.level() != ref_pyramid.level().");
         return false;
     }
 
@@ -68,7 +66,7 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
         scaled_ref_points_.emplace_back(ref_pixel_uv[i] / scale);
     }
-    std::array<float, 4> scaled_K = {K[0] / scale, K[1] / scale, K[2] / scale, K[3] / scale};
+    std::array<float, 4> scaled_K = { K[0] / scale, K[1] / scale, K[2] / scale, K[3] / scale };
 
     // Track per level.
     for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
