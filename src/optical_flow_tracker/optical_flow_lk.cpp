@@ -225,10 +225,10 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
 }
 
 void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
-                                           const Image &cur_image,
-                                           const Vec2 &ref_point,
-                                           Vec2 &cur_point,
-                                           uint8_t &status) {
+                                    const Image &cur_image,
+                                    const Vec2 &ref_point,
+                                    Vec2 &cur_point,
+                                    uint8_t &status) {
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // H = (A.t * A).inv * A.t
         Mat2 H = Mat2::Zero();
@@ -285,8 +285,9 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
 
         cur_point += v;
 
-        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
-            cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
+        // Check converge status.
+        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() - 1 ||
+            cur_point.y() < 0 || cur_point.y() > cur_image.rows() - 1) {
             status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
             break;
         }
@@ -301,7 +302,7 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
             break;
         }
     }
-}
+    }
 
 void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
                                           const Image &cur_image,
@@ -357,15 +358,16 @@ void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
         // Solve H * v = b, update cur_pixel_uv.
         Vec2 v = H.ldlt().solve(b);
 
-        if (std::isnan(v(0)) || std::isnan(v(1))) {
+        if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
             break;
         }
 
         cur_point += v;
 
-        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
-            cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
+        // Check converge status.
+        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() - 1 ||
+            cur_point.y() < 0 || cur_point.y() > cur_image.rows() - 1) {
             status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
             break;
         }

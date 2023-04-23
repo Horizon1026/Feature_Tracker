@@ -28,11 +28,10 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     PrepareForTracking();
 
     // Set predict and reference with scale.
-    scaled_ref_points_.clear();
-    scaled_ref_points_.reserve(ref_pixel_uv.size());
+    scaled_ref_points_.resize(ref_pixel_uv.size());
     const float scale = static_cast<float>(1 << (ref_pyramid.level() - 1));
     for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
-        scaled_ref_points_.emplace_back(ref_pixel_uv[i] / scale);
+        scaled_ref_points_[i] = ref_pixel_uv[i] / scale;
     }
 
     // If sizeof ref_pixel_uv is not equal to cur_pixel_uv, view it as no prediction.

@@ -88,7 +88,8 @@ void TestDirectMethod() {
 
         // Construct direct method tracker.
         FEATURE_TRACKER::DirectMethod solver;
-        solver.TrackMultipleLevel(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur);
+        std::vector<uint8_t> status;
+        solver.TrackMultipleLevel(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur, status);
 
         // Show result.
         LogInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
@@ -96,6 +97,9 @@ void TestDirectMethod() {
         cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
         cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
         for (unsigned long i = 0; i < cv_ref_corners.size(); i++) {
+            if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
+                continue;
+            }
             cv::circle(show_cur_image, cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), 2, cv::Scalar(0, 0, 255), 3);
             cv::line(show_cur_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), cv::Scalar(0, 255, 0), 2);
         }

@@ -43,7 +43,8 @@ public:
                             const std::vector<Vec2> &ref_pixel_uv,
                             std::vector<Vec2> &cur_pixel_uv,
                             Quat &cur_q_wc,
-                            Vec3 &cur_p_wc);
+                            Vec3 &cur_p_wc,
+                            std::vector<uint8_t> &status);
 
     bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                             const ImagePyramid &cur_pyramid,
@@ -52,7 +53,8 @@ public:
                             const std::vector<Vec2> &ref_pixel_uv,
                             std::vector<Vec2> &cur_pixel_uv,
                             Quat &q_rc,
-                            Vec3 &p_rc);
+                            Vec3 &p_rc,
+                            std::vector<uint8_t> &status);
 
     DirectMethodOptions &options() { return options_; }
 
@@ -76,13 +78,13 @@ private:
                                  Vec3 &p_rc);
 
     bool TrackAllFeaturesDirect(const Image &ref_image,
-                                const Image &cur_image,
-                                const std::array<float, 4> &K,
-                                const std::vector<Vec3> &p_c_in_ref,
-                                const std::vector<Vec2> &ref_pixel_uv,
-                                std::vector<Vec2> &cur_pixel_uv,
-                                Quat &q_rc,
-                                Vec3 &p_rc);
+                          const Image &cur_image,
+                          const std::array<float, 4> &K,
+                          const std::vector<Vec3> &p_c_in_ref,
+                          const std::vector<Vec2> &ref_pixel_uv,
+                          std::vector<Vec2> &cur_pixel_uv,
+                          Quat &q_rc,
+                          Vec3 &p_rc);
 
     bool TrackAllFeaturesFast(const Image &ref_image,
                               const Image &cur_image,

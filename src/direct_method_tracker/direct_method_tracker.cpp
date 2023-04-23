@@ -14,7 +14,8 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                       const std::vector<Vec2> &ref_pixel_uv,
                                       std::vector<Vec2> &cur_pixel_uv,
                                       Quat &cur_q_wc,
-                                      Vec3 &cur_p_wc) {
+                                      Vec3 &cur_p_wc,
+                                      std::vector<uint8_t> &status) {
     // Lift all points in world frame to reference camera frame.
     if (p_c_in_ref_.capacity() < p_w.size()) {
         p_c_in_ref_.reserve(p_w.size());
@@ -32,7 +33,7 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     q_rc_ = ref_q_cw * cur_q_wc;
     p_rc_ = ref_q_cw * (cur_p_wc - ref_p_wc);
 
-    RETURN_FALSE_IF_FALSE(TrackMultipleLevel(ref_pyramid, cur_pyramid, K, p_c_in_ref_, ref_pixel_uv, cur_pixel_uv, q_rc_, p_rc_));
+    RETURN_FALSE_IF_FALSE(TrackMultipleLevel(ref_pyramid, cur_pyramid, K, p_c_in_ref_, ref_pixel_uv, cur_pixel_uv, q_rc_, p_rc_, status));
 
     cur_q_wc = ref_q_wc * q_rc_;
     cur_p_wc = ref_q_wc * p_rc_ + ref_p_wc;
@@ -46,7 +47,8 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                       const std::vector<Vec2> &ref_pixel_uv,
                                       std::vector<Vec2> &cur_pixel_uv,
                                       Quat &q_rc,
-                                      Vec3 &p_rc) {
+                                      Vec3 &p_rc,
+                                      std::vector<uint8_t> &status) {
     if (ref_pixel_uv.empty()) {
         return false;
     }
@@ -88,6 +90,18 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
         }
     }
 
+    // Check if outside.
+    if (status.size() != ref_pixel_uv.size()) {
+        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED));
+    }
+    const Image &bottom_image = ref_pyramid.GetImageConst(0);
+    for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
+        if (cur_pixel_uv[i].x() < 0 || cur_pixel_uv[i].x() > bottom_image.cols() - 1 ||
+            cur_pixel_uv[i].y() < 0 || cur_pixel_uv[i].y() > bottom_image.rows() - 1) {
+            status[i] = static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::OUTSIDE);
+        }
+    }
+
     return true;
 }
 
@@ -118,10 +132,10 @@ bool DirectMethod::TrackSingleLevel(const Image &ref_image,
 
 
 bool DirectMethod::TrackAllFeaturesInverse(const Image &ref_image,
-                                 		   const Image &cur_image,
-                                 		   const std::array<float, 4> &K,
-                                		   const std::vector<Vec3> &p_c_in_ref,
-                                	 	   const std::vector<Vec2> &ref_pixel_uv,
+                                           const Image &cur_image,
+                                           const std::array<float, 4> &K,
+                                           const std::vector<Vec3> &p_c_in_ref,
+                                           const std::vector<Vec2> &ref_pixel_uv,
                                            std::vector<Vec2> &cur_pixel_uv,
                                            Quat &q_rc,
                                            Vec3 &p_rc) {
