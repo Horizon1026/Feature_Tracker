@@ -21,17 +21,27 @@ public:
     virtual bool PrepareForTracking() override;
 
 private:
-    void TrackOneFeatureInverse(const Image &ref_image,
-                                const Image &cur_image,
-                                const Vec2 &ref_pixel_uv,
-                                Vec2 &cur_pixel_uv,
-                                uint8_t &status);
+    void TrackOneFeature(const Image &ref_image,
+                         const Image &cur_image,
+                         const Vec2 &ref_pixel_uv,
+                         Vec2 &cur_pixel_uv,
+                         uint8_t &status);
 
-    void TrackOneFeatureDirect(const Image &ref_image,
-                               const Image &cur_image,
-                               const Vec2 &ref_pixel_uv,
-                               Vec2 &cur_pixel_uv,
-                               uint8_t &status);
+    void ConstructIncrementalFunction(const Image &ref_image,
+                                      const Image &cur_image,
+                                      const Vec2 &ref_point,
+                                      const Vec2 &cur_point,
+                                      Mat2 &A,
+                                      Mat6 &H,
+                                      Vec6 &b,
+                                      float &average_residual,
+                                      int32_t &num_of_valid_pixel);
+
+    void TrackOneFeatureFast(const Image &ref_image,
+                             const Image &cur_image,
+                             const Vec2 &ref_pixel_uv,
+                             Vec2 &cur_pixel_uv,
+                             uint8_t &status);
 
 private:
     std::vector<Vec3> fx_fy_ti_;

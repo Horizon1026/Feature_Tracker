@@ -27,19 +27,22 @@ private:
                              Vec2 &cur_pixel_uv,
                              uint8_t &status);
 
-    void TrackOneFeatureInverse(const Image &ref_image,
-                                const Image &cur_image,
-                                const Vec2 &ref_pixel_uv,
-                                Vec2 &cur_pixel_uv,
-                                uint8_t &status);
+    void TrackOneFeature(const Image &ref_image,
+                         const Image &cur_image,
+                         const Vec2 &ref_pixel_uv,
+                         Vec2 &cur_pixel_uv,
+                         uint8_t &status);
 
-    void TrackOneFeatureDirect(const Image &ref_image,
-                               const Image &cur_image,
-                               const Vec2 &ref_pixel_uv,
-                               Vec2 &cur_pixel_uv,
-                               uint8_t &status);
+    void ConstructIncrementalFunction(const Image &ref_image,
+                                      const Image &cur_image,
+                                      const Vec2 &ref_point,
+                                      const Vec2 &cur_point,
+                                      Mat2 &H,
+                                      Vec2 &b,
+                                      float &average_residual,
+                                      int32_t &num_of_valid_pixel);
 
-    inline void GetPixelValueFromeBuffer(const Image &image,
+    inline void GetPixelValueFrameBuffer(const Image &image,
                                          const int32_t row_idx_buf,
                                          const int32_t col_idx_buf,
                                          const float row_image,

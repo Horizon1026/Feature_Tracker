@@ -39,10 +39,8 @@ bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
 
         switch (options().kMethod) {
             case kLkInverse:
-                TrackOneFeatureInverse(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
-                break;
             case kLkDirect:
-                TrackOneFeatureDirect(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
+                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
             case kLkFast:
             default:
@@ -82,11 +80,11 @@ void OpticalFlowLk::PrecomputeHessian(const Image &ref_image,
         [ ] [x] [ ]         [ ] [x] [i] [ ]
         When (drow, dcol) is moved in a small patch, the above will move one step too. Then two pixel value is computed repeatedly,
         which is shown above with 'o'.
-        So, pixel_values_in_patch_ is used to avoid repeatedly computation. GetPixelValueFromeBuffer() will priorly get value from
+        So, pixel_values_in_patch_ is used to avoid repeatedly computation. GetPixelValueFrameBuffer() will priorly get value from
         pixel_values_in_patch_, unless the pixel value hasn't been computed.
     */
 
-    float temp_value[5] = { 0 };
+    std::array<float, 5> temp_value = {};
     for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
         for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
             row_i = static_cast<float>(drow) + ref_point.y();
@@ -99,11 +97,11 @@ void OpticalFlowLk::PrecomputeHessian(const Image &ref_image,
                 row_i_buf = drow + options().kPatchRowHalfSize + 1;
                 col_i_buf = dcol + options().kPatchColHalfSize + 1;
 
-                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf, row_i, col_i, temp_value);
-                GetPixelValueFromeBuffer(ref_image, row_i_buf + 1, col_i_buf, row_i + 1.0f, col_i, temp_value + 1);
-                GetPixelValueFromeBuffer(ref_image, row_i_buf - 1, col_i_buf, row_i - 1.0f, col_i, temp_value + 2);
-                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf + 1, row_i, col_i + 1.0f, temp_value + 3);
-                GetPixelValueFromeBuffer(ref_image, row_i_buf, col_i_buf - 1, row_i, col_i - 1.0f, temp_value + 4);
+                GetPixelValueFrameBuffer(ref_image, row_i_buf, col_i_buf, row_i, col_i, &temp_value[0]);
+                GetPixelValueFrameBuffer(ref_image, row_i_buf + 1, col_i_buf, row_i + 1.0f, col_i, &temp_value[1]);
+                GetPixelValueFrameBuffer(ref_image, row_i_buf - 1, col_i_buf, row_i - 1.0f, col_i, &temp_value[2]);
+                GetPixelValueFrameBuffer(ref_image, row_i_buf, col_i_buf + 1, row_i, col_i + 1.0f, &temp_value[3]);
+                GetPixelValueFrameBuffer(ref_image, row_i_buf, col_i_buf - 1, row_i, col_i - 1.0f, &temp_value[4]);
 
                 one_fx_fy_ti(0) = temp_value[3] - temp_value[4];
                 one_fx_fy_ti(1) = temp_value[1] - temp_value[2];
@@ -195,10 +193,10 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
         b.setZero();
 
         // Compute b and residual.
-        float residual = ComputeResidual(cur_image, cur_point, b);
+        const float residual = ComputeResidual(cur_image, cur_point, b);
 
         // Solve H * v = b, update cur_pixel_uv.
-        Vec2 v = H.ldlt().solve(b);
+        const Vec2 v = H.ldlt().solve(b);
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
@@ -224,65 +222,104 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
     }
 }
 
-void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
+void OpticalFlowLk::ConstructIncrementalFunction(const Image &ref_image,
+                                                 const Image &cur_image,
+                                                 const Vec2 &ref_point,
+                                                 const Vec2 &cur_point,
+                                                 Mat2 &H,
+                                                 Vec2 &b,
+                                                 float &average_residual,
+                                                 int32_t &num_of_valid_pixel) {
+    std::array<float, 6> temp_value = {};
+
+    if (options().kMethod == kLkInverse) {
+        // For inverse optical flow, use reference image to compute gradient.
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+                const float row_i = static_cast<float>(drow) + ref_point.y();
+                const float col_i = static_cast<float>(dcol) + ref_point.x();
+                const float row_j = static_cast<float>(drow) + cur_point.y();
+                const float col_j = static_cast<float>(dcol) + cur_point.x();
+                // Compute pixel gradient
+                if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) &&
+                    ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
+                    ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) &&
+                    ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
+                    ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
+                    cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
+                    const float fx = temp_value[1] - temp_value[0];
+                    const float fy = temp_value[3] - temp_value[2];
+                    const float ft = temp_value[5] - temp_value[4];
+
+                    H(0, 0) += fx * fx;
+                    H(1, 1) += fy * fy;
+                    H(0, 1) += fx * fy;
+
+                    b(0) -= fx * ft;
+                    b(1) -= fy * ft;
+
+                    average_residual += std::fabs(ft);
+                    ++num_of_valid_pixel;
+                }
+            }
+        }
+    } else {
+        // For direct optical flow, use current image to compute gradient.
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+                const float row_i = static_cast<float>(drow) + ref_point.y();
+                const float col_i = static_cast<float>(dcol) + ref_point.x();
+                const float row_j = static_cast<float>(drow) + cur_point.y();
+                const float col_j = static_cast<float>(dcol) + cur_point.x();
+                // Compute pixel gradient
+                if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) &&
+                    cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
+                    cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) &&
+                    cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
+                    ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
+                    cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
+                    const float fx = temp_value[1] - temp_value[0];
+                    const float fy = temp_value[3] - temp_value[2];
+                    const float ft = temp_value[5] - temp_value[4];
+
+                    H(0, 0) += fx * fx;
+                    H(1, 1) += fy * fy;
+                    H(0, 1) += fx * fy;
+
+                    b(0) -= fx * ft;
+                    b(1) -= fy * ft;
+
+                    average_residual += std::fabs(ft);
+                    ++num_of_valid_pixel;
+                }
+            }
+        }
+    }
+    H(1, 0) = H(0, 1);
+    average_residual /= static_cast<float>(num_of_valid_pixel);
+}
+
+void OpticalFlowLk::TrackOneFeature(const Image &ref_image,
                                     const Image &cur_image,
                                     const Vec2 &ref_point,
                                     Vec2 &cur_point,
                                     uint8_t &status) {
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
-        // H = (A.t * A).inv * A.t
+        // Compute each pixel in the patch, create H * v = b
         Mat2 H = Mat2::Zero();
         Vec2 b = Vec2::Zero();
-
-        float fx = 0.0f;
-        float fy = 0.0f;
-        float ft = 0.0f;
-        float temp_value[6] = { 0 };
-
-        float residual = 0.0f;
+        float average_residual = 0.0f;
         int32_t num_of_valid_pixel = 0;
+        ConstructIncrementalFunction(ref_image, cur_image, ref_point, cur_point, H, b, average_residual, num_of_valid_pixel);
 
-        // Compute each pixel in the patch, create H * v = b
-        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
-            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
-                float row_i = static_cast<float>(drow) + ref_point.y();
-                float col_i = static_cast<float>(dcol) + ref_point.x();
-                float row_j = static_cast<float>(drow) + cur_point.y();
-                float col_j = static_cast<float>(dcol) + cur_point.x();
-                // Compute pixel gradient
-                if (ref_image.GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
-                    ref_image.GetPixelValue(row_i, col_i + 1.0f, temp_value + 1) &&
-                    ref_image.GetPixelValue(row_i - 1.0f, col_i, temp_value + 2) &&
-                    ref_image.GetPixelValue(row_i + 1.0f, col_i, temp_value + 3) &&
-                    ref_image.GetPixelValue(row_i, col_i, temp_value + 4) &&
-                    cur_image.GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx = temp_value[1] - temp_value[0];
-                    fy = temp_value[3] - temp_value[2];
-                    ft = temp_value[5] - temp_value[4];
-
-                    H(0, 0) += fx * fx;
-                    H(1, 1) += fy * fy;
-                    H(0, 1) += fx * fy;
-
-                    b(0) -= fx * ft;
-                    b(1) -= fy * ft;
-
-                    residual += std::fabs(ft);
-                    ++num_of_valid_pixel;
-                }
-            }
-        }
-        H(1, 0) = H(0, 1);
-        residual /= static_cast<float>(num_of_valid_pixel);
-
-        // Solve H * v = b, update cur_pixel_uv.
+        // Solve H * v = b.
         Vec2 v = H.ldlt().solve(b);
-
         if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
             break;
         }
 
+        // Update cur_pixel_uv.
         cur_point += v;
 
         // Check converge status.
@@ -291,93 +328,11 @@ void OpticalFlowLk::TrackOneFeatureInverse(const Image &ref_image,
             status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
             break;
         }
-
         if (v.squaredNorm() < options().kMaxConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }
-
-        if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
-            break;
-        }
-    }
-    }
-
-void OpticalFlowLk::TrackOneFeatureDirect(const Image &ref_image,
-                                          const Image &cur_image,
-                                          const Vec2 &ref_point,
-                                          Vec2 &cur_point,
-                                          uint8_t &status) {
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
-        // H = (A.t * A).inv * A.t
-        Mat2 H = Mat2::Zero();
-        Vec2 b = Vec2::Zero();
-
-        float fx = 0.0f;
-        float fy = 0.0f;
-        float ft = 0.0f;
-        float temp_value[6] = { 0 };
-
-        float residual = 0.0f;
-        int32_t num_of_valid_pixel = 0;
-
-        // Compute each pixel in the patch, create H * v = b
-        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
-            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
-                float row_i = static_cast<float>(drow) + ref_point.y();
-                float col_i = static_cast<float>(dcol) + ref_point.x();
-                float row_j = static_cast<float>(drow) + cur_point.y();
-                float col_j = static_cast<float>(dcol) + cur_point.x();
-                // Compute pixel gradient
-                if (cur_image.GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
-                    cur_image.GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
-                    cur_image.GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
-                    cur_image.GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
-                    ref_image.GetPixelValue(row_i, col_i, temp_value + 4) &&
-                    cur_image.GetPixelValue(row_j, col_j, temp_value + 5)) {
-                    fx = temp_value[1] - temp_value[0];
-                    fy = temp_value[3] - temp_value[2];
-                    ft = temp_value[5] - temp_value[4];
-
-                    H(0, 0) += fx * fx;
-                    H(1, 1) += fy * fy;
-                    H(0, 1) += fx * fy;
-
-                    b(0) -= fx * ft;
-                    b(1) -= fy * ft;
-
-                    residual += std::fabs(ft);
-                    ++num_of_valid_pixel;
-                }
-            }
-        }
-        H(1, 0) = H(0, 1);
-        residual /= static_cast<float>(num_of_valid_pixel);
-
-        // Solve H * v = b, update cur_pixel_uv.
-        Vec2 v = H.ldlt().solve(b);
-
-        if (Eigen::isnan(v.array()).any()) {
-            status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
-            break;
-        }
-
-        cur_point += v;
-
-        // Check converge status.
-        if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() - 1 ||
-            cur_point.y() < 0 || cur_point.y() > cur_image.rows() - 1) {
-            status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
-            break;
-        }
-
-        if (v.squaredNorm() < options().kMaxConvergeStep) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
-            break;
-        }
-
-        if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
+        if (average_residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
             status = static_cast<uint8_t>(TrackStatus::TRACKED);
             break;
         }
