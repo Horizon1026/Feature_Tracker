@@ -183,7 +183,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const Image &ref_image,
             camera.LiftToImagePlane(cur_norm_xy, cur_pixel_uv[i]);
 
             // Compute gradient from pixel to xi.
-            Mat26 jacobian_pixel_xi;
+            Mat2x6 jacobian_pixel_xi;
             jacobian_pixel_xi << fx * p_r_z_inv,
                                  0,
                                  -fx * p_r_x * p_r_z2_inv,
