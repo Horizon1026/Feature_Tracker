@@ -2,6 +2,7 @@
 #define _DESCRIPTOR_MATCHER_H_
 
 #include "datatype_basic.h"
+#include "math_kinematics.h"
 
 namespace FEATURE_TRACKER {
 
@@ -55,7 +56,7 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
     const int32_t max_i = descriptors_ref.size();
     const int32_t max_j = descriptors_cur.size();
     for (int32_t i = 0; i < max_i; ++i) {
-        int32_t min_distance = 2147483647;
+        int32_t min_distance = kMaxInt32;
         for (int32_t j = 0; j < max_j; ++j) {
             int32_t distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
             if (distance < min_distance) {
@@ -85,11 +86,11 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     // For each descriptor in ref, find best pair in cur.
     const uint32_t max_i = descriptors_ref.size();
     const uint32_t max_j = descriptors_cur.size();
-    int32_t min_distance = 2147483647;
     for (uint32_t i = 0; i < max_i; ++i) {
+        int32_t min_distance = kMaxInt32;
         for (uint32_t j = 0; j < max_j; ++j) {
-            if (std::fabs(pixel_uv_ref[i].x() - pixel_uv_cur[i].x()) > options_.kMaxValidSquareDistance ||
-                std::fabs(pixel_uv_ref[i].y() - pixel_uv_cur[i].y()) > options_.kMaxValidSquareDistance) {
+            if (std::fabs(pixel_uv_ref[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
+                std::fabs(pixel_uv_ref[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
                 continue;
             }
 

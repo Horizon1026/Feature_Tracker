@@ -24,7 +24,7 @@ public:
     virtual int32_t ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref,
                                     const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
         if (descriptor_ref.empty() || descriptor_cur.empty()) {
-            return 2147483647;
+            return kMaxInt32;
         }
 
         int32_t distance = 0;
@@ -72,7 +72,7 @@ void TestFeaturePointMatcher() {
 
     // Match features with descriptors.
     BriefMatcher matcher;
-    matcher.options().kMaxValidSquareDistance = 300;
+    matcher.options().kMaxValidSquareDistance = 50;
 
     std::vector<int32_t> pairs;
     matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, pairs);
