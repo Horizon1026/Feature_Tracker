@@ -7,7 +7,7 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "log_api.h"
+#include "log_report.h"
 
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"

@@ -1,7 +1,7 @@
 #include "direct_method_tracker.h"
 #include "camera_basic.h"
 #include "slam_operations.h"
-#include "log_api.h"
+#include "log_report.h"
 
 namespace FEATURE_TRACKER {
 

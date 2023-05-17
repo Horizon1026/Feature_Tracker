@@ -5,7 +5,7 @@
 #include <ctime>
 #include <thread>
 
-#include "log_api.h"
+#include "log_report.h"
 #include "feature_point_detector.h"
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
@@ -38,7 +38,7 @@ public:
 };
 
 void TestFeaturePointMatcher() {
-    LogInfo(YELLOW ">> Test Feature Point Matcher." RESET_COLOR);
+    ReportInfo(YELLOW ">> Test Feature Point Matcher." RESET_COLOR);
 
     // Load images.
     cv::Mat cv_ref_image, cv_cur_image;
@@ -47,7 +47,7 @@ void TestFeaturePointMatcher() {
 
     Image ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
     Image cur_image(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
-    LogInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
+    ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector detector;
@@ -58,7 +58,7 @@ void TestFeaturePointMatcher() {
     std::vector<Vec2> ref_features, cur_features;
     detector.DetectGoodFeatures(ref_image, 100, ref_features);
     detector.DetectGoodFeatures(cur_image, 100, cur_features);
-    LogInfo("Detect features in two images.");
+    ReportInfo("Detect features in two images.");
 
     // Compute descriptors for these features.
     FEATURE_DETECTOR::BriefDescriptor descriptor;
@@ -68,7 +68,7 @@ void TestFeaturePointMatcher() {
     std::vector<FEATURE_DETECTOR::BriefType> ref_desp, cur_desp;
     descriptor.Compute(ref_image, ref_features, ref_desp);
     descriptor.Compute(cur_image, cur_features, cur_desp);
-    LogInfo("Compute descriptor for all features in ref and cur image.");
+    ReportInfo("Compute descriptor for all features in ref and cur image.");
 
     // Match features with descriptors.
     BriefMatcher matcher;
@@ -76,7 +76,7 @@ void TestFeaturePointMatcher() {
 
     std::vector<int32_t> pairs;
     matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, pairs);
-    LogInfo("Match features by descriptors.");
+    ReportInfo("Match features by descriptors.");
 
     // Show match result.
     cv::Mat merged_image(cv_cur_image.rows, cv_cur_image.cols * 2, CV_8UC1);

@@ -7,7 +7,7 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "log_api.h"
+#include "log_report.h"
 #include "direct_method_tracker.h"
 
 #define FEATURES_TO_TRACK (200)
@@ -92,7 +92,7 @@ void TestDirectMethod() {
         solver.TrackMultipleLevel(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur, status);
 
         // Show result.
-        LogInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
+        ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
 
         cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
         cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
@@ -114,7 +114,7 @@ void TestDirectMethod() {
 
 int main(int argc, char **argv) {
 
-    LogInfo(YELLOW ">> Test direct method for all images." RESET_COLOR);
+    ReportInfo(YELLOW ">> Test direct method for all images." RESET_COLOR);
     TestDirectMethod();
 
     return 0;
