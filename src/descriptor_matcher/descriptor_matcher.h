@@ -24,7 +24,7 @@ public:
 
     bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
                      const std::vector<DescriptorType> &descriptors_cur,
-                     const std::vector<Vec2> &pixel_uv_ref,
+                     const std::vector<Vec2> &pixel_uv_pred,
                      const std::vector<Vec2> &pixel_uv_cur,
                      std::vector<int32_t> &index_pairs_in_cur);
 
@@ -72,7 +72,7 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
 template <typename DescriptorType>
 bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
                                                     const std::vector<DescriptorType> &descriptors_cur,
-                                                    const std::vector<Vec2> &pixel_uv_ref,
+                                                    const std::vector<Vec2> &pixel_uv_pred,
                                                     const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
     if (descriptors_cur.empty()) {
@@ -89,15 +89,19 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     for (uint32_t i = 0; i < max_i; ++i) {
         int32_t min_distance = kMaxInt32;
         for (uint32_t j = 0; j < max_j; ++j) {
-            if (std::fabs(pixel_uv_ref[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
-                std::fabs(pixel_uv_ref[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
+            if (std::fabs(pixel_uv_pred[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
+                std::fabs(pixel_uv_pred[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
                 continue;
             }
 
-            int32_t distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
+            const int32_t distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
             if (distance < min_distance) {
                 min_distance = distance;
                 index_pairs_in_cur[i] = j;
+            }
+
+            if (distance == 0) {
+                break;
             }
         }
     }
