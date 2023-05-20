@@ -4,7 +4,7 @@ Intergration of some simple sparse feature track method.
 # Components
 - [x] Optical flow tracker
 - [x] Direct method tracker
-- [ ] Descripter matcher
+- [x] Descripter matcher
 
 # Dependence
 Slam_Utility, OpenCV4(only for test)
