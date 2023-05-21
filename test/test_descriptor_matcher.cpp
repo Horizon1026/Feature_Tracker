@@ -1,9 +1,10 @@
 #include "iostream"
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <ctime>
-#include <thread>
+#include "cstdint"
+#include "string"
+#include "vector"
+#include "ctime"
+#include "thread"
+#include "random"
 
 #include "log_report.h"
 #include "feature_point_detector.h"
@@ -56,8 +57,8 @@ void TestFeaturePointMatcher() {
     detector.options().kMinFeatureDistance = 20;
 
     std::vector<Vec2> ref_features, cur_features;
-    detector.DetectGoodFeatures(ref_image, 100, ref_features);
-    detector.DetectGoodFeatures(cur_image, 100, cur_features);
+    detector.DetectGoodFeatures(ref_image, 120, ref_features);
+    detector.DetectGoodFeatures(cur_image, 120, cur_features);
     ReportInfo("Detect features in two images.");
 
     // Compute descriptors for these features.
@@ -73,10 +74,17 @@ void TestFeaturePointMatcher() {
     // Match features with descriptors.
     BriefMatcher matcher;
     matcher.options().kMaxValidSquareDistance = 50;
+    matcher.options().kMaxValidDescriptorDistance = 60;
 
-    std::vector<int32_t> pairs;
-    matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, pairs);
-    ReportInfo("Match features by descriptors.");
+    std::vector<Vec2> matched_cur_features;
+    std::vector<uint8_t> status;
+    const bool res = matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, matched_cur_features, status);
+
+    int32_t cnt = 0;
+    for (uint32_t i = 0; i < status.size(); ++i) {
+        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED);
+    }
+    ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
     cv::Mat merged_image(cv_cur_image.rows, cv_cur_image.cols * 2, CV_8UC1);
@@ -92,6 +100,15 @@ void TestFeaturePointMatcher() {
     // Construct image to show.
     cv::Mat show_image(merged_image.rows, merged_image.cols, CV_8UC3);
     cv::cvtColor(merged_image, show_image, cv::COLOR_GRAY2BGR);
+    // [ALL] Draw pairs.
+    for (uint32_t i = 0; i < matched_cur_features.size(); ++i) {
+        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
+            continue;
+        }
+        cv::line(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()),
+                 cv::Point2f(matched_cur_features[i].x() + cv_cur_image.cols, matched_cur_features[i].y()),
+                 cv::Scalar(std::rand() % 256, std::rand() % 256, std::rand() % 256), 1);
+    }
     // [left] Draw reference points.
     for (uint32_t i = 0; i < ref_features.size(); ++i) {
         cv::circle(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()), 1, cv::Scalar(0, 0, 255), 3);
@@ -99,15 +116,6 @@ void TestFeaturePointMatcher() {
     // [right] Draw result points.
     for (uint32_t i = 0; i < cur_features.size(); ++i) {
         cv::circle(show_image, cv::Point2f(cur_features[i].x() + cv_cur_image.cols, cur_features[i].y()), 1, cv::Scalar(255, 255, 0), 3);
-    }
-    // [ALL] Draw pairs.
-    for (uint32_t i = 0; i < pairs.size(); ++i) {
-        if (pairs[i] < 0) {
-            continue;
-        }
-        cv::line(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()),
-                 cv::Point2f(cur_features[pairs[i]].x() + cv_cur_image.cols, cur_features[pairs[i]].y()),
-                 cv::Scalar(255, 0, 0), 1);
     }
 
     cv::imshow("Features matched by Brief descriptor", show_image);
