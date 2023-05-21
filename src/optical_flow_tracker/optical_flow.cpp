@@ -21,7 +21,7 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
     // If sizeof ref_pixel_uv is not equal to status, view it as all features haven't been tracked.
     if (ref_pixel_uv.size() != status.size()) {
-        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
+        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
 
     // Prepare for tracking.
@@ -45,7 +45,7 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
     // If sizeof ref_pixel_uv is not equal to status, view it as all features haven't been tracked.
     if (scaled_ref_points_.size() != status.size()) {
-        status.resize(scaled_ref_points_.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
+        status.resize(scaled_ref_points_.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
 
     // Track per level.

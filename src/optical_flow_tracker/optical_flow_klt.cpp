@@ -31,7 +31,7 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
     uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
-        if (status[feature_id] > static_cast<uint8_t>(TrackStatus::TRACKED)) {
+        if (status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked)) {
             continue;
         }
 
@@ -46,8 +46,8 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
                 break;
         }
 
-        if (status[feature_id] == static_cast<uint8_t>(TrackStatus::NOT_TRACKED)) {
-            status[feature_id] = static_cast<uint8_t>(TrackStatus::LARGE_RESIDUAL);
+        if (status[feature_id] == static_cast<uint8_t>(TrackStatus::kNotTracked)) {
+            status[feature_id] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
         }
     }
 
@@ -179,7 +179,7 @@ void OpticalFlowKlt::TrackOneFeatureFast(const Image &ref_image,
         Vec2 v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
-            status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
@@ -192,17 +192,17 @@ void OpticalFlowKlt::TrackOneFeatureFast(const Image &ref_image,
 
         if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
             cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
-            status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
+            status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
 
         if (v.squaredNorm() < options().kMaxConvergeStep) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
 
         if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
     }
@@ -229,7 +229,7 @@ void OpticalFlowKlt::TrackOneFeature(const Image &ref_image,
         const Vec2 v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {
-            status = static_cast<uint8_t>(TrackStatus::NUM_ERROR);
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
@@ -244,15 +244,15 @@ void OpticalFlowKlt::TrackOneFeature(const Image &ref_image,
         // Check converge status.
         if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() - 1 ||
             cur_point.y() < 0 || cur_point.y() > cur_image.rows() - 1) {
-            status = static_cast<uint8_t>(TrackStatus::OUTSIDE);
+            status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
         if (v.squaredNorm() < options().kMaxConvergeStep) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
         if (average_residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
-            status = static_cast<uint8_t>(TrackStatus::TRACKED);
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
     }

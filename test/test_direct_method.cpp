@@ -97,7 +97,7 @@ void TestDirectMethod() {
         cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
         cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
         for (unsigned long i = 0; i < cv_ref_corners.size(); i++) {
-            if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
+            if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
                 continue;
             }
             cv::circle(show_cur_image, cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), 2, cv::Scalar(0, 0, 255), 3);

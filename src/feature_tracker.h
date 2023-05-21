@@ -6,11 +6,11 @@
 namespace FEATURE_TRACKER {
 
 enum class TrackStatus : uint8_t {
-    NOT_TRACKED = 0,
-    TRACKED = 1,
-    OUTSIDE = 2,
-    LARGE_RESIDUAL = 3,
-    NUM_ERROR = 4,
+    kNotTracked = 0,
+    kTracked = 1,
+    kOutside = 2,
+    kLargeResidual = 3,
+    kNumericError = 4,
 };
 
 }

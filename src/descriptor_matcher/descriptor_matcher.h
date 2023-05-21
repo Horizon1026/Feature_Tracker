@@ -159,16 +159,16 @@ bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std:
                                                                       std::vector<Vec2> &matched_pixel_uv_cur,
                                                                       std::vector<uint8_t> &status) {
     if (pixel_uv_cur.size() != status.size()) {
-        status.resize(pixel_uv_cur.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
+        status.resize(pixel_uv_cur.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
     matched_pixel_uv_cur = pixel_uv_cur;
 
     for (uint32_t i = 0; i < matched_pixel_uv_cur.size(); ++i) {
         if (index_pairs_in_cur[i] > 0) {
             matched_pixel_uv_cur[i] = pixel_uv_cur[index_pairs_in_cur[i]];
-            status[i] = static_cast<uint8_t>(TrackStatus::TRACKED);
+            status[i] = static_cast<uint8_t>(TrackStatus::kTracked);
         } else {
-            status[i] = static_cast<uint8_t>(TrackStatus::LARGE_RESIDUAL);
+            status[i] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
         }
     }
 

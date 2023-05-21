@@ -52,9 +52,9 @@ void TestFeaturePointMatcher() {
 
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector detector;
-    detector.options().kMethod = FEATURE_DETECTOR::FeaturePointDetector::HARRIS;
-    detector.options().kMinValidResponse = 20.0f;
+    detector.options().kMethod = FEATURE_DETECTOR::FeaturePointDetector::kHarris;
     detector.options().kMinFeatureDistance = 20;
+    detector.harris().options().kMinValidResponse = 40.0f;
 
     std::vector<Vec2> ref_features, cur_features;
     detector.DetectGoodFeatures(ref_image, 120, ref_features);
@@ -82,7 +82,7 @@ void TestFeaturePointMatcher() {
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
-        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED);
+        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked);
     }
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
@@ -102,7 +102,7 @@ void TestFeaturePointMatcher() {
     cv::cvtColor(merged_image, show_image, cv::COLOR_GRAY2BGR);
     // [ALL] Draw pairs.
     for (uint32_t i = 0; i < matched_cur_features.size(); ++i) {
-        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::TRACKED)) {
+        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
             continue;
         }
         cv::line(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()),
