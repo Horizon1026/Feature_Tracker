@@ -3,6 +3,7 @@
 
 #include "datatype_basic.h"
 #include "math_kinematics.h"
+#include "feature_tracker.h"
 
 namespace FEATURE_TRACKER {
 
@@ -22,17 +23,35 @@ public:
                     const std::vector<DescriptorType> &descriptors_cur,
                     std::vector<int32_t> &index_pairs_in_cur);
 
+    bool ForceMatch(const std::vector<DescriptorType> &descriptors_ref,
+                    const std::vector<DescriptorType> &descriptors_cur,
+                    const std::vector<Vec2> &pixel_uv_cur,
+                    std::vector<Vec2> &matched_pixel_uv_cur,
+                    std::vector<uint8_t> &status);
+
     bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
                      const std::vector<DescriptorType> &descriptors_cur,
-                     const std::vector<Vec2> &pixel_uv_pred,
+                     const std::vector<Vec2> &pixel_uv_pred_in_cur,
                      const std::vector<Vec2> &pixel_uv_cur,
                      std::vector<int32_t> &index_pairs_in_cur);
+
+    bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
+                     const std::vector<DescriptorType> &descriptors_cur,
+                     const std::vector<Vec2> &pixel_uv_pred_in_cur,
+                     const std::vector<Vec2> &pixel_uv_cur,
+                     std::vector<Vec2> &matched_pixel_uv_cur,
+                     std::vector<uint8_t> &status);
 
     DescriptorMatcherOptions &options() { return options_; }
 
 private:
     virtual int32_t ComputeDistance(const DescriptorType &descriptor_ref,
                                     const DescriptorType &descriptor_cur) = 0;
+
+    bool FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur,
+                                       const std::vector<Vec2> &pixel_uv_cur,
+                                       std::vector<Vec2> &matched_pixel_uv_cur,
+                                       std::vector<uint8_t> &status);
 
 private:
     DescriptorMatcherOptions options_;
@@ -70,9 +89,20 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
 }
 
 template <typename DescriptorType>
+bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorType> &descriptors_ref,
+                                                   const std::vector<DescriptorType> &descriptors_cur,
+                                                   const std::vector<Vec2> &pixel_uv_cur,
+                                                   std::vector<Vec2> &matched_pixel_uv_cur,
+                                                   std::vector<uint8_t> &status) {
+    std::vector<int32_t> index_pairs_in_cur;
+    RETURN_FALSE_IF_FALSE(ForceMatch(descriptors_ref, descriptors_cur, index_pairs_in_cur));
+	return FillMatchedPixelByPairIndices(index_pairs_in_cur, pixel_uv_cur, matched_pixel_uv_cur, status);
+}
+
+template <typename DescriptorType>
 bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
                                                     const std::vector<DescriptorType> &descriptors_cur,
-                                                    const std::vector<Vec2> &pixel_uv_pred,
+                                                    const std::vector<Vec2> &pixel_uv_pred_in_cur,
                                                     const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
     if (descriptors_cur.empty()) {
@@ -89,8 +119,8 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     for (uint32_t i = 0; i < max_i; ++i) {
         int32_t min_distance = kMaxInt32;
         for (uint32_t j = 0; j < max_j; ++j) {
-            if (std::fabs(pixel_uv_pred[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
-                std::fabs(pixel_uv_pred[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
+            if (std::fabs(pixel_uv_pred_in_cur[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
+                std::fabs(pixel_uv_pred_in_cur[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
                 continue;
             }
 
@@ -103,6 +133,39 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
             if (distance == 0) {
                 break;
             }
+        }
+    }
+
+    return true;
+}
+
+template <typename DescriptorType>
+bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<DescriptorType> &descriptors_ref,
+                                                    const std::vector<DescriptorType> &descriptors_cur,
+                                                    const std::vector<Vec2> &pixel_uv_pred_in_cur,
+                                                    const std::vector<Vec2> &pixel_uv_cur,
+                                                    std::vector<Vec2> &matched_pixel_uv_cur,
+                                                    std::vector<uint8_t> &status) {
+    std::vector<int32_t> index_pairs_in_cur;
+    RETURN_FALSE_IF_FALSE(NearbyMatch(descriptors_ref, descriptors_cur, pixel_uv_pred_in_cur, pixel_uv_cur, index_pairs_in_cur));
+	return FillMatchedPixelByPairIndices(index_pairs_in_cur, pixel_uv_cur, matched_pixel_uv_cur, status);
+}
+
+template <typename DescriptorType>
+bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur,
+                                                                      const std::vector<Vec2> &pixel_uv_cur,
+                                                                      std::vector<Vec2> &matched_pixel_uv_cur,
+                                                                      std::vector<uint8_t> &status) {
+    if (pixel_uv_cur.size() != status.size()) {
+        status.resize(pixel_uv_cur.size(), static_cast<uint8_t>(TrackStatus::NOT_TRACKED));
+    }
+    matched_pixel_uv_cur = pixel_uv_cur;
+
+    for (uint32_t i = 0; i < matched_pixel_uv_cur.size(); ++i) {
+        if (index_pairs_in_cur[i] > 0 && status[i] == static_cast<uint8_t>(TrackStatus::NOT_TRACKED)) {
+            matched_pixel_uv_cur[i] = pixel_uv_cur[index_pairs_in_cur[i]];
+        } else {
+            status[i] = static_cast<uint8_t>(TrackStatus::LARGE_RESIDUAL);
         }
     }
 
