@@ -73,7 +73,8 @@ void TestFeaturePointMatcher() {
 
     // Match features with descriptors.
     BriefMatcher matcher;
-    matcher.options().kMaxValidSquareDistance = 50;
+    matcher.options().kMaxValidPredictRowDistance = 50;
+    matcher.options().kMaxValidPredictColDistance = 50;
     matcher.options().kMaxValidDescriptorDistance = 60;
 
     std::vector<Vec2> matched_cur_features;

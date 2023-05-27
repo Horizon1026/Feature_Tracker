@@ -9,7 +9,8 @@
 namespace FEATURE_TRACKER {
 
 struct DescriptorMatcherOptions {
-    int32_t kMaxValidSquareDistance = 40;
+    int32_t kMaxValidPredictRowDistance = 40;
+    int32_t kMaxValidPredictColDistance = 40;
     int32_t kMaxValidDescriptorDistance = 50;
 };
 
@@ -121,8 +122,8 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     for (uint32_t i = 0; i < max_i; ++i) {
         int32_t min_distance = kMaxInt32;
         for (uint32_t j = 0; j < max_j; ++j) {
-            if (std::fabs(pixel_uv_pred_in_cur[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidSquareDistance ||
-                std::fabs(pixel_uv_pred_in_cur[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidSquareDistance) {
+            if (std::fabs(pixel_uv_pred_in_cur[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidPredictColDistance ||
+                std::fabs(pixel_uv_pred_in_cur[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidPredictRowDistance) {
                 continue;
             }
 
