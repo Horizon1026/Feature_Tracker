@@ -7,7 +7,7 @@ Intergration of some simple sparse feature track method.
 - [x] Descripter matcher
 
 # Dependence
-Slam_Utility, OpenCV4(only for test)
+Slam_Utility, Feature_Detector, OpenCV4(only for test)
 
 # Tips
 - 欢迎一起交流学习，不同意商用；
