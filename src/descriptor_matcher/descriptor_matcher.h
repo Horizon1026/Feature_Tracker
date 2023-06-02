@@ -45,7 +45,11 @@ public:
                      std::vector<Vec2> &matched_pixel_uv_cur,
                      std::vector<uint8_t> &status);
 
+    // Reference for member variables.
     DescriptorMatcherOptions &options() { return options_; }
+
+    // Const reference for member variables.
+    const DescriptorMatcherOptions &options() const { return options_; }
 
 private:
     virtual int32_t ComputeDistance(const DescriptorType &descriptor_ref,

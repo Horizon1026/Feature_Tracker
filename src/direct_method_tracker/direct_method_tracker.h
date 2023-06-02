@@ -56,7 +56,11 @@ public:
                             Vec3 &p_rc,
                             std::vector<uint8_t> &status);
 
+    // Reference for member variables.
     DirectMethodOptions &options() { return options_; }
+
+    // Const reference for member variables.
+    const DirectMethodOptions &options() const { return options_; }
 
 private:
     virtual bool TrackSingleLevel(const Image &ref_image,

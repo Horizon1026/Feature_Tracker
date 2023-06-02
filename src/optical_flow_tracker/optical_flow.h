@@ -41,7 +41,11 @@ public:
                             std::vector<Vec2> &cur_pixel_uv,
                             std::vector<uint8_t> &status);
 
+    // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
+
+    // Const reference for member variables.
+    const OpticalFlowOptions &options() const { return options_; }
 
 private:
     virtual bool TrackSingleLevel(const Image &ref_image,
