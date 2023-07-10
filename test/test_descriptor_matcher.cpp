@@ -47,8 +47,8 @@ void TestFeaturePointMatcher() {
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
-    Image ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    Image cur_image(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
+    GrayImage ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    GrayImage cur_image(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.

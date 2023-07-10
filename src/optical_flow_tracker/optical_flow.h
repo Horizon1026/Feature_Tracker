@@ -48,8 +48,8 @@ public:
     const OpticalFlowOptions &options() const { return options_; }
 
 private:
-    virtual bool TrackSingleLevel(const Image &ref_image,
-                                  const Image &cur_image,
+    virtual bool TrackSingleLevel(const GrayImage &ref_image,
+                                  const GrayImage &cur_image,
                                   const std::vector<Vec2> &ref_pixel_uv,
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) = 0;

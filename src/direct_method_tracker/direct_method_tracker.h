@@ -63,8 +63,8 @@ public:
     const DirectMethodOptions &options() const { return options_; }
 
 private:
-    virtual bool TrackSingleLevel(const Image &ref_image,
-                                  const Image &cur_image,
+    virtual bool TrackSingleLevel(const GrayImage &ref_image,
+                                  const GrayImage &cur_image,
                                   const std::array<float, 4> &K,
                                   const std::vector<Vec3> &p_c_in_ref,
                                   const std::vector<Vec2> &ref_pixel_uv,
@@ -72,8 +72,8 @@ private:
                                   Quat &q_rc,
                                   Vec3 &p_rc);
 
-    bool TrackAllFeaturesInverse(const Image &ref_image,
-                                 const Image &cur_image,
+    bool TrackAllFeaturesInverse(const GrayImage &ref_image,
+                                 const GrayImage &cur_image,
                                  const std::array<float, 4> &K,
                                  const std::vector<Vec3> &p_c_in_ref,
                                  const std::vector<Vec2> &ref_pixel_uv,
@@ -81,8 +81,8 @@ private:
                                  Quat &q_rc,
                                  Vec3 &p_rc);
 
-    bool TrackAllFeaturesDirect(const Image &ref_image,
-                          const Image &cur_image,
+    bool TrackAllFeaturesDirect(const GrayImage &ref_image,
+                          const GrayImage &cur_image,
                           const std::array<float, 4> &K,
                           const std::vector<Vec3> &p_c_in_ref,
                           const std::vector<Vec2> &ref_pixel_uv,
@@ -90,8 +90,8 @@ private:
                           Quat &q_rc,
                           Vec3 &p_rc);
 
-    bool TrackAllFeaturesFast(const Image &ref_image,
-                              const Image &cur_image,
+    bool TrackAllFeaturesFast(const GrayImage &ref_image,
+                              const GrayImage &cur_image,
                               const std::array<float, 4> &K,
                               const std::vector<Vec3> &p_c_in_ref,
                               const std::vector<Vec2> &ref_pixel_uv,

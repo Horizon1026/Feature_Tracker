@@ -24,8 +24,8 @@ bool OpticalFlowLk::PrepareForTracking() {
     return true;
 }
 
-bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
-                                     const Image &cur_image,
+bool OpticalFlowLk::TrackSingleLevel(const GrayImage &ref_image,
+                                     const GrayImage &cur_image,
                                      const std::vector<Vec2> &ref_pixel_uv,
                                      std::vector<Vec2> &cur_pixel_uv,
                                      std::vector<uint8_t> &status) {
@@ -56,7 +56,7 @@ bool OpticalFlowLk::TrackSingleLevel(const Image &ref_image,
     return true;
 }
 
-void OpticalFlowLk::PrecomputeHessian(const Image &ref_image,
+void OpticalFlowLk::PrecomputeHessian(const GrayImage &ref_image,
                                       const Vec2 &ref_point,
                                       Mat2 &H) {
     fx_fy_ti_.clear();
@@ -125,7 +125,7 @@ void OpticalFlowLk::PrecomputeHessian(const Image &ref_image,
     H(1, 0) = H(0, 1);
 }
 
-float OpticalFlowLk::ComputeResidual(const Image &cur_image,
+float OpticalFlowLk::ComputeResidual(const GrayImage &cur_image,
                                      const Vec2 &cur_point,
                                      Vec2 &b) {
     float residual = 0.0f;
@@ -176,8 +176,8 @@ float OpticalFlowLk::ComputeResidual(const Image &cur_image,
     return residual;
 }
 
-void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
-                                        const Image &cur_image,
+void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
+                                        const GrayImage &cur_image,
                                         const Vec2 &ref_point,
                                         Vec2 &cur_point,
                                         uint8_t &status) {
@@ -222,8 +222,8 @@ void OpticalFlowLk::TrackOneFeatureFast(const Image &ref_image,
     }
 }
 
-void OpticalFlowLk::ConstructIncrementalFunction(const Image &ref_image,
-                                                 const Image &cur_image,
+void OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                 const GrayImage &cur_image,
                                                  const Vec2 &ref_point,
                                                  const Vec2 &cur_point,
                                                  Mat2 &H,
@@ -299,8 +299,8 @@ void OpticalFlowLk::ConstructIncrementalFunction(const Image &ref_image,
     average_residual /= static_cast<float>(num_of_valid_pixel);
 }
 
-void OpticalFlowLk::TrackOneFeature(const Image &ref_image,
-                                    const Image &cur_image,
+void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
+                                    const GrayImage &cur_image,
                                     const Vec2 &ref_point,
                                     Vec2 &cur_point,
                                     uint8_t &status) {

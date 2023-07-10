@@ -72,8 +72,8 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
     // Track per level.
     for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
-        const Image &ref_image = ref_pyramid.GetImageConst(level_idx);
-        const Image &cur_image = cur_pyramid.GetImageConst(level_idx);
+        const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
+        const GrayImage &cur_image = cur_pyramid.GetImageConst(level_idx);
 
         TrackSingleLevel(ref_image, cur_image, scaled_K, p_c_in_ref, scaled_ref_points_, cur_pixel_uv, q_rc, p_rc);
 
@@ -94,7 +94,7 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     if (status.size() != ref_pixel_uv.size()) {
         status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     }
-    const Image &bottom_image = ref_pyramid.GetImageConst(0);
+    const GrayImage &bottom_image = ref_pyramid.GetImageConst(0);
     for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
         if (cur_pixel_uv[i].x() < 0 || cur_pixel_uv[i].x() > bottom_image.cols() - 1 ||
             cur_pixel_uv[i].y() < 0 || cur_pixel_uv[i].y() > bottom_image.rows() - 1) {
@@ -105,8 +105,8 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     return true;
 }
 
-bool DirectMethod::TrackSingleLevel(const Image &ref_image,
-                                    const Image &cur_image,
+bool DirectMethod::TrackSingleLevel(const GrayImage &ref_image,
+                                    const GrayImage &cur_image,
                                     const std::array<float, 4> &K,
                                     const std::vector<Vec3> &p_c_in_ref,
                                     const std::vector<Vec2> &ref_pixel_uv,
@@ -131,8 +131,8 @@ bool DirectMethod::TrackSingleLevel(const Image &ref_image,
 }
 
 
-bool DirectMethod::TrackAllFeaturesInverse(const Image &ref_image,
-                                           const Image &cur_image,
+bool DirectMethod::TrackAllFeaturesInverse(const GrayImage &ref_image,
+                                           const GrayImage &cur_image,
                                            const std::array<float, 4> &K,
                                            const std::vector<Vec3> &p_c_in_ref,
                                            const std::vector<Vec2> &ref_pixel_uv,
@@ -143,8 +143,8 @@ bool DirectMethod::TrackAllFeaturesInverse(const Image &ref_image,
     return true;
 }
 
-bool DirectMethod::TrackAllFeaturesDirect(const Image &ref_image,
-                                          const Image &cur_image,
+bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
+                                          const GrayImage &cur_image,
                                           const std::array<float, 4> &K,
                                           const std::vector<Vec3> &p_c_in_ref,
                                           const std::vector<Vec2> &ref_pixel_uv,
@@ -245,8 +245,8 @@ bool DirectMethod::TrackAllFeaturesDirect(const Image &ref_image,
     return true;
 }
 
-bool DirectMethod::TrackAllFeaturesFast(const Image &ref_image,
-                                        const Image &cur_image,
+bool DirectMethod::TrackAllFeaturesFast(const GrayImage &ref_image,
+                                        const GrayImage &cur_image,
                                         const std::array<float, 4> &K,
                               			const std::vector<Vec3> &p_c_in_ref,
                               			const std::vector<Vec2> &ref_pixel_uv,

@@ -22,8 +22,8 @@ bool OpticalFlowKlt::PrepareForTracking() {
     return true;
 }
 
-bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
-                                      const Image &cur_image,
+bool OpticalFlowKlt::TrackSingleLevel(const GrayImage &ref_image,
+                                      const GrayImage &cur_image,
                                       const std::vector<Vec2> &ref_pixel_uv,
                                       std::vector<Vec2> &cur_pixel_uv,
                                       std::vector<uint8_t> &status) {
@@ -54,8 +54,8 @@ bool OpticalFlowKlt::TrackSingleLevel(const Image &ref_image,
     return true;
 }
 
-void OpticalFlowKlt::TrackOneFeatureFast(const Image &ref_image,
-                                         const Image &cur_image,
+void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
+                                         const GrayImage &cur_image,
                                          const Vec2 &ref_point,
                                          Vec2 &cur_point,
                                          uint8_t &status) {
@@ -208,8 +208,8 @@ void OpticalFlowKlt::TrackOneFeatureFast(const Image &ref_image,
     }
 }
 
-void OpticalFlowKlt::TrackOneFeature(const Image &ref_image,
-                                     const Image &cur_image,
+void OpticalFlowKlt::TrackOneFeature(const GrayImage &ref_image,
+                                     const GrayImage &cur_image,
                                      const Vec2 &ref_point,
                                      Vec2 &cur_point,
                                      uint8_t &status) {
@@ -258,8 +258,8 @@ void OpticalFlowKlt::TrackOneFeature(const Image &ref_image,
     }
 }
 
-void OpticalFlowKlt::ConstructIncrementalFunction(const Image &ref_image,
-                                                  const Image &cur_image,
+void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                  const GrayImage &cur_image,
                                                   const Vec2 &ref_point,
                                                   const Vec2 &cur_point,
                                                   Mat2 &A,

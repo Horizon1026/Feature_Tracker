@@ -12,8 +12,8 @@ public:
     OpticalFlowLk() : OpticalFlow() {}
     virtual ~OpticalFlowLk() = default;
 
-    virtual bool TrackSingleLevel(const Image &ref_image,
-                                  const Image &cur_image,
+    virtual bool TrackSingleLevel(const GrayImage &ref_image,
+                                  const GrayImage &cur_image,
                                   const std::vector<Vec2> &ref_pixel_uv,
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) override;
@@ -21,20 +21,20 @@ public:
     virtual bool PrepareForTracking() override;
 
 private:
-    void TrackOneFeatureFast(const Image &ref_image,
-                             const Image &cur_image,
+    void TrackOneFeatureFast(const GrayImage &ref_image,
+                             const GrayImage &cur_image,
                              const Vec2 &ref_pixel_uv,
                              Vec2 &cur_pixel_uv,
                              uint8_t &status);
 
-    void TrackOneFeature(const Image &ref_image,
-                         const Image &cur_image,
+    void TrackOneFeature(const GrayImage &ref_image,
+                         const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
                          Vec2 &cur_pixel_uv,
                          uint8_t &status);
 
-    void ConstructIncrementalFunction(const Image &ref_image,
-                                      const Image &cur_image,
+    void ConstructIncrementalFunction(const GrayImage &ref_image,
+                                      const GrayImage &cur_image,
                                       const Vec2 &ref_point,
                                       const Vec2 &cur_point,
                                       Mat2 &H,
@@ -42,7 +42,7 @@ private:
                                       float &average_residual,
                                       int32_t &num_of_valid_pixel);
 
-    inline void GetPixelValueFrameBuffer(const Image &image,
+    inline void GetPixelValueFrameBuffer(const GrayImage &image,
                                          const int32_t row_idx_buf,
                                          const int32_t col_idx_buf,
                                          const float row_image,
@@ -58,11 +58,11 @@ private:
         }
     }
 
-    void PrecomputeHessian(const Image &ref_image,
+    void PrecomputeHessian(const GrayImage &ref_image,
                            const Vec2 &ref_point,
                            Mat2 &H);
 
-    float ComputeResidual(const Image &cur_image,
+    float ComputeResidual(const GrayImage &cur_image,
                           const Vec2 &cur_point,
                           Vec2 &b);
 
