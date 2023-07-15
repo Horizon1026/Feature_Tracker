@@ -17,7 +17,13 @@
 #include "optical_flow_klt.h"
 
 #define DRAW_TRACKING_RESULT (1)
-#define FEATURES_TO_TRACK (200)
+
+namespace {
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 200;
+    constexpr int32_t kHalfPatchSize = 6;
+    constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
+    constexpr int32_t kMaxPyramidLevel = 4;
+}
 
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
@@ -56,7 +62,7 @@ void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
     detector.options().kMinFeatureDistance = 20;
     detector.feature().options().kMinValidResponse = 40.0f;
 
-    detector.DetectGoodFeatures(image, FEATURES_TO_TRACK, pixel_uv);
+    detector.DetectGoodFeatures(image, kMaxNumberOfFeaturesToTrack, pixel_uv);
 }
 
 float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
@@ -139,14 +145,11 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 }
 
 int main(int argc, char **argv) {
-    uint8_t optical_flow_method = 2;
-    int32_t pyramid_level = 4;
-    int32_t half_patch_size = 6;
 
-    float cost_time = TestLkOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
+    float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time << " ms.");
 
-    cost_time = TestKltOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
+    cost_time = TestKltOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("klt.TrackMultipleLevel average cost time " << cost_time << " ms.");
     return 0;
 }
