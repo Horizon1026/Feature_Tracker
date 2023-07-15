@@ -56,7 +56,7 @@ void TestDirectMethod() {
     RgbImage show_ref_image(show_ref_image_buf, ref_image.rows(), ref_image.cols(), true);
     Visualizor::ConvertUint8ToRgb(ref_image.data(), show_ref_image.data(), ref_image.rows() * ref_image.cols());
     for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
-        Visualizor::DrawSolidCircle(show_ref_image, static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
+        Visualizor::DrawSolidCircle(show_ref_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
             3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
     Visualizor::ShowImage("Direct method : Feature before multi tracking", show_ref_image);
@@ -103,11 +103,11 @@ void TestDirectMethod() {
             if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
                 continue;
             }
-            Visualizor::DrawSolidCircle(show_cur_image, static_cast<int32_t>(cur_pixel_uv[i].x()), static_cast<int32_t>(cur_pixel_uv[i].y()),
+            Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
                 3, RgbPixel{.r = 255, .g = 0, .b = 0});
             Visualizor::DrawBressenhanLine(show_cur_image,
-                static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
-                static_cast<int32_t>(cur_pixel_uv[i].x()), static_cast<int32_t>(cur_pixel_uv[i].y()),
+                ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
+                cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
                 RgbPixel{.r = 0, .g = 255, .b = 0});
         }
         Visualizor::ShowImage("Direct method : Feature after multi tracking", show_cur_image);

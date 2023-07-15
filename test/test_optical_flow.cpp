@@ -26,7 +26,7 @@ void DrawReferenceImage(const GrayImage &image, const std::vector<Vec2> &pixel_u
     RgbImage show_ref_image(show_ref_image_buf, image.rows(), image.cols(), true);
     Visualizor::ConvertUint8ToRgb(image.data(), show_ref_image.data(), image.rows() * image.cols());
     for (unsigned long i = 0; i < pixel_uv.size(); i++) {
-        Visualizor::DrawSolidCircle(show_ref_image, static_cast<int32_t>(pixel_uv[i].x()), static_cast<int32_t>(pixel_uv[i].y()),
+        Visualizor::DrawSolidCircle(show_ref_image, pixel_uv[i].x(), pixel_uv[i].y(),
             3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
     Visualizor::ShowImage(title, show_ref_image);
@@ -40,10 +40,10 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
         if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
             continue;
         }
-        Visualizor::DrawSolidCircle(show_cur_image, static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
+        Visualizor::DrawSolidCircle(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
             3, RgbPixel{.r = 255, .g = 0, .b = 0});
-        Visualizor::DrawBressenhanLine(show_cur_image, static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
-            static_cast<int32_t>(cur_pixel_uv[i].x()), static_cast<int32_t>(cur_pixel_uv[i].y()),
+        Visualizor::DrawBressenhanLine(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
+            cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
             RgbPixel{.r = 0, .g = 255, .b = 0});
     }
     Visualizor::ShowImage(title, show_cur_image);

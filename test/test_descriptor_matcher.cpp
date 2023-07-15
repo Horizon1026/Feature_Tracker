@@ -109,21 +109,21 @@ void TestFeaturePointMatcher() {
             continue;
         }
         Visualizor::DrawBressenhanLine(show_image,
-            static_cast<int32_t>(ref_features[i].x()), static_cast<int32_t>(ref_features[i].y()),
-            static_cast<int32_t>(matched_cur_features[i].x() + cur_image.cols()),
-            static_cast<int32_t>(matched_cur_features[i].y()),
+            ref_features[i].x(), ref_features[i].y(),
+            matched_cur_features[i].x() + cur_image.cols(),
+            matched_cur_features[i].y(),
             RgbPixel{.r = static_cast<uint8_t>(std::rand() % 256),
                      .g = static_cast<uint8_t>(std::rand() % 256),
                      .b = static_cast<uint8_t>(std::rand() % 256)});
     }
     // [left] Draw reference points.
     for (uint32_t i = 0; i < ref_features.size(); ++i) {
-        Visualizor::DrawSolidCircle(show_image, static_cast<int32_t>(ref_features[i].x()), static_cast<int32_t>(ref_features[i].y()),
+        Visualizor::DrawSolidCircle(show_image, ref_features[i].x(), ref_features[i].y(),
             3, RgbPixel{.r = 255, .g = 0, .b = 0});
     }
     // [right] Draw result points.
     for (uint32_t i = 0; i < cur_features.size(); ++i) {
-        Visualizor::DrawSolidCircle(show_image, static_cast<int32_t>(cur_features[i].x() + cur_image.cols()), static_cast<int32_t>(cur_features[i].y()),
+        Visualizor::DrawSolidCircle(show_image, cur_features[i].x() + cur_image.cols(), cur_features[i].y(),
             3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
 
