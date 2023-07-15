@@ -12,6 +12,9 @@ set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
 if ( NOT TARGET lib_slam_utility_log )
     add_subdirectory( ${SLAM_UTILITY_PATH}/log ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_log )
 endif()
+if ( NOT TARGET lib_slam_utility_tick_tock )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/tick_tock ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_tick_tock )
+endif()
 if ( NOT TARGET lib_slam_utility_visualize )
     add_subdirectory( ${SLAM_UTILITY_PATH}/visualize ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_visualize )
 endif()
@@ -51,6 +54,7 @@ target_link_libraries( test_optical_flow
     lib_feature_point_detector
     lib_optical_flow_tracker
     lib_slam_utility_log
+    lib_slam_utility_tick_tock
     lib_slam_utility_visualize
 )
 
@@ -61,6 +65,7 @@ add_executable( test_direct_method
 target_link_libraries( test_direct_method
     lib_direct_method_tracker
     lib_slam_utility_log
+    lib_slam_utility_tick_tock
     lib_slam_utility_visualize
 )
 
@@ -73,5 +78,6 @@ target_link_libraries( test_descriptor_matcher
     lib_feature_descriptor
     lib_descriptor_matcher
     lib_slam_utility_log
+    lib_slam_utility_tick_tock
     lib_slam_utility_visualize
 )

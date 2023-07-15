@@ -7,6 +7,7 @@
 
 #include "log_report.h"
 #include "slam_memory.h"
+#include "tick_tock.h"
 #include "visualizor.h"
 
 #include "feature_point_detector.h"
@@ -83,13 +84,11 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     lk.options().kPatchColHalfSize = patch_size;
     lk.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
 
-    clock_t begin, end;
-    begin = clock();
+    TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     lk.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    end = clock();
-    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
+    const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
@@ -124,13 +123,11 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
     klt.options().kPatchColHalfSize = patch_size;
     klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
 
-    clock_t begin, end;
-    begin = clock();
+    TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    end = clock();
-    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
+    const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // DrawReferenceImage(ref_image, ref_pixel_uv, "KLT : Feature before multi tracking");
@@ -142,33 +139,15 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 }
 
 int main(int argc, char **argv) {
-    uint32_t test_times = 10;
     uint8_t optical_flow_method = 2;
     int32_t pyramid_level = 4;
     int32_t half_patch_size = 6;
 
-#if DRAW_TRACKING_RESULT
-    test_times = 1;
-#endif
+    float cost_time = TestLkOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
+    ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time << " ms.");
 
-    std::thread test_lk([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {
-        float cost_time = 0.0f;
-        for (uint32_t i = 0; i < test_time; ++i) {
-            cost_time += TestLkOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
-        }
-        ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_time) << " ms.");
-    }, pyramid_level, half_patch_size, optical_flow_method, test_times);
-    test_lk.join();
-
-    std::thread test_klt([] (int32_t pyramid_level, int32_t half_patch_size, uint8_t optical_flow_method, uint32_t test_time) {
-        float cost_time = 0.0f;
-        for (uint32_t i = 0; i < test_time; ++i) {
-            cost_time += TestKltOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
-        }
-        ReportInfo("klt.TrackMultipleLevel average cost time " << cost_time / static_cast<float>(test_time) << " ms.");
-    }, pyramid_level, half_patch_size, optical_flow_method, test_times);
-    test_klt.join();
-
+    cost_time = TestKltOpticalFlow(pyramid_level, half_patch_size, optical_flow_method);
+    ReportInfo("klt.TrackMultipleLevel average cost time " << cost_time << " ms.");
     return 0;
 }
 
