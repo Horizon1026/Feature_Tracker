@@ -1,6 +1,8 @@
 #include "optical_flow_lk.h"
 #include "slam_operations.h"
-#include <cmath>
+#include "log_report.h"
+
+#include "cmath"
 
 namespace FEATURE_TRACKER {
 
@@ -10,7 +12,7 @@ namespace {
 
 bool OpticalFlowLk::PrepareForTracking() {
     // Initial fx_fy_ti_ and pixel_values_in_patch_ for fast inverse tracker.
-    if (options().kMethod == kLkFast) {
+    if (options().kMethod == OpticalFlowMethod::kFast) {
         const int32_t patch_rows = 2 * options().kPatchRowHalfSize + 1;
         const int32_t patch_cols = 2 * options().kPatchColHalfSize + 1;
         const uint32_t size = patch_rows + patch_cols;
@@ -38,11 +40,11 @@ bool OpticalFlowLk::TrackSingleLevel(const GrayImage &ref_image,
         }
 
         switch (options().kMethod) {
-            case kLkInverse:
-            case kLkDirect:
+            case OpticalFlowMethod::kInverse:
+            case OpticalFlowMethod::kDirect:
                 TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
-            case kLkFast:
+            case OpticalFlowMethod::kFast:
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
@@ -232,7 +234,7 @@ void OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
                                                  int32_t &num_of_valid_pixel) {
     std::array<float, 6> temp_value = {};
 
-    if (options().kMethod == kLkInverse) {
+    if (options().kMethod == OpticalFlowMethod::kInverse) {
         // For inverse optical flow, use reference image to compute gradient.
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {

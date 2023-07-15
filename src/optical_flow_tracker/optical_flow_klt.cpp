@@ -1,6 +1,6 @@
 #include "optical_flow_klt.h"
 #include "slam_operations.h"
-#include <cmath>
+#include "cmath"
 
 namespace FEATURE_TRACKER {
 
@@ -10,7 +10,7 @@ namespace {
 
 bool OpticalFlowKlt::PrepareForTracking() {
     // Initial fx_fy_ti_ for fast inverse tracker.
-    if (options().kMethod == kKltFast) {
+    if (options().kMethod == OpticalFlowMethod::kFast) {
         const int32_t patch_rows = 2 * options().kPatchRowHalfSize + 1;
         const int32_t patch_cols = 2 * options().kPatchColHalfSize + 1;
         const uint32_t size = patch_rows + patch_cols;
@@ -36,11 +36,11 @@ bool OpticalFlowKlt::TrackSingleLevel(const GrayImage &ref_image,
         }
 
         switch (options().kMethod) {
-            case kKltInverse:
-            case kKltDirect:
+            case OpticalFlowMethod::kInverse:
+            case OpticalFlowMethod::kDirect:
                 TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
-            case kLkFast:
+            case OpticalFlowMethod::kFast:
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
@@ -273,7 +273,7 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
     std::array<float, 6> temp_value = {};
     num_of_valid_pixel = 0;
 
-    if (options().kMethod == kKltDirect) {
+    if (options().kMethod == OpticalFlowMethod::kDirect) {
         // For direct optical flow, use current image to compute gradient.
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
@@ -339,7 +339,7 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                 }
             }
         }
-    } else if (options().kMethod == kKltInverse) {
+    } else {
         // For inverse optical flow, use reference image to compute gradient.
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
@@ -405,8 +405,6 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                 }
             }
         }
-    } else {
-        return;
     }
 
     for (uint32_t i = 0; i < 6; ++i) {

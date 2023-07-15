@@ -69,8 +69,8 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     ImagePyramid ref_pyramid, cur_pyramid;
     ref_pyramid.SetPyramidBuff((uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * ref_image.rows() * ref_image.cols()), true);
     cur_pyramid.SetPyramidBuff((uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * cur_image.rows() * cur_image.cols()), true);
-    cur_pyramid.SetRawImage(cur_image.data(), cur_image.rows(), cur_image.cols());
     ref_pyramid.SetRawImage(ref_image.data(), ref_image.rows(), ref_image.cols());
+    cur_pyramid.SetRawImage(cur_image.data(), cur_image.rows(), cur_image.cols());
 
     // Detect features.
     std::vector<Vec2> ref_pixel_uv, cur_pixel_uv;
@@ -142,10 +142,10 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 }
 
 int main(int argc, char **argv) {
-    uint32_t test_times = 300;
+    uint32_t test_times = 10;
     uint8_t optical_flow_method = 2;
     int32_t pyramid_level = 4;
-    int32_t half_patch_size = 10;
+    int32_t half_patch_size = 6;
 
 #if DRAW_TRACKING_RESULT
     test_times = 1;
