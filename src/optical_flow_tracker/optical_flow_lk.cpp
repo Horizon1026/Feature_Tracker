@@ -99,6 +99,7 @@ void OpticalFlowLk::PrecomputeHessian(const GrayImage &ref_image,
                 row_i_buf = drow + options().kPatchRowHalfSize + 1;
                 col_i_buf = dcol + options().kPatchColHalfSize + 1;
 
+                // Get each pixel value in patch by linear interpolar.
                 GetPixelValueFrameBuffer(ref_image, row_i_buf, col_i_buf, row_i, col_i, &temp_value[0]);
                 GetPixelValueFrameBuffer(ref_image, row_i_buf + 1, col_i_buf, row_i + 1.0f, col_i, &temp_value[1]);
                 GetPixelValueFrameBuffer(ref_image, row_i_buf - 1, col_i_buf, row_i - 1.0f, col_i, &temp_value[2]);
@@ -163,7 +164,6 @@ float OpticalFlowLk::ComputeResidual(const GrayImage &cur_image,
 
                 residual += std::fabs(ft);
                 ++num_of_valid_pixel;
-
             }
 
             ++idx;
