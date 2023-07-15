@@ -145,7 +145,6 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 }
 
 int main(int argc, char **argv) {
-
     float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time << " ms.");
 
@@ -153,10 +152,3 @@ int main(int argc, char **argv) {
     ReportInfo("klt.TrackMultipleLevel average cost time " << cost_time << " ms.");
     return 0;
 }
-
-/*
-    clock_t begin, end;
-    begin = clock();
-    end = clock();
-    const float cost_time = static_cast<float>(end - begin)/ CLOCKS_PER_SEC * 1000.0f;
-*/
