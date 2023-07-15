@@ -6,13 +6,14 @@
 #include "thread"
 #include "random"
 
-#include "log_report.h"
 #include "feature_point_detector.h"
 #include "feature_harris.h"
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
 
-#include "opencv2/opencv.hpp"
+#include "log_report.h"
+#include "slam_memory.h"
+#include "visualizor.h"
 
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
@@ -43,12 +44,10 @@ void TestFeaturePointMatcher() {
     ReportInfo(YELLOW ">> Test Feature Point Matcher." RESET_COLOR);
 
     // Load images.
-    cv::Mat cv_ref_image, cv_cur_image;
-    cv_ref_image = cv::imread(test_ref_image_file_name, 0);
-    cv_cur_image = cv::imread(test_cur_image_file_name, 0);
-
-    GrayImage ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
-    GrayImage cur_image(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
+    GrayImage ref_image;
+    GrayImage cur_image;
+    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.
@@ -88,39 +87,48 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    cv::Mat merged_image(cv_cur_image.rows, cv_cur_image.cols * 2, CV_8UC1);
-    for (int32_t v = 0; v < merged_image.rows; ++v) {
-        for (int32_t u = 0; u < merged_image.cols; ++u) {
-            if (u < cv_ref_image.cols) {
-                merged_image.at<uchar>(v, u) = cv_ref_image.at<uchar>(v, u);
+    uint8_t *merged_gray_buf = (uint8_t *)SlamMemory::Malloc(cur_image.rows() * cur_image.cols() * 2 * sizeof(uint8_t));
+    GrayImage merged_image(merged_gray_buf, cur_image.rows(), cur_image.cols() * 2, true);
+    for (int32_t v = 0; v < merged_image.rows(); ++v) {
+        for (int32_t u = 0; u < merged_image.cols(); ++u) {
+            if (u < cur_image.cols()) {
+                merged_image.SetPixelValueNoCheck(v, u, ref_image.GetPixelValueNoCheck(v, u));
             } else {
-                merged_image.at<uchar>(v, u) = cv_cur_image.at<uchar>(v, u - cv_cur_image.cols);
+                merged_image.SetPixelValueNoCheck(v, u, ref_image.GetPixelValueNoCheck(v, u - cur_image.cols()));
             }
         }
     }
     // Construct image to show.
-    cv::Mat show_image(merged_image.rows, merged_image.cols, CV_8UC3);
-    cv::cvtColor(merged_image, show_image, cv::COLOR_GRAY2BGR);
+    uint8_t *merged_rgb_buf = (uint8_t *)SlamMemory::Malloc(merged_image.rows() * merged_image.cols() * 3 * sizeof(uint8_t));
+    RgbImage show_image(merged_rgb_buf, merged_image.rows(), merged_image.cols(), true);
+    Visualizor::ConvertUint8ToRgb(merged_image.data(), show_image.data(), merged_image.rows() * merged_image.cols());
+
     // [ALL] Draw pairs.
     for (uint32_t i = 0; i < matched_cur_features.size(); ++i) {
         if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
             continue;
         }
-        cv::line(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()),
-                 cv::Point2f(matched_cur_features[i].x() + cv_cur_image.cols, matched_cur_features[i].y()),
-                 cv::Scalar(std::rand() % 256, std::rand() % 256, std::rand() % 256), 1);
+        Visualizor::DrawBressenhanLine(show_image,
+            static_cast<int32_t>(ref_features[i].x()), static_cast<int32_t>(ref_features[i].y()),
+            static_cast<int32_t>(matched_cur_features[i].x() + cur_image.cols()),
+            static_cast<int32_t>(matched_cur_features[i].y()),
+            RgbPixel{.r = static_cast<uint8_t>(std::rand() % 256),
+                     .g = static_cast<uint8_t>(std::rand() % 256),
+                     .b = static_cast<uint8_t>(std::rand() % 256)});
     }
     // [left] Draw reference points.
     for (uint32_t i = 0; i < ref_features.size(); ++i) {
-        cv::circle(show_image, cv::Point2f(ref_features[i].x(), ref_features[i].y()), 1, cv::Scalar(0, 0, 255), 3);
+        Visualizor::DrawSolidCircle(show_image, static_cast<int32_t>(ref_features[i].x()), static_cast<int32_t>(ref_features[i].y()),
+            3, RgbPixel{.r = 255, .g = 0, .b = 0});
     }
     // [right] Draw result points.
     for (uint32_t i = 0; i < cur_features.size(); ++i) {
-        cv::circle(show_image, cv::Point2f(cur_features[i].x() + cv_cur_image.cols, cur_features[i].y()), 1, cv::Scalar(255, 255, 0), 3);
+        Visualizor::DrawSolidCircle(show_image, static_cast<int32_t>(cur_features[i].x() + cur_image.cols()), static_cast<int32_t>(cur_features[i].y()),
+            3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
 
-    cv::imshow("Features matched by Brief descriptor", show_image);
-    cv::waitKey(0);
+    Visualizor::ShowImage("Features matched by Brief descriptor", show_image);
+    Visualizor::WaitKey(0);
 }
 
 int main(int argc, char **argv) {

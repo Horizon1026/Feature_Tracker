@@ -5,10 +5,11 @@
 #include <ctime>
 #include <thread>
 
-#include "opencv2/opencv.hpp"
+#include "direct_method_tracker.h"
 
 #include "log_report.h"
-#include "direct_method_tracker.h"
+#include "slam_memory.h"
+#include "visualizor.h"
 
 #define FEATURES_TO_TRACK (200)
 
@@ -29,44 +30,43 @@ std::array<std::string, 5> test_cur_image_file_names = {
 
 void TestDirectMethod() {
     // Load images and pyramids.
-    cv::Mat cv_ref_image = cv::imread(test_ref_image_file_name, 0);
-    cv::Mat cv_ref_depth = cv::imread(test_ref_depth_file_name, 0);
+    GrayImage ref_image;
+    GrayImage ref_depth;
+    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor::LoadImage(test_ref_depth_file_name, ref_depth);
 
-    uint8_t *ref_buf = (uint8_t *)malloc(sizeof(uint8_t) * cv_ref_image.rows * cv_ref_image.cols);
+    uint8_t *ref_buf = (uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * ref_image.rows() * ref_image.cols());
     ImagePyramid ref_pyramid;
-    ref_pyramid.SetPyramidBuff(ref_buf);
-    ref_pyramid.SetRawImage(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    ref_pyramid.SetPyramidBuff(ref_buf, true);
+    ref_pyramid.SetRawImage(ref_image.data(), ref_image.rows(), ref_image.cols());
     ref_pyramid.CreateImagePyramid(5);
 
     // Detect features in reference image.
-    std::vector<cv::Point2f> cv_ref_corners;
+    std::vector<Vec2> ref_pixel_uv;
+    std::vector<Vec2> cur_pixel_uv;
     std::vector<float> ref_pixel_uv_depth;
-    cv::goodFeaturesToTrack(cv_ref_image, cv_ref_corners, FEATURES_TO_TRACK, 0.01, 20);
-    for (uint32_t i = 0; i < cv_ref_corners.size(); ++i) {
-        int32_t disparity = cv_ref_depth.at<uchar>(cv_ref_corners[i].y, cv_ref_corners[i].x);
+    for (int32_t i = 0; i < FEATURES_TO_TRACK; ++i) {
+        ref_pixel_uv.emplace_back(Vec2(std::rand() % ref_image.cols(), std::rand() % ref_image.rows()));
+        const int32_t disparity = ref_depth.GetPixelValueNoCheck(ref_pixel_uv.back().y(), ref_pixel_uv.back().x());
         ref_pixel_uv_depth.emplace_back(fx * baseline / disparity);
     }
 
-    std::vector<Eigen::Vector2f> ref_pixel_uv, cur_pixel_uv;
-    ref_pixel_uv.reserve(cv_ref_corners.size());
-    for (uint32_t i = 0; i < cv_ref_corners.size(); ++i) {
-        ref_pixel_uv.emplace_back(Eigen::Vector2f(cv_ref_corners[i].x, cv_ref_corners[i].y));
-    }
-
     // Show detected features in reference image.
-    cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
-    cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < cv_ref_corners.size(); i++) {
-        cv::circle(show_ref_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), 2, cv::Scalar(255, 255, 0), 3);
+    uint8_t *show_ref_image_buf = (uint8_t *)SlamMemory::Malloc(ref_image.rows() * ref_image.cols() * 3);
+    RgbImage show_ref_image(show_ref_image_buf, ref_image.rows(), ref_image.cols(), true);
+    Visualizor::ConvertUint8ToRgb(ref_image.data(), show_ref_image.data(), ref_image.rows() * ref_image.cols());
+    for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
+        Visualizor::DrawSolidCircle(show_ref_image, static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
+            3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
-    cv::imshow("Direct method : Feature before multi tracking", show_ref_image);
+    Visualizor::ShowImage("Direct method : Feature before multi tracking", show_ref_image);
 
     // Construct camera intrinsic matrix K.
     std::array<float, 4> K = {fx, fy, cx, cy};
 
     // Compute features position in reference frame.
     std::vector<Vec3> p_w;
-    p_w.reserve(cv_ref_corners.size());
+    p_w.reserve(ref_pixel_uv.size());
     for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
         p_w.emplace_back(Vec3((ref_pixel_uv[i].x() - cx) / fx, (ref_pixel_uv[i].y() - cy) / fy, 1.0f) * ref_pixel_uv_depth[i]);
     }
@@ -79,11 +79,13 @@ void TestDirectMethod() {
 
     for (uint32_t i = 0; i < test_cur_image_file_names.size(); ++i) {
         // Prepare for tracking.
-        cv::Mat cv_cur_image = cv::imread(test_cur_image_file_names[i], 0);
-        uint8_t *cur_buf = (uint8_t *)malloc(sizeof(uint8_t) * cv_cur_image.rows * cv_cur_image.cols);
+        GrayImage cur_image;
+        Visualizor::LoadImage(test_cur_image_file_names[i], cur_image);
+
+        uint8_t *cur_buf = (uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * cur_image.rows() * cur_image.cols());
         ImagePyramid cur_pyramid;
-        cur_pyramid.SetPyramidBuff(cur_buf);
-        cur_pyramid.SetRawImage(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
+        cur_pyramid.SetPyramidBuff(cur_buf, true);
+        cur_pyramid.SetRawImage(cur_image.data(), cur_image.rows(), cur_image.cols());
         cur_pyramid.CreateImagePyramid(5);
 
         // Construct direct method tracker.
@@ -94,22 +96,23 @@ void TestDirectMethod() {
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
 
-        cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
-        cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
-        for (unsigned long i = 0; i < cv_ref_corners.size(); i++) {
+        uint8_t *show_cur_image_buf = (uint8_t *)SlamMemory::Malloc(cur_image.rows() * cur_image.cols() * 3);
+        RgbImage show_cur_image(show_cur_image_buf, cur_image.rows(), cur_image.cols(), true);
+        Visualizor::ConvertUint8ToRgb(cur_image.data(), show_cur_image.data(), cur_image.rows() * cur_image.cols());
+        for (unsigned long i = 0; i < cur_pixel_uv.size(); i++) {
             if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
                 continue;
             }
-            cv::circle(show_cur_image, cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), 2, cv::Scalar(0, 0, 255), 3);
-            cv::line(show_cur_image, cv::Point2f(ref_pixel_uv[i].x(), ref_pixel_uv[i].y()), cv::Point2f(cur_pixel_uv[i].x(), cur_pixel_uv[i].y()), cv::Scalar(0, 255, 0), 2);
+            Visualizor::DrawSolidCircle(show_cur_image, static_cast<int32_t>(cur_pixel_uv[i].x()), static_cast<int32_t>(cur_pixel_uv[i].y()),
+                3, RgbPixel{.r = 255, .g = 0, .b = 0});
+            Visualizor::DrawBressenhanLine(show_cur_image,
+                static_cast<int32_t>(ref_pixel_uv[i].x()), static_cast<int32_t>(ref_pixel_uv[i].y()),
+                static_cast<int32_t>(cur_pixel_uv[i].x()), static_cast<int32_t>(cur_pixel_uv[i].y()),
+                RgbPixel{.r = 0, .g = 255, .b = 0});
         }
-        cv::imshow("Direct method : Feature after multi tracking", show_cur_image);
-
-        cv::waitKey(0);
-
-        free(cur_buf);
+        Visualizor::ShowImage("Direct method : Feature after multi tracking", show_cur_image);
+        Visualizor::WaitKey(0);
     }
-    free(ref_buf);
 }
 
 int main(int argc, char **argv) {
