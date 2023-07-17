@@ -14,6 +14,12 @@ endif()
 if ( NOT TARGET lib_slam_utility_log )
     add_subdirectory( ${SLAM_UTILITY_PATH}/log ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_log )
 endif()
+if ( NOT TARGET lib_slam_utility_memory )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/memory ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_memory )
+endif()
+if ( NOT TARGET lib_slam_utility_visualize )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/visualize ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_visualize )
+endif()
 
 add_library( lib_optical_flow_tracker ${AUX_SRC_OPTICAL_FLOW_TRACKER} )
 target_include_directories( lib_optical_flow_tracker PUBLIC
@@ -25,4 +31,7 @@ target_link_libraries( lib_optical_flow_tracker
     lib_slam_utility_math
     lib_slam_utility_operate
     lib_slam_utility_log
+    lib_slam_utility_memory
+
+    lib_slam_utility_visualize
 )

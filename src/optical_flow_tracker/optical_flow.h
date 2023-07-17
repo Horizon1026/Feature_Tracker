@@ -32,7 +32,6 @@ class OpticalFlow {
 public:
     OpticalFlow() = default;
     virtual ~OpticalFlow() = default;
-    OpticalFlow(const OpticalFlow &optical_flow) = delete;
 
     bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                             const ImagePyramid &cur_pyramid,
