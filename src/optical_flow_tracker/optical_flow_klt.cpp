@@ -134,9 +134,6 @@ void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     // Iterate to compute optical flow.
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         b.setZero();
-
-        float ft = 0.0f;
-        float residual = 0.0f;
         int32_t num_of_valid_pixel = 0;
 
         // Compute each pixel in the patch, create H * v = b
@@ -152,7 +149,7 @@ void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                     !std::isinf(fx_fy_ti_[idx].x())) {
                     const float fx = fx_fy_ti_[idx].x();
                     const float fy = fx_fy_ti_[idx].y();
-                    ft = temp_value[5] - fx_fy_ti_[idx].z();
+                    const float ft = temp_value[5] - fx_fy_ti_[idx].z();
 
                     float &x = col_j;
                     float &y = row_j;
@@ -164,15 +161,12 @@ void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                     b(4) -= ft * fx;
                     b(5) -= ft * fy;
 
-                    residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
 
                 ++idx;
             }
         }
-
-        residual /= static_cast<float>(num_of_valid_pixel);
 
         // Solve H * z = b, update cur_pixel_uv.
         Vec6 z = H.ldlt().solve(b);
@@ -200,11 +194,6 @@ void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
-
-        if (residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
-            status = static_cast<uint8_t>(TrackStatus::kTracked);
-            break;
-        }
     }
 }
 
@@ -217,12 +206,9 @@ void OpticalFlowKlt::TrackOneFeature(const GrayImage &ref_image,
     Vec6 b = Vec6::Zero();
     Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
 
-    float average_residual = 0.0f;
-    int32_t num_of_valid_pixel = 0;
-
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.
-        ConstructIncrementalFunction(ref_image, cur_image, ref_point, cur_point, A, H, b, average_residual, num_of_valid_pixel);
+        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_point, cur_point, A, H, b) == 0);
 
         // Solve H * z = b.
         const Vec6 z = H.ldlt().solve(b);
@@ -251,27 +237,20 @@ void OpticalFlowKlt::TrackOneFeature(const GrayImage &ref_image,
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
-        if (average_residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
-            status = static_cast<uint8_t>(TrackStatus::kTracked);
-            break;
-        }
     }
 }
 
-void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
-                                                  const GrayImage &cur_image,
-                                                  const Vec2 &ref_point,
-                                                  const Vec2 &cur_point,
-                                                  Mat2 &A,
-                                                  Mat6 &H,
-                                                  Vec6 &b,
-                                                  float &average_residual,
-                                                  int32_t &num_of_valid_pixel) {
+int32_t OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                     const GrayImage &cur_image,
+                                                     const Vec2 &ref_point,
+                                                     const Vec2 &cur_point,
+                                                     Mat2 &A,
+                                                     Mat6 &H,
+                                                     Vec6 &b) {
     H.setZero();
     b.setZero();
-    average_residual = 0.0f;
     std::array<float, 6> temp_value = {};
-    num_of_valid_pixel = 0;
+    int32_t num_of_valid_pixel = 0;
 
     if (options().kMethod == OpticalFlowMethod::kDirect) {
         // For direct optical flow, use current image to compute gradient.
@@ -334,7 +313,6 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                     b(4) -= ft * fx;
                     b(5) -= ft * fy;
 
-                    average_residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
@@ -400,7 +378,6 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                     b(4) -= ft * fx;
                     b(5) -= ft * fy;
 
-                    average_residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
@@ -415,7 +392,7 @@ void OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
         }
     }
 
-    average_residual /= static_cast<float>(num_of_valid_pixel);
+    return num_of_valid_pixel;
 }
 
 }

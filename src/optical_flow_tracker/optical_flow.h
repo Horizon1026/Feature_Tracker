@@ -19,11 +19,10 @@ enum class OpticalFlowMethod : uint8_t {
 
 struct OpticalFlowOptions {
     uint32_t kMaxTrackPointsNumber = 200;
-    uint32_t kMaxIteration = 10;
+    uint32_t kMaxIteration = 15;
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 1e-2f;
-    float kMaxConvergeResidual = 2.0f;
     OpticalFlowMethod kMethod = OpticalFlowMethod::kFast;
 };
 

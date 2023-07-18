@@ -27,15 +27,13 @@ private:
                          Vec2 &cur_pixel_uv,
                          uint8_t &status);
 
-    void ConstructIncrementalFunction(const GrayImage &ref_image,
-                                      const GrayImage &cur_image,
-                                      const Vec2 &ref_point,
-                                      const Vec2 &cur_point,
-                                      Mat2 &A,
-                                      Mat6 &H,
-                                      Vec6 &b,
-                                      float &average_residual,
-                                      int32_t &num_of_valid_pixel);
+    int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
+                                         const GrayImage &cur_image,
+                                         const Vec2 &ref_point,
+                                         const Vec2 &cur_point,
+                                         Mat2 &A,
+                                         Mat6 &H,
+                                         Vec6 &b);
 
     void TrackOneFeatureFast(const GrayImage &ref_image,
                              const GrayImage &cur_image,

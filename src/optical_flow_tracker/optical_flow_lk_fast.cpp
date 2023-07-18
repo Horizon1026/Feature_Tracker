@@ -3,8 +3,6 @@
 #include "log_report.h"
 #include "slam_operations.h"
 
-#include "visualizor.h"
-
 namespace FEATURE_TRACKER {
 
 void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
@@ -39,8 +37,6 @@ void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
     Mat2 hessian = Mat2::Zero();
     PrecomputeJacobianAndHessian(ex_patch, ex_patch_pixel_valid, ex_patch_rows, ex_patch_cols, all_dx, all_dy, hessian);
 
-    ReportDebug("fast hessian is\n" << hessian);
-
     // Compute incremental by iteration.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
@@ -52,7 +48,6 @@ void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
 
         // Solve incremental function.
         const Vec2 v = hessian.ldlt().solve(bias);
-        ReportDebug("solve v is " << LogVec(v));
         if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;

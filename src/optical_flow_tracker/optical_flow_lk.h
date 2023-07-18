@@ -26,14 +26,12 @@ private:
                          const Vec2 &ref_pixel_uv,
                          Vec2 &cur_pixel_uv,
                          uint8_t &status);
-    void ConstructIncrementalFunction(const GrayImage &ref_image,
-                                      const GrayImage &cur_image,
-                                      const Vec2 &ref_pixel_uv,
-                                      const Vec2 &cur_pixel_uv,
-                                      Mat2 &H,
-                                      Vec2 &b,
-                                      float &average_residual,
-                                      int32_t &num_of_valid_pixel);
+    int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
+                                         const GrayImage &cur_image,
+                                         const Vec2 &ref_pixel_uv,
+                                         const Vec2 &cur_pixel_uv,
+                                         Mat2 &H,
+                                         Vec2 &b);
 
     // Support for kFast method.
     void TrackOneFeatureFast(const GrayImage &ref_image,

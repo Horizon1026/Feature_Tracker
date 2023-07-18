@@ -37,15 +37,14 @@ bool OpticalFlowLk::TrackSingleLevel(const GrayImage &ref_image,
     return true;
 }
 
-void OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
-                                                 const GrayImage &cur_image,
-                                                 const Vec2 &ref_pixel_uv,
-                                                 const Vec2 &cur_pixel_uv,
-                                                 Mat2 &H,
-                                                 Vec2 &b,
-                                                 float &average_residual,
-                                                 int32_t &num_of_valid_pixel) {
+int32_t OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                    const GrayImage &cur_image,
+                                                    const Vec2 &ref_pixel_uv,
+                                                    const Vec2 &cur_pixel_uv,
+                                                    Mat2 &H,
+                                                    Vec2 &b) {
     std::array<float, 6> temp_value = {};
+    int32_t num_of_valid_pixel = 0;
 
     if (options().kMethod == OpticalFlowMethod::kInverse) {
         // For inverse optical flow, use reference image to compute gradient.
@@ -73,7 +72,6 @@ void OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
                     b(0) -= fx * ft;
                     b(1) -= fy * ft;
 
-                    average_residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
@@ -104,14 +102,14 @@ void OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
                     b(0) -= fx * ft;
                     b(1) -= fy * ft;
 
-                    average_residual += std::fabs(ft);
                     ++num_of_valid_pixel;
                 }
             }
         }
     }
     H(1, 0) = H(0, 1);
-    average_residual /= static_cast<float>(num_of_valid_pixel);
+
+    return num_of_valid_pixel;
 }
 
 void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
@@ -123,11 +121,7 @@ void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
         // Compute each pixel in the patch, create H * v = b
         Mat2 H = Mat2::Zero();
         Vec2 b = Vec2::Zero();
-        float average_residual = 0.0f;
-        int32_t num_of_valid_pixel = 0;
-        ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, H, b, average_residual, num_of_valid_pixel);
-
-        ReportDebug("normal hessian is\n" << H);
+        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, H, b) == 0);
 
         // Solve H * v = b.
         Vec2 v = H.ldlt().solve(b);
@@ -146,10 +140,6 @@ void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
             break;
         }
         if (v.squaredNorm() < options().kMaxConvergeStep) {
-            status = static_cast<uint8_t>(TrackStatus::kTracked);
-            break;
-        }
-        if (average_residual < options().kMaxConvergeResidual && num_of_valid_pixel) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
