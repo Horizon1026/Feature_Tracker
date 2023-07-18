@@ -127,6 +127,8 @@ void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
         int32_t num_of_valid_pixel = 0;
         ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, H, b, average_residual, num_of_valid_pixel);
 
+        ReportDebug("normal hessian is\n" << H);
+
         // Solve H * v = b.
         Vec2 v = H.ldlt().solve(b);
         if (Eigen::isnan(v.array()).any()) {

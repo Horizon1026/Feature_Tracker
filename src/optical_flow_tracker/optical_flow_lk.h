@@ -54,6 +54,15 @@ private:
                                       std::vector<float> &all_dx,
                                       std::vector<float> &all_dy,
                                       Mat2 &hessian);
+    int32_t ComputeBias(const GrayImage &cur_image,
+                        const Vec2 &cur_pixel_uv,
+                        const std::vector<float> &ex_patch,
+                        const std::vector<bool> &ex_patch_pixel_valid,
+                        int32_t ex_patch_rows,
+                        int32_t ex_patch_cols,
+                        std::vector<float> &all_dx,
+                        std::vector<float> &all_dy,
+                        Vec2 &bias);
 
     // Support for Sse method.
 

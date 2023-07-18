@@ -19,10 +19,10 @@
 #define DRAW_TRACKING_RESULT (1)
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 200;
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 1;
     constexpr int32_t kHalfPatchSize = 6;
     constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
-    constexpr int32_t kMaxPyramidLevel = 4;
+    constexpr int32_t kMaxPyramidLevel = 1;
 }
 
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
@@ -146,6 +146,7 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 
 int main(int argc, char **argv) {
     float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(FEATURE_TRACKER::OpticalFlowMethod::kInverse));
     ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time << " ms.");
 
     cost_time = TestKltOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
