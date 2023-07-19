@@ -18,7 +18,7 @@ private:
                                   const std::vector<Vec2> &ref_pixel_uv,
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) override;
-    virtual bool PrepareForTracking() override { return true; }
+    virtual bool PrepareForTracking() override;
 
     // Support for kInverse and kDirect method.
     void TrackOneFeature(const GrayImage &ref_image,
@@ -65,6 +65,21 @@ private:
     // Support for Sse method.
 
     // Support for Neon method.
+
+private:
+    // Variable support for fast method.
+    std::vector<float> ex_patch_;
+    std::vector<bool> ex_patch_pixel_valid_;
+    std::vector<float> all_dx_;
+    std::vector<float> all_dy_;
+
+    int32_t patch_rows_ = 0;
+    int32_t patch_cols_ = 0;
+    int32_t patch_size_ = 0;
+    int32_t ex_patch_rows_ = 0;
+    int32_t ex_patch_cols_ = 0;
+    int32_t ex_patch_size_ = 0;
+
 };
 
 }

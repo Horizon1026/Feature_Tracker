@@ -45,10 +45,12 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
     Visualizor::ConvertUint8ToRgb(image.data(), show_cur_image.data(), image.rows() * image.cols());
     for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
         if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
+            Visualizor::DrawSolidCircle(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
+                3, RgbPixel{.r = 255, .g = 0, .b = 0});
             continue;
         }
         Visualizor::DrawSolidCircle(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
-            3, RgbPixel{.r = 255, .g = 0, .b = 0});
+            3, RgbPixel{.r = 0, .g = 200, .b = 255});
         Visualizor::DrawBressenhanLine(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
             cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
             RgbPixel{.r = 0, .g = 255, .b = 0});
@@ -59,7 +61,8 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
-    detector.options().kMinFeatureDistance = 20;
+    detector.options().kMinFeatureDistance = 25;
+    detector.feature().options().kHalfPatchSize = 6;
     detector.feature().options().kMinValidResponse = 40.0f;
 
     detector.DetectGoodFeatures(image, kMaxNumberOfFeaturesToTrack, pixel_uv);
