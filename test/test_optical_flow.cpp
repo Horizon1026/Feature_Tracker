@@ -16,7 +16,12 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define DRAW_TRACKING_RESULT (1)
+#define DRAW_TRACKING_RESULT (0)
+#define DETECT_FEATURES_BY_OPENCV (1)
+
+#if DETECT_FEATURES_BY_OPENCV
+#include "opencv2/opencv.hpp"
+#endif
 
 namespace {
     constexpr int32_t kMaxNumberOfFeaturesToTrack = 200;
@@ -59,13 +64,25 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
 }
 
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
+
+#if DETECT_FEATURES_BY_OPENCV
+	cv::Mat cv_image(image.rows(), image.cols(), CV_8UC1, image.data());
+    std::vector<cv::Point2f> ref_corners;
+    cv::goodFeaturesToTrack(cv_image, ref_corners, kMaxNumberOfFeaturesToTrack, 0.01, 20);
+
+    pixel_uv.clear();
+    for (auto &item : ref_corners) {
+        pixel_uv.emplace_back(Vec2(item.x, item.y));
+    }
+
+#else
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
     detector.options().kMinFeatureDistance = 25;
     detector.feature().options().kHalfPatchSize = 6;
     detector.feature().options().kMinValidResponse = 40.0f;
-
     detector.DetectGoodFeatures(image, kMaxNumberOfFeaturesToTrack, pixel_uv);
+#endif
 }
 
 float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {

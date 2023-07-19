@@ -7,6 +7,8 @@ set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall -lpthread" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 17 )
 
+find_package( OpenCV )
+
 # Add slam utility log and visualizor.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
 if ( NOT TARGET lib_slam_utility_log )
@@ -56,6 +58,8 @@ target_link_libraries( test_optical_flow
     lib_slam_utility_log
     lib_slam_utility_tick_tock
     lib_slam_utility_visualize
+
+    ${OpenCV_LIBS}
 )
 
 # Create executable target to test direct method.
