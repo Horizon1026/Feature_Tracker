@@ -16,15 +16,13 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define DRAW_TRACKING_RESULT (0)
-#define DETECT_FEATURES_BY_OPENCV (1)
+#define DRAW_TRACKING_RESULT (1)
+#define DETECT_FEATURES_BY_OPENCV (0)
 
-#if DETECT_FEATURES_BY_OPENCV
 #include "opencv2/opencv.hpp"
-#endif
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 200;
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
     constexpr int32_t kHalfPatchSize = 6;
     constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
     constexpr int32_t kMaxPyramidLevel = 4;
@@ -54,7 +52,7 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
                 3, RgbPixel{.r = 255, .g = 0, .b = 0});
             continue;
         }
-        Visualizor::DrawSolidCircle(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
+        Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
             3, RgbPixel{.r = 0, .g = 200, .b = 255});
         Visualizor::DrawBressenhanLine(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
             cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
@@ -118,7 +116,7 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
 
 #if DRAW_TRACKING_RESULT
     // DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
-    DrawCurrentImage(ref_image, ref_pixel_uv, cur_pixel_uv, "LK : Feature after multi tracking", status);
+    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "LK : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
 
@@ -157,18 +155,78 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
 
 #if DRAW_TRACKING_RESULT
     // DrawReferenceImage(ref_image, ref_pixel_uv, "KLT : Feature before multi tracking");
-    DrawCurrentImage(ref_image, ref_pixel_uv, cur_pixel_uv, "KLT : Feature after multi tracking", status);
+    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "KLT : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
 
     return cost_time;
 }
 
-int main(int argc, char **argv) {
-    float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-    ReportInfo("lk.TrackMultipleLevel average cost time " << cost_time << " ms.");
+float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
+    cv::Mat cv_ref_image, cv_cur_image;
+    cv_ref_image = cv::imread(test_ref_image_file_name, 0);
+    cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
-    cost_time = TestKltOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-    ReportInfo("klt.TrackMultipleLevel average cost time " << cost_time << " ms.");
+    GrayImage ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+
+    // Detect features.
+    std::vector<cv::Point2f> ref_corners, cur_corners;
+    std::vector<Vec2> ref_pixel_uv;
+    DetectFeatures(ref_image, ref_pixel_uv);
+    for (auto &item : ref_pixel_uv) {
+        ref_corners.emplace_back(cv::Point2f(item.x(), item.y()));
+    }
+
+    std::vector<uchar> status;
+    std::vector<float> errors;
+
+    cv::setNumThreads(1);
+    TickTock timer;
+    cv::calcOpticalFlowPyrLK(cv_ref_image, cv_cur_image, ref_corners, cur_corners, status, errors,
+        cv::Size(2 * patch_size + 1, 2 * patch_size + 1), pyramid_level - 1);
+    const float cost_time = timer.TickInMillisecond();
+
+#if DRAW_TRACKING_RESULT
+    // cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
+    // cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
+    // for (unsigned long i = 0; i < ref_corners.size(); i++) {
+    //     cv::circle(show_ref_image, ref_corners[i], 2, cv::Scalar(255, 255, 0), 3);
+    // }
+    // cv::imshow("OpenCvLk : Feature before multi tracking", show_ref_image);
+
+    cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
+    cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
+    for (unsigned long i = 0; i < cur_corners.size(); i++) {
+        if (status[i] != 1) {
+            cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 0, 255), 3);
+            continue;
+        }
+        cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 255, 255), 3);
+        cv::line(show_cur_image, ref_corners[i], cur_corners[i], cv::Scalar(0, 255, 0), 1);
+    }
+    cv::imshow("OpenCvLk : Feature after multi tracking", show_cur_image);
+
+    cv::waitKey(0);
+#endif
+
+    return cost_time;
+}
+
+int main(int argc, char **argv) {
+    std::thread([&]() {
+        const float cost_time = TestOpencvLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+        ReportInfo("cv::calcOpticalFlowPyrLK cost time " << cost_time << " ms.");
+    }).join();
+
+    std::thread([&]() {
+        const float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+        ReportInfo("lk.TrackMultipleLevel cost time " << cost_time << " ms.");
+    }).join();
+
+    std::thread([&]() {
+        const float cost_time = TestKltOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+        ReportInfo("klt.TrackMultipleLevel cost time " << cost_time << " ms.");
+    }).join();
+
     return 0;
 }
