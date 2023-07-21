@@ -47,8 +47,9 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
     RgbImage show_cur_image(show_cur_image_buf, image.rows(), image.cols(), true);
     Visualizor::ConvertUint8ToRgb(image.data(), show_cur_image.data(), image.rows() * image.cols());
     for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
-        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
-            Visualizor::DrawSolidCircle(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
+        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked) &&
+            status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kLargeResidual)) {
+            Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
                 3, RgbPixel{.r = 255, .g = 0, .b = 0});
             continue;
         }
@@ -77,7 +78,7 @@ void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
     detector.options().kMinFeatureDistance = 25;
-    detector.feature().options().kHalfPatchSize = 6;
+    detector.feature().options().kHalfPatchSize = 1;
     detector.feature().options().kMinValidResponse = 40.0f;
     detector.DetectGoodFeatures(image, kMaxNumberOfFeaturesToTrack, pixel_uv);
 #endif
@@ -115,7 +116,7 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
+    DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
     DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "LK : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
