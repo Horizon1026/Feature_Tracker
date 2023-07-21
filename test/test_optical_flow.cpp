@@ -16,8 +16,8 @@
 #include "optical_flow_lk.h"
 #include "optical_flow_klt.h"
 
-#define DRAW_TRACKING_RESULT (1)
-#define DETECT_FEATURES_BY_OPENCV (0)
+#define DRAW_TRACKING_RESULT (0)
+#define DETECT_FEATURES_BY_OPENCV (1)
 
 #include "opencv2/opencv.hpp"
 
@@ -102,6 +102,8 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     std::vector<Vec2> ref_pixel_uv, cur_pixel_uv;
     std::vector<uint8_t> status;
     DetectFeatures(ref_image, ref_pixel_uv);
+    cur_pixel_uv.reserve(ref_pixel_uv.size());
+    status.reserve(ref_pixel_uv.size());
 
     // Use LK optical tracker.
     FEATURE_TRACKER::OpticalFlowLk lk;
@@ -116,7 +118,7 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
+    // DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
     DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "LK : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
@@ -142,6 +144,8 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
     std::vector<Vec2> ref_pixel_uv, cur_pixel_uv;
     std::vector<uint8_t> status;
     DetectFeatures(ref_image, ref_pixel_uv);
+    cur_pixel_uv.reserve(ref_pixel_uv.size());
+    status.reserve(ref_pixel_uv.size());
 
     FEATURE_TRACKER::OpticalFlowKlt klt;
     klt.options().kPatchRowHalfSize = patch_size;
@@ -180,6 +184,9 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
 
     std::vector<uchar> status;
     std::vector<float> errors;
+    cur_corners.reserve(ref_pixel_uv.size());
+    status.reserve(ref_pixel_uv.size());
+    errors.reserve(ref_pixel_uv.size());
 
     cv::setNumThreads(1);
     TickTock timer;
