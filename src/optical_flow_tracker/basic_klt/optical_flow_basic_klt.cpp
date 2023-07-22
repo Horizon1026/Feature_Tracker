@@ -41,8 +41,8 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
                                                           const GrayImage &cur_image,
                                                           const Vec2 &ref_pixel_uv,
                                                           const Vec2 &cur_pixel_uv,
-                                                          Mat2 &H,
-                                                          Vec2 &b) {
+                                                          Mat2 &hessian,
+                                                          Vec2 &bias) {
     std::array<float, 6> temp_value = {};
     int32_t num_of_valid_pixel = 0;
 
@@ -65,12 +65,12 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
                     const float fy = temp_value[3] - temp_value[2];
                     const float ft = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx * fx;
-                    H(1, 1) += fy * fy;
-                    H(0, 1) += fx * fy;
+                    hessian(0, 0) += fx * fx;
+                    hessian(1, 1) += fy * fy;
+                    hessian(0, 1) += fx * fy;
 
-                    b(0) -= fx * ft;
-                    b(1) -= fy * ft;
+                    bias(0) -= fx * ft;
+                    bias(1) -= fy * ft;
 
                     ++num_of_valid_pixel;
                 }
@@ -95,19 +95,19 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
                     const float fy = temp_value[3] - temp_value[2];
                     const float ft = temp_value[5] - temp_value[4];
 
-                    H(0, 0) += fx * fx;
-                    H(1, 1) += fy * fy;
-                    H(0, 1) += fx * fy;
+                    hessian(0, 0) += fx * fx;
+                    hessian(1, 1) += fy * fy;
+                    hessian(0, 1) += fx * fy;
 
-                    b(0) -= fx * ft;
-                    b(1) -= fy * ft;
+                    bias(0) -= fx * ft;
+                    bias(1) -= fy * ft;
 
                     ++num_of_valid_pixel;
                 }
             }
         }
     }
-    H(1, 0) = H(0, 1);
+    hessian(1, 0) = hessian(0, 1);
 
     return num_of_valid_pixel;
 }
@@ -118,13 +118,13 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image,
                                           Vec2 &cur_pixel_uv,
                                           uint8_t &status) {
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
-        // Compute each pixel in the patch, create H * v = b
-        Mat2 H = Mat2::Zero();
-        Vec2 b = Vec2::Zero();
-        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, H, b) == 0);
+        // Compute each pixel in the patch, create hessian * v = bias
+        Mat2 hessian = Mat2::Zero();
+        Vec2 bias = Vec2::Zero();
+        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
 
-        // Solve H * v = b.
-        Vec2 v = H.ldlt().solve(b);
+        // Solve hessian * v = bias.
+        Vec2 v = hessian.ldlt().solve(bias);
         if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;

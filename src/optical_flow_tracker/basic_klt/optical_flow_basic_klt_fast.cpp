@@ -49,9 +49,8 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
     float last_squared_step = INFINITY;
     uint32_t large_step_cnt = 0;
+    Vec2 bias = Vec2::Zero();
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
-        Vec2 bias = Vec2::Zero();
-
         // Compute bias.
         BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_patch_, ex_patch_pixel_valid_,
             ex_patch_rows_, ex_patch_cols_, all_dx_, all_dy_, bias) == 0);
@@ -135,8 +134,8 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                                          const std::vector<bool> &ex_patch_pixel_valid,
                                          int32_t ex_patch_rows,
                                          int32_t ex_patch_cols,
-                                         std::vector<float> &all_dx,
-                                         std::vector<float> &all_dy,
+                                         const std::vector<float> &all_dx,
+                                         const std::vector<float> &all_dy,
                                          Vec2 &bias) {
     const int32_t patch_rows = ex_patch_rows - 2;
     const int32_t patch_cols = ex_patch_cols - 2;
@@ -153,23 +152,23 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
     const float w_bottom_right = dec_pixel_row * dec_pixel_col;
 
     // Extract patch from current image, and compute bias.
-    const int32_t min_ref_pixel_row = static_cast<int32_t>(int_pixel_row) - patch_rows / 2;
-    const int32_t min_ref_pixel_col = static_cast<int32_t>(int_pixel_col) - patch_cols / 2;
-    const int32_t max_ref_pixel_row = min_ref_pixel_row + patch_rows;
-    const int32_t max_ref_pixel_col = min_ref_pixel_col + patch_cols;
+    const int32_t min_cur_pixel_row = static_cast<int32_t>(int_pixel_row) - patch_rows / 2;
+    const int32_t min_cur_pixel_col = static_cast<int32_t>(int_pixel_col) - patch_cols / 2;
+    const int32_t max_cur_pixel_row = min_cur_pixel_row + patch_rows;
+    const int32_t max_cur_pixel_col = min_cur_pixel_col + patch_cols;
 
     uint32_t valid_pixel_cnt = 0;
-    if (min_ref_pixel_row < 0 || max_ref_pixel_row > cur_image.rows() - 2 ||
-        min_ref_pixel_col < 0 || max_ref_pixel_col > cur_image.cols() - 2) {
+    if (min_cur_pixel_row < 0 || max_cur_pixel_row > cur_image.rows() - 2 ||
+        min_cur_pixel_col < 0 || max_cur_pixel_col > cur_image.cols() - 2) {
         // If this patch is partly outside of reference image.
-        for (int32_t row = min_ref_pixel_row; row < max_ref_pixel_row; ++row) {
-            const int32_t row_in_ex_patch = row - min_ref_pixel_row + 1;
-            const int32_t row_in_patch = row - min_ref_pixel_row;
+        for (int32_t row = min_cur_pixel_row; row < max_cur_pixel_row; ++row) {
+            const int32_t row_in_ex_patch = row - min_cur_pixel_row + 1;
+            const int32_t row_in_patch = row - min_cur_pixel_row;
 
-            for (int32_t col = min_ref_pixel_col; col < max_ref_pixel_col; ++col) {
+            for (int32_t col = min_cur_pixel_col; col < max_cur_pixel_col; ++col) {
                 CONTINUE_IF(row < 0 || row > cur_image.rows() - 2 || col < 0 || col > cur_image.cols() - 2);
 
-                const int32_t col_in_ex_patch = col + 1 - min_ref_pixel_col;
+                const int32_t col_in_ex_patch = col + 1 - min_cur_pixel_col;
                 const int32_t index_in_ex_patch = row_in_ex_patch * ex_patch_cols + col_in_ex_patch;
 
                 // If this pixel is invalid in ref or cur image, discard it.
@@ -184,7 +183,7 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                 const float dt = cur_pixel_value - ref_pixel_value;
 
                 // Update bias.
-                const int32_t &col_in_patch = col - min_ref_pixel_col;
+                const int32_t &col_in_patch = col - min_cur_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
 
                 bias(0) -= all_dx[index_in_patch] * dt;
@@ -197,12 +196,12 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
 
     } else {
         // If this patch is totally inside of reference image.
-        for (int32_t row = min_ref_pixel_row; row < max_ref_pixel_row; ++row) {
-            const int32_t row_in_ex_patch = row - min_ref_pixel_row + 1;
-            const int32_t row_in_patch = row - min_ref_pixel_row;
+        for (int32_t row = min_cur_pixel_row; row < max_cur_pixel_row; ++row) {
+            const int32_t row_in_ex_patch = row - min_cur_pixel_row + 1;
+            const int32_t row_in_patch = row - min_cur_pixel_row;
 
-            for (int32_t col = min_ref_pixel_col; col < max_ref_pixel_col; ++col) {
-                const int32_t col_in_ex_patch = col + 1 - min_ref_pixel_col;
+            for (int32_t col = min_cur_pixel_col; col < max_cur_pixel_col; ++col) {
+                const int32_t col_in_ex_patch = col + 1 - min_cur_pixel_col;
                 const int32_t index_in_ex_patch = row_in_ex_patch * ex_patch_cols + col_in_ex_patch;
 
                 // If this pixel is invalid in ref or cur image, discard it.
@@ -217,7 +216,7 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                 const float dt = cur_pixel_value - ref_pixel_value;
 
                 // Update bias.
-                const int32_t &col_in_patch = col - min_ref_pixel_col;
+                const int32_t &col_in_patch = col - min_cur_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
 
                 bias(0) -= all_dx[index_in_patch] * dt;

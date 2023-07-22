@@ -52,8 +52,8 @@ private:
                         const std::vector<bool> &ex_patch_pixel_valid,
                         int32_t ex_patch_rows,
                         int32_t ex_patch_cols,
-                        std::vector<float> &all_dx,
-                        std::vector<float> &all_dy,
+                        const std::vector<float> &all_dx,
+                        const std::vector<float> &all_dy,
                         Vec2 &bias);
 
     // Support for Sse method.

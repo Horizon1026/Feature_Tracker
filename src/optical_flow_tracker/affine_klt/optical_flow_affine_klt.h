@@ -29,11 +29,11 @@ private:
                          uint8_t &status);
     int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
                                          const GrayImage &cur_image,
-                                         const Vec2 &ref_point,
-                                         const Vec2 &cur_point,
-                                         Mat2 &A,
-                                         Mat6 &H,
-                                         Vec6 &b);
+                                         const Vec2 &ref_pixel_uv,
+                                         const Vec2 &cur_pixel_uv,
+                                         Mat2 &affine,
+                                         Mat6 &hessian,
+                                         Vec6 &bias);
 
     // Support for fast method.
     void TrackOneFeatureFast(const GrayImage &ref_image,
@@ -54,8 +54,9 @@ private:
                         const std::vector<bool> &ex_patch_pixel_valid,
                         int32_t ex_patch_rows,
                         int32_t ex_patch_cols,
-                        std::vector<float> &all_dx,
-                        std::vector<float> &all_dy,
+                        const std::vector<float> &all_dx,
+                        const std::vector<float> &all_dy,
+                        const Mat2 &affine,
                         Vec6 &bias);
 
 private:

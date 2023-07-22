@@ -4,10 +4,6 @@
 
 namespace FEATURE_TRACKER {
 
-namespace {
-    static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
-}
-
 bool OpticalFlowAffineKlt::PrepareForTracking() {
     patch_rows_ = (options().kPatchRowHalfSize << 1) + 1;
     patch_cols_ = (options().kPatchColHalfSize << 1) + 1;
@@ -28,9 +24,73 @@ bool OpticalFlowAffineKlt::PrepareForTracking() {
 
 void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                                                const GrayImage &cur_image,
-                                               const Vec2 &ref_point,
-                                               Vec2 &cur_point,
+                                               const Vec2 &ref_pixel_uv,
+                                               Vec2 &cur_pixel_uv,
                                                uint8_t &status) {
+    // Confirm extended patch size. Extract it from reference image.
+    ex_patch_.clear();
+    ex_patch_pixel_valid_.clear();
+    const uint32_t valid_pixel_num = this->ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_patch_rows_, ex_patch_cols_, ex_patch_, ex_patch_pixel_valid_);
+
+    // If this feature has no valid pixel in patch, it can not be tracked.
+    if (valid_pixel_num == 0) {
+        status = static_cast<uint8_t>(TrackStatus::kOutside);
+        return;
+    }
+
+    // Precompute dx, dy, hessian matrix.
+    all_dx_.clear();
+    all_dy_.clear();
+    Mat6 hessian = Mat6::Zero();
+    PrecomputeJacobianAndHessian(ex_patch_, ex_patch_pixel_valid_, ex_patch_rows_, ex_patch_cols_, all_dx_, all_dy_, hessian);
+
+    // Compute incremental by iteration.
+    Mat2 affine = Mat2::Identity();
+    Vec6 bias = Vec6::Zero();
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+    float last_squared_step = INFINITY;
+    uint32_t large_step_cnt = 0;
+    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+
+        // Compute bias.
+        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_patch_, ex_patch_pixel_valid_,
+            ex_patch_rows_, ex_patch_cols_, all_dx_, all_dy_, affine, bias) == 0);
+
+        // Solve incremental function.
+        const Vec6 z = hessian.ldlt().solve(bias);
+        if (Eigen::isnan(z.array()).any()) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+
+        // Update cur_pixel_uv.
+        const Vec2 v = z.head<2>() * cur_pixel_uv.x() + z.segment<2>(2) * cur_pixel_uv.y() + z.tail<2>();
+        cur_pixel_uv += v;
+
+        // Update affine translation matrix.
+        affine.col(0) += z.head<2>();
+        affine.col(1) += z.segment<2>(2);
+
+        // Check if this step is converged.
+        const float squared_step = v.squaredNorm();
+        if (squared_step < last_squared_step) {
+            last_squared_step = squared_step;
+            large_step_cnt = 0;
+        } else {
+            ++large_step_cnt;
+            BREAK_IF(large_step_cnt >= options().kMaxToleranceLargeStep);
+        }
+        if (squared_step < options().kMaxConvergeStep) {
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+    }
+
+    // Check if this feature is outside of current image.
+    if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 ||
+        cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
+        status = static_cast<uint8_t>(TrackStatus::kOutside);
+    }
     // Mat6 H = Mat6::Zero();
     // Vec6 b = Vec6::Zero();
     // Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
@@ -41,10 +101,10 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
 
     // for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
     //     for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
-    //         float row_i = static_cast<float>(drow) + ref_point.y();
-    //         float col_i = static_cast<float>(dcol) + ref_point.x();
-    //         float row_j = static_cast<float>(drow) + cur_point.y();
-    //         float col_j = static_cast<float>(dcol) + cur_point.x();
+    //         float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
+    //         float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
+    //         float row_j = static_cast<float>(drow) + cur_pixel_uv.y();
+    //         float col_j = static_cast<float>(dcol) + cur_pixel_uv.x();
 
     //         // Compute pixel gradient
     //         if (ref_image.GetPixelValue(row_i, col_i - 1.0f, temp_value) &&
@@ -113,8 +173,8 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     //     for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
     //         for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
     //             Vec2 affined_dcol_drow = A * Vec2(dcol, drow);
-    //             float row_j = affined_dcol_drow.y() + cur_point.y();
-    //             float col_j = affined_dcol_drow.x() + cur_point.x();
+    //             float row_j = affined_dcol_drow.y() + cur_pixel_uv.y();
+    //             float col_j = affined_dcol_drow.x() + cur_pixel_uv.x();
 
     //             // Compute pixel gradient
     //             if (cur_image.GetPixelValue(row_j, col_j, temp_value + 5) &&
@@ -142,22 +202,22 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
 
     //     // Solve H * z = b, update cur_pixel_uv.
     //     Vec6 z = H.ldlt().solve(b);
-    //     Vec2 v = z.head<2>() * cur_point.x() + z.segment<2>(2) * cur_point.y() + z.tail<2>();
+    //     Vec2 v = z.head<2>() * cur_pixel_uv.x() + z.segment<2>(2) * cur_pixel_uv.y() + z.tail<2>();
 
     //     if (std::isnan(v(0)) || std::isnan(v(1))) {
     //         status = static_cast<uint8_t>(TrackStatus::kNumericError);
     //         break;
     //     }
 
-    //     cur_point.x() += v(0);
-    //     cur_point.y() += v(1);
+    //     cur_pixel_uv.x() += v(0);
+    //     cur_pixel_uv.y() += v(1);
 
     //     // Update affine translation matrix.
     //     A.col(0) += z.head<2>();
     //     A.col(1) += z.segment<2>(2);
 
-    //     if (cur_point.x() < 0 || cur_point.x() > cur_image.cols() ||
-    //         cur_point.y() < 0 || cur_point.y() > cur_image.rows()) {
+    //     if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() ||
+    //         cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows()) {
     //         status = static_cast<uint8_t>(TrackStatus::kOutside);
     //         break;
     //     }
@@ -197,9 +257,31 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
                 all_dy.emplace_back(dy);
 
                 // Compute hessian matrix.
-                hessian(0, 0) += dx * dx;
-                hessian(0, 1) += dx * dy;
-                hessian(1, 1) += dy * dy;
+                const float xx = col * col;
+                const float yy = row * row;
+                const float xy = col * row;
+                const float dxdx = dx * dx;
+                const float dydy = dy * dy;
+                const float dxdy = dx * dy;
+
+                hessian(0, 0) += xx * dxdx;
+                hessian(0, 1) += xx * dxdy;
+                hessian(0, 2) += xy * dxdx;
+                hessian(0, 3) += xy * dxdy;
+                hessian(0, 4) += col * dxdx;
+                hessian(0, 5) += col * dxdy;
+                hessian(1, 1) += xx * dydy;
+                hessian(1, 3) += xy * dydy;
+                hessian(1, 5) += col * dydy;
+                hessian(2, 2) += yy * dxdx;
+                hessian(2, 3) += yy * dxdy;
+                hessian(2, 4) += row * dxdx;
+                hessian(2, 5) += row * dxdy;
+                hessian(3, 3) += yy * dydy;
+                hessian(3, 5) += row * dydy;
+                hessian(4, 4) += dxdx;
+                hessian(4, 5) += dxdy;
+                hessian(5, 5) += dydy;
             } else {
                 all_dx.emplace_back(0.0f);
                 all_dy.emplace_back(0.0f);
@@ -207,7 +289,14 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
         }
     }
 
-    hessian(1, 0) = hessian(0, 1);
+    hessian(1, 2) = hessian(0, 3);
+    hessian(1, 4) = hessian(0, 5);
+    hessian(3, 4) = hessian(2, 3);
+    for (uint32_t i = 0; i < 6; ++i) {
+        for (uint32_t j = i + 1; j < 6; ++j) {
+            hessian(j, i) = hessian(i, j);
+        }
+    }
 }
 
 int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
@@ -216,8 +305,9 @@ int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
                                           const std::vector<bool> &ex_patch_pixel_valid,
                                           int32_t ex_patch_rows,
                                           int32_t ex_patch_cols,
-                                          std::vector<float> &all_dx,
-                                          std::vector<float> &all_dy,
+                                          const std::vector<float> &all_dx,
+                                          const std::vector<float> &all_dy,
+                                          const Mat2 &affine,
                                           Vec6 &bias) {
     const int32_t patch_rows = ex_patch_rows - 2;
     const int32_t patch_cols = ex_patch_cols - 2;
@@ -267,9 +357,14 @@ int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
                 // Update bias.
                 const int32_t &col_in_patch = col - min_ref_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
-
-                bias(0) -= all_dx[index_in_patch] * dt;
-                bias(1) -= all_dy[index_in_patch] * dt;
+                const float &dx = all_dx[index_in_patch];
+                const float &dy = all_dy[index_in_patch];
+                bias(0) -= dt * col * dx;
+                bias(1) -= dt * col * dy;
+                bias(2) -= dt * row * dx;
+                bias(3) -= dt * row * dy;
+                bias(4) -= dt * dx;
+                bias(5) -= dt * dy;
 
                 // Static valid pixel number.
                 ++valid_pixel_cnt;
@@ -300,9 +395,14 @@ int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
                 // Update bias.
                 const int32_t &col_in_patch = col - min_ref_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
-
-                bias(0) -= all_dx[index_in_patch] * dt;
-                bias(1) -= all_dy[index_in_patch] * dt;
+                const float &dx = all_dx[index_in_patch];
+                const float &dy = all_dy[index_in_patch];
+                bias(0) -= dt * col * dx;
+                bias(1) -= dt * col * dy;
+                bias(2) -= dt * row * dx;
+                bias(3) -= dt * row * dy;
+                bias(4) -= dt * dx;
+                bias(5) -= dt * dy;
 
                 // Static valid pixel number.
                 ++valid_pixel_cnt;
