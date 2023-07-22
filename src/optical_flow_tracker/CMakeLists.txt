@@ -1,4 +1,6 @@
 aux_source_directory( . AUX_SRC_OPTICAL_FLOW_TRACKER )
+aux_source_directory( basic_klt AUX_SRC_OPTICAL_FLOW_BASIC_KLT )
+aux_source_directory( affine_klt AUX_SRC_OPTICAL_FLOW_AFFINE_KLT )
 
 # Add all components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -21,10 +23,16 @@ if ( NOT TARGET lib_slam_utility_tick_tock )
     add_subdirectory( ${SLAM_UTILITY_PATH}/tick_tock ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_tick_tock )
 endif()
 
-add_library( lib_optical_flow_tracker ${AUX_SRC_OPTICAL_FLOW_TRACKER} )
+add_library( lib_optical_flow_tracker
+    ${AUX_SRC_OPTICAL_FLOW_TRACKER}
+    ${AUX_SRC_OPTICAL_FLOW_BASIC_KLT}
+    ${AUX_SRC_OPTICAL_FLOW_AFFINE_KLT}
+)
 target_include_directories( lib_optical_flow_tracker PUBLIC
     .
     ..
+    basic_klt
+    affine_klt
 )
 target_link_libraries( lib_optical_flow_tracker
     lib_slam_utility_datatype

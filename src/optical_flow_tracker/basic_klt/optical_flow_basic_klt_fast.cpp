@@ -1,11 +1,11 @@
-#include "optical_flow_lk.h"
+#include "optical_flow_basic_klt.h"
 #include "slam_memory.h"
 #include "log_report.h"
 #include "slam_operations.h"
 
 namespace FEATURE_TRACKER {
 
-bool OpticalFlowLk::PrepareForTracking() {
+bool OpticalFlowBasicKlt::PrepareForTracking() {
     patch_rows_ = (options().kPatchRowHalfSize << 1) + 1;
     patch_cols_ = (options().kPatchColHalfSize << 1) + 1;
     patch_size_ = patch_rows_ * patch_cols_;
@@ -23,11 +23,11 @@ bool OpticalFlowLk::PrepareForTracking() {
     return true;
 }
 
-void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
-                                        const GrayImage &cur_image,
-                                        const Vec2 &ref_pixel_uv,
-                                        Vec2 &cur_pixel_uv,
-                                        uint8_t &status) {
+void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
+                                              const GrayImage &cur_image,
+                                              const Vec2 &ref_pixel_uv,
+                                              Vec2 &cur_pixel_uv,
+                                              uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
     ex_patch_.clear();
     ex_patch_pixel_valid_.clear();
@@ -88,12 +88,12 @@ void OpticalFlowLk::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 }
 
-uint32_t OpticalFlowLk::ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
-                                                           const Vec2 &ref_pixel_uv,
-                                                           int32_t ex_patch_rows,
-                                                           int32_t ex_patch_cols,
-                                                           std::vector<float> &ex_patch,
-                                                           std::vector<bool> &ex_patch_pixel_valid) {
+uint32_t OpticalFlowBasicKlt::ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
+                                                                 const Vec2 &ref_pixel_uv,
+                                                                 int32_t ex_patch_rows,
+                                                                 int32_t ex_patch_cols,
+                                                                 std::vector<float> &ex_patch,
+                                                                 std::vector<bool> &ex_patch_pixel_valid) {
     // Compute the weight for linear interpolar.
     const float int_pixel_row = std::floor(ref_pixel_uv.y());
     const float int_pixel_col = std::floor(ref_pixel_uv.x());
@@ -147,13 +147,13 @@ uint32_t OpticalFlowLk::ExtractExtendPatchInReferenceImage(const GrayImage &ref_
     }
 }
 
-void OpticalFlowLk::PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
-                                                 const std::vector<bool> &ex_patch_pixel_valid,
-                                                 int32_t ex_patch_rows,
-                                                 int32_t ex_patch_cols,
-                                                 std::vector<float> &all_dx,
-                                                 std::vector<float> &all_dy,
-                                                 Mat2 &hessian) {
+void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
+                                                       const std::vector<bool> &ex_patch_pixel_valid,
+                                                       int32_t ex_patch_rows,
+                                                       int32_t ex_patch_cols,
+                                                       std::vector<float> &all_dx,
+                                                       std::vector<float> &all_dy,
+                                                       Mat2 &hessian) {
     const int32_t patch_rows = ex_patch_rows - 2;
     const int32_t patch_cols = ex_patch_cols - 2;
     hessian.setZero();
@@ -188,15 +188,15 @@ void OpticalFlowLk::PrecomputeJacobianAndHessian(const std::vector<float> &ex_pa
     hessian(1, 0) = hessian(0, 1);
 }
 
-int32_t OpticalFlowLk::ComputeBias(const GrayImage &cur_image,
-                                   const Vec2 &cur_pixel_uv,
-                                   const std::vector<float> &ex_patch,
-                                   const std::vector<bool> &ex_patch_pixel_valid,
-                                   int32_t ex_patch_rows,
-                                   int32_t ex_patch_cols,
-                                   std::vector<float> &all_dx,
-                                   std::vector<float> &all_dy,
-                                   Vec2 &bias) {
+int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
+                                         const Vec2 &cur_pixel_uv,
+                                         const std::vector<float> &ex_patch,
+                                         const std::vector<bool> &ex_patch_pixel_valid,
+                                         int32_t ex_patch_rows,
+                                         int32_t ex_patch_cols,
+                                         std::vector<float> &all_dx,
+                                         std::vector<float> &all_dy,
+                                         Vec2 &bias) {
     const int32_t patch_rows = ex_patch_rows - 2;
     const int32_t patch_cols = ex_patch_cols - 2;
     bias.setZero();

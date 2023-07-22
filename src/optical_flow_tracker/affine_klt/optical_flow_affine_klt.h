@@ -1,16 +1,16 @@
-#ifndef _OPTICAL_FLOW_KLT_H_
-#define _OPTICAL_FLOW_KLT_H_
+#ifndef _OPTICAL_FLOW_AFFINE_KLT_H_
+#define _OPTICAL_FLOW_AFFINE_KLT_H_
 
 #include "optical_flow.h"
 #include <vector>
 
 namespace FEATURE_TRACKER {
 
-class OpticalFlowKlt : public OpticalFlow {
+class OpticalFlowAffineKlt : public OpticalFlow {
 
 public:
-    OpticalFlowKlt() : OpticalFlow() {}
-    virtual ~OpticalFlowKlt() = default;
+    OpticalFlowAffineKlt() : OpticalFlow() {}
+    virtual ~OpticalFlowAffineKlt() = default;
 
     virtual bool TrackSingleLevel(const GrayImage &ref_image,
                                   const GrayImage &cur_image,
@@ -47,4 +47,4 @@ private:
 
 }
 
-#endif
+#endif // end of _OPTICAL_FLOW_AFFINE_KLT_H_

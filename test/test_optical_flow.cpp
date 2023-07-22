@@ -13,8 +13,8 @@
 #include "feature_point_detector.h"
 #include "feature_harris.h"
 
-#include "optical_flow_lk.h"
-#include "optical_flow_klt.h"
+#include "optical_flow_basic_klt.h"
+#include "optical_flow_affine_klt.h"
 
 #define DRAW_TRACKING_RESULT (0)
 #define DETECT_FEATURES_BY_OPENCV (1)
@@ -84,7 +84,7 @@ void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
 #endif
 }
 
-float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
+float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
@@ -106,27 +106,27 @@ float TestLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t metho
     status.reserve(ref_pixel_uv.size());
 
     // Use LK optical tracker.
-    FEATURE_TRACKER::OpticalFlowLk lk;
-    lk.options().kPatchRowHalfSize = patch_size;
-    lk.options().kPatchColHalfSize = patch_size;
-    lk.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+    FEATURE_TRACKER::OpticalFlowBasicKlt klt;
+    klt.options().kPatchRowHalfSize = patch_size;
+    klt.options().kPatchColHalfSize = patch_size;
+    klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
 
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    lk.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
+    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "LK : Feature before multi tracking");
-    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "LK : Feature after multi tracking", status);
+    // DrawReferenceImage(ref_image, ref_pixel_uv, "Basic KLT : Feature before multi tracking");
+    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "Basic KLT : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
 
     return cost_time;
 }
 
-float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
+float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
@@ -147,7 +147,7 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
     cur_pixel_uv.reserve(ref_pixel_uv.size());
     status.reserve(ref_pixel_uv.size());
 
-    FEATURE_TRACKER::OpticalFlowKlt klt;
+    FEATURE_TRACKER::OpticalFlowAffineKlt klt;
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
     klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
@@ -159,8 +159,8 @@ float TestKltOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t meth
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "KLT : Feature before multi tracking");
-    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "KLT : Feature after multi tracking", status);
+    // DrawReferenceImage(ref_image, ref_pixel_uv, "Affine KLT : Feature before multi tracking");
+    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "Affine KLT : Feature after multi tracking", status);
     Visualizor::WaitKey(0);
 #endif
 
@@ -227,13 +227,13 @@ int main(int argc, char **argv) {
     }).join();
 
     std::thread([&]() {
-        const float cost_time = TestLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-        ReportInfo("lk.TrackMultipleLevel cost time " << cost_time << " ms.");
+        const float cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+        ReportInfo("Basic klt cost time " << cost_time << " ms.");
     }).join();
 
     std::thread([&]() {
-        const float cost_time = TestKltOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-        ReportInfo("klt.TrackMultipleLevel cost time " << cost_time << " ms.");
+        const float cost_time = TestOpticalFlowAffineKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+        ReportInfo("Affine klt cost time " << cost_time << " ms.");
     }).join();
 
     return 0;

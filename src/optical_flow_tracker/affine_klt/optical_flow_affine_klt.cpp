@@ -1,4 +1,4 @@
-#include "optical_flow_klt.h"
+#include "optical_flow_affine_klt.h"
 #include "slam_operations.h"
 #include "cmath"
 
@@ -8,7 +8,7 @@ namespace {
     static Vec3 kInfinityVec3 = Vec3(INFINITY, INFINITY, INFINITY);
 }
 
-bool OpticalFlowKlt::PrepareForTracking() {
+bool OpticalFlowAffineKlt::PrepareForTracking() {
     // Initial fx_fy_ti_ for fast inverse tracker.
     if (options().kMethod == OpticalFlowMethod::kFast) {
         const int32_t patch_rows = 2 * options().kPatchRowHalfSize + 1;
@@ -22,11 +22,11 @@ bool OpticalFlowKlt::PrepareForTracking() {
     return true;
 }
 
-bool OpticalFlowKlt::TrackSingleLevel(const GrayImage &ref_image,
-                                      const GrayImage &cur_image,
-                                      const std::vector<Vec2> &ref_pixel_uv,
-                                      std::vector<Vec2> &cur_pixel_uv,
-                                      std::vector<uint8_t> &status) {
+bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
+                                            const GrayImage &cur_image,
+                                            const std::vector<Vec2> &ref_pixel_uv,
+                                            std::vector<Vec2> &cur_pixel_uv,
+                                            std::vector<uint8_t> &status) {
     // Track per feature.
     uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
@@ -54,11 +54,11 @@ bool OpticalFlowKlt::TrackSingleLevel(const GrayImage &ref_image,
     return true;
 }
 
-void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
-                                         const GrayImage &cur_image,
-                                         const Vec2 &ref_point,
-                                         Vec2 &cur_point,
-                                         uint8_t &status) {
+void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
+                                               const GrayImage &cur_image,
+                                               const Vec2 &ref_point,
+                                               Vec2 &cur_point,
+                                               uint8_t &status) {
     Mat6 H = Mat6::Zero();
     Vec6 b = Vec6::Zero();
     Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
@@ -197,11 +197,11 @@ void OpticalFlowKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 }
 
-void OpticalFlowKlt::TrackOneFeature(const GrayImage &ref_image,
-                                     const GrayImage &cur_image,
-                                     const Vec2 &ref_point,
-                                     Vec2 &cur_point,
-                                     uint8_t &status) {
+void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image,
+                                           const GrayImage &cur_image,
+                                           const Vec2 &ref_point,
+                                           Vec2 &cur_point,
+                                           uint8_t &status) {
     Mat6 H = Mat6::Zero();
     Vec6 b = Vec6::Zero();
     Mat2 A = Mat2::Identity();    /* Affine trasform matrix. */
@@ -240,13 +240,13 @@ void OpticalFlowKlt::TrackOneFeature(const GrayImage &ref_image,
     }
 }
 
-int32_t OpticalFlowKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
-                                                     const GrayImage &cur_image,
-                                                     const Vec2 &ref_point,
-                                                     const Vec2 &cur_point,
-                                                     Mat2 &A,
-                                                     Mat6 &H,
-                                                     Vec6 &b) {
+int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                           const GrayImage &cur_image,
+                                                           const Vec2 &ref_point,
+                                                           const Vec2 &cur_point,
+                                                           Mat2 &A,
+                                                           Mat6 &H,
+                                                           Vec6 &b) {
     H.setZero();
     b.setZero();
     std::array<float, 6> temp_value = {};

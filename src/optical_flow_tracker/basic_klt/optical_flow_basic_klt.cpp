@@ -1,14 +1,14 @@
-#include "optical_flow_lk.h"
+#include "optical_flow_basic_klt.h"
 #include "slam_operations.h"
 #include "log_report.h"
 
 namespace FEATURE_TRACKER {
 
-bool OpticalFlowLk::TrackSingleLevel(const GrayImage &ref_image,
-                                     const GrayImage &cur_image,
-                                     const std::vector<Vec2> &ref_pixel_uv,
-                                     std::vector<Vec2> &cur_pixel_uv,
-                                     std::vector<uint8_t> &status) {
+bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image,
+                                           const GrayImage &cur_image,
+                                           const std::vector<Vec2> &ref_pixel_uv,
+                                           std::vector<Vec2> &cur_pixel_uv,
+                                           std::vector<uint8_t> &status) {
     // Track per feature.
     const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ?
                                     ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
@@ -37,12 +37,12 @@ bool OpticalFlowLk::TrackSingleLevel(const GrayImage &ref_image,
     return true;
 }
 
-int32_t OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
-                                                    const GrayImage &cur_image,
-                                                    const Vec2 &ref_pixel_uv,
-                                                    const Vec2 &cur_pixel_uv,
-                                                    Mat2 &H,
-                                                    Vec2 &b) {
+int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
+                                                          const GrayImage &cur_image,
+                                                          const Vec2 &ref_pixel_uv,
+                                                          const Vec2 &cur_pixel_uv,
+                                                          Mat2 &H,
+                                                          Vec2 &b) {
     std::array<float, 6> temp_value = {};
     int32_t num_of_valid_pixel = 0;
 
@@ -112,11 +112,11 @@ int32_t OpticalFlowLk::ConstructIncrementalFunction(const GrayImage &ref_image,
     return num_of_valid_pixel;
 }
 
-void OpticalFlowLk::TrackOneFeature(const GrayImage &ref_image,
-                                    const GrayImage &cur_image,
-                                    const Vec2 &ref_pixel_uv,
-                                    Vec2 &cur_pixel_uv,
-                                    uint8_t &status) {
+void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image,
+                                          const GrayImage &cur_image,
+                                          const Vec2 &ref_pixel_uv,
+                                          Vec2 &cur_pixel_uv,
+                                          uint8_t &status) {
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create H * v = b
         Mat2 H = Mat2::Zero();
