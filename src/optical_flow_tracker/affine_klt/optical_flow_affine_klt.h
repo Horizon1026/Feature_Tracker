@@ -21,12 +21,12 @@ public:
     virtual bool PrepareForTracking() override;
 
 private:
+    // Support for inverse and direct method.
     void TrackOneFeature(const GrayImage &ref_image,
                          const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
                          Vec2 &cur_pixel_uv,
                          uint8_t &status);
-
     int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
                                          const GrayImage &cur_image,
                                          const Vec2 &ref_point,
@@ -35,14 +35,42 @@ private:
                                          Mat6 &H,
                                          Vec6 &b);
 
+    // Support for fast method.
     void TrackOneFeatureFast(const GrayImage &ref_image,
                              const GrayImage &cur_image,
                              const Vec2 &ref_pixel_uv,
                              Vec2 &cur_pixel_uv,
                              uint8_t &status);
+    void PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
+                                      const std::vector<bool> &ex_patch_pixel_valid,
+                                      int32_t ex_patch_rows,
+                                      int32_t ex_patch_cols,
+                                      std::vector<float> &all_dx,
+                                      std::vector<float> &all_dy,
+                                      Mat6 &hessian);
+    int32_t ComputeBias(const GrayImage &cur_image,
+                        const Vec2 &cur_pixel_uv,
+                        const std::vector<float> &ex_patch,
+                        const std::vector<bool> &ex_patch_pixel_valid,
+                        int32_t ex_patch_rows,
+                        int32_t ex_patch_cols,
+                        std::vector<float> &all_dx,
+                        std::vector<float> &all_dy,
+                        Vec6 &bias);
 
 private:
-    std::vector<Vec3> fx_fy_ti_;
+    // Variable support for fast method.
+    std::vector<float> ex_patch_;
+    std::vector<bool> ex_patch_pixel_valid_;
+    std::vector<float> all_dx_;
+    std::vector<float> all_dy_;
+
+    int32_t patch_rows_ = 0;
+    int32_t patch_cols_ = 0;
+    int32_t patch_size_ = 0;
+    int32_t ex_patch_rows_ = 0;
+    int32_t ex_patch_cols_ = 0;
+    int32_t ex_patch_size_ = 0;
 };
 
 }

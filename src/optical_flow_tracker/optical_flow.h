@@ -39,6 +39,14 @@ public:
                             std::vector<Vec2> &cur_pixel_uv,
                             std::vector<uint8_t> &status);
 
+    // Support for all subclass's fast method.
+    uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
+                                                const Vec2 &ref_pixel_uv,
+                                                int32_t ex_patch_rows,
+                                                int32_t ex_patch_cols,
+                                                std::vector<float> &ex_patch,
+                                                std::vector<bool> &ex_patch_pixel_valid);
+
     // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
 
@@ -58,7 +66,7 @@ private:
     OpticalFlowOptions options_;
 
     // Scaled reference points pixel position for multi-level tracking.
-    std::vector<Vec2> scaled_ref_points_ = {};
+    std::vector<Vec2> scaled_ref_points_;
 
 };
 

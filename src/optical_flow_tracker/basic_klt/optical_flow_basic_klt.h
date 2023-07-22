@@ -20,7 +20,7 @@ private:
                                   std::vector<uint8_t> &status) override;
     virtual bool PrepareForTracking() override;
 
-    // Support for kInverse and kDirect method.
+    // Support for inverse and direct method.
     void TrackOneFeature(const GrayImage &ref_image,
                          const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
@@ -33,18 +33,12 @@ private:
                                          Mat2 &H,
                                          Vec2 &b);
 
-    // Support for kFast method.
+    // Support for fast method.
     void TrackOneFeatureFast(const GrayImage &ref_image,
                              const GrayImage &cur_image,
                              const Vec2 &ref_pixel_uv,
                              Vec2 &cur_pixel_uv,
                              uint8_t &status);
-    uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
-                                                const Vec2 &ref_pixel_uv,
-                                                int32_t ex_patch_rows,
-                                                int32_t ex_patch_cols,
-                                                std::vector<float> &ex_patch,
-                                                std::vector<bool> &ex_patch_pixel_valid);
     void PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
                                       const std::vector<bool> &ex_patch_pixel_valid,
                                       int32_t ex_patch_rows,

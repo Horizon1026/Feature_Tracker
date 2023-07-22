@@ -68,4 +68,63 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     return true;
 }
 
+uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
+                                                         const Vec2 &ref_pixel_uv,
+                                                         int32_t ex_patch_rows,
+                                                         int32_t ex_patch_cols,
+                                                         std::vector<float> &ex_patch,
+                                                         std::vector<bool> &ex_patch_pixel_valid) {
+    // Compute the weight for linear interpolar.
+    const float int_pixel_row = std::floor(ref_pixel_uv.y());
+    const float int_pixel_col = std::floor(ref_pixel_uv.x());
+    const float dec_pixel_row = ref_pixel_uv.y() - int_pixel_row;
+    const float dec_pixel_col = ref_pixel_uv.x() - int_pixel_col;
+    const float w_top_left = (1.0f - dec_pixel_row) * (1.0f - dec_pixel_col);
+    const float w_top_right = (1.0f - dec_pixel_row) * dec_pixel_col;
+    const float w_bottom_left = dec_pixel_row * (1.0f - dec_pixel_col);
+    const float w_bottom_right = dec_pixel_row * dec_pixel_col;
+
+    // Extract patch from reference image.
+    const int32_t min_ref_pixel_row = static_cast<int32_t>(int_pixel_row) - ex_patch_rows / 2;
+    const int32_t min_ref_pixel_col = static_cast<int32_t>(int_pixel_col) - ex_patch_cols / 2;
+    const int32_t max_ref_pixel_row = min_ref_pixel_row + ex_patch_rows;
+    const int32_t max_ref_pixel_col = min_ref_pixel_col + ex_patch_cols;
+
+    if (min_ref_pixel_row < 0 || max_ref_pixel_row > ref_image.rows() - 2 ||
+        min_ref_pixel_col < 0 || max_ref_pixel_col > ref_image.cols() - 2) {
+        // If this patch is partly outside of reference image.
+        uint32_t valid_pixel_cnt = 0;
+        for (int32_t row = min_ref_pixel_row; row < max_ref_pixel_row; ++row) {
+            for (int32_t col = min_ref_pixel_col; col < max_ref_pixel_col; ++col) {
+                if (row < 0 || row > ref_image.rows() - 2 || col < 0 || col > ref_image.cols() - 2) {
+                    ex_patch_pixel_valid.emplace_back(false);
+                    ex_patch.emplace_back(0.0f);
+                } else {
+                    ex_patch_pixel_valid.emplace_back(true);
+                    ex_patch.emplace_back(w_top_left * static_cast<float>(ref_image.GetPixelValueNoCheck(row, col)) +
+                                          w_top_right * static_cast<float>(ref_image.GetPixelValueNoCheck(row, col + 1)) +
+                                          w_bottom_left * static_cast<float>(ref_image.GetPixelValueNoCheck(row + 1, col)) +
+                                          w_bottom_right * static_cast<float>(ref_image.GetPixelValueNoCheck(row + 1, col + 1)));
+                    ++valid_pixel_cnt;
+                }
+            }
+        }
+
+        return valid_pixel_cnt;
+    } else {
+        // If this patch is totally inside of reference image.
+        for (int32_t row = min_ref_pixel_row; row < max_ref_pixel_row; ++row) {
+            for (int32_t col = min_ref_pixel_col; col < max_ref_pixel_col; ++col) {
+                ex_patch_pixel_valid.emplace_back(true);
+                ex_patch.emplace_back(w_top_left * static_cast<float>(ref_image.GetPixelValueNoCheck(row, col)) +
+                                      w_top_right * static_cast<float>(ref_image.GetPixelValueNoCheck(row, col + 1)) +
+                                      w_bottom_left * static_cast<float>(ref_image.GetPixelValueNoCheck(row + 1, col)) +
+                                      w_bottom_right * static_cast<float>(ref_image.GetPixelValueNoCheck(row + 1, col + 1)));
+            }
+        }
+
+        return ex_patch.size();
+    }
+}
+
 }
