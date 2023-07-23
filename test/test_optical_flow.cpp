@@ -17,7 +17,7 @@
 #include "optical_flow_affine_klt.h"
 
 #define DRAW_TRACKING_RESULT (0)
-#define DETECT_FEATURES_BY_OPENCV (1)
+#define DETECT_FEATURES_BY_OPENCV (0)
 
 #include "opencv2/opencv.hpp"
 

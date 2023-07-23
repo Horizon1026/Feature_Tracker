@@ -45,6 +45,7 @@ private:
                                       const std::vector<bool> &ex_patch_pixel_valid,
                                       int32_t ex_patch_rows,
                                       int32_t ex_patch_cols,
+                                      const Vec2 &cur_pixel_uv,
                                       std::vector<float> &all_dx,
                                       std::vector<float> &all_dy,
                                       Mat6 &hessian);

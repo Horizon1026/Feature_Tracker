@@ -42,7 +42,7 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image,
                                            uint8_t &status) {
     Mat6 hessian = Mat6::Zero();
     Vec6 bias = Vec6::Zero();
-    Mat2 affine = Mat2::Identity();    /* Affine trasform matrix. */
+    Mat2 affine = Mat2::Identity();    /* Affine transform matrix. */
 
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.
@@ -101,7 +101,7 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 const float row_j = affined_dcol_drow.y() + cur_pixel_uv.y();
                 const float col_j = affined_dcol_drow.x() + cur_pixel_uv.x();
 
-                // Compute pixel gradient
+                // Compute pixel gradient.
                 if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) &&
                     cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
                     cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) &&
@@ -166,7 +166,7 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 const float row_j = affined_dcol_drow.y() + cur_pixel_uv.y();
                 const float col_j = affined_dcol_drow.x() + cur_pixel_uv.x();
 
-                // Compute pixel gradient
+                // Compute pixel gradient.
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) &&
                     ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) &&
