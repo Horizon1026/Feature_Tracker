@@ -16,7 +16,7 @@
 #include "optical_flow_basic_klt.h"
 #include "optical_flow_affine_klt.h"
 
-#define DRAW_TRACKING_RESULT (0)
+#define DRAW_TRACKING_RESULT (1)
 #define DETECT_FEATURES_BY_OPENCV (0)
 
 #include "opencv2/opencv.hpp"
@@ -206,10 +206,10 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
     cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
     for (unsigned long i = 0; i < cur_corners.size(); i++) {
         if (status[i] != 1) {
-            cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 0, 255), 3);
+            cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 0, 255), 2);
             continue;
         }
-        cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 255, 255), 3);
+        cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 255, 255), 2);
         cv::line(show_cur_image, ref_corners[i], cur_corners[i], cv::Scalar(0, 255, 0), 1);
     }
     cv::imshow("OpenCvLk : Feature after multi tracking", show_cur_image);
@@ -221,20 +221,14 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
 }
 
 int main(int argc, char **argv) {
-    std::thread([&]() {
-        const float cost_time = TestOpencvLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-        ReportInfo("cv::calcOpticalFlowPyrLK cost time " << cost_time << " ms.");
-    }).join();
+    float cost_time = TestOpencvLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    ReportInfo("cv::calcOpticalFlowPyrLK cost time " << cost_time << " ms.");
 
-    std::thread([&]() {
-        const float cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-        ReportInfo("Basic klt cost time " << cost_time << " ms.");
-    }).join();
+    cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    ReportInfo("Basic klt cost time " << cost_time << " ms.");
 
-    std::thread([&]() {
-        const float cost_time = TestOpticalFlowAffineKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-        ReportInfo("Affine klt cost time " << cost_time << " ms.");
-    }).join();
+    cost_time = TestOpticalFlowAffineKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    ReportInfo("Affine klt cost time " << cost_time << " ms.");
 
     return 0;
 }

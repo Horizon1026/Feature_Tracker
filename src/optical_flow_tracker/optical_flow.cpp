@@ -127,4 +127,22 @@ uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_im
     }
 }
 
+bool OpticalFlow::PrepareForTracking() {
+    patch_rows_ = (options_.kPatchRowHalfSize << 1) + 1;
+    patch_cols_ = (options_.kPatchColHalfSize << 1) + 1;
+    patch_size_ = patch_rows_ * patch_cols_;
+
+    ex_patch_rows_ = patch_rows_ + 2;
+    ex_patch_cols_ = patch_cols_ + 2;
+    ex_patch_size_ = ex_patch_rows_ * ex_patch_cols_;
+
+    ex_patch_.reserve(ex_patch_size_);
+    ex_patch_pixel_valid_.reserve(ex_patch_size_);
+
+    all_dx_.reserve(patch_size_);
+    all_dy_.reserve(patch_size_);
+
+    return true;
+}
+
 }

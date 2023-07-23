@@ -5,33 +5,15 @@
 
 namespace FEATURE_TRACKER {
 
-bool OpticalFlowBasicKlt::PrepareForTracking() {
-    patch_rows_ = (options().kPatchRowHalfSize << 1) + 1;
-    patch_cols_ = (options().kPatchColHalfSize << 1) + 1;
-    patch_size_ = patch_rows_ * patch_cols_;
-
-    ex_patch_rows_ = patch_rows_ + 2;
-    ex_patch_cols_ = patch_cols_ + 2;
-    ex_patch_size_ = ex_patch_rows_ * ex_patch_cols_;
-
-    ex_patch_.reserve(ex_patch_size_);
-    ex_patch_pixel_valid_.reserve(ex_patch_size_);
-
-    all_dx_.reserve(patch_size_);
-    all_dy_.reserve(patch_size_);
-
-    return true;
-}
-
 void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                                               const GrayImage &cur_image,
                                               const Vec2 &ref_pixel_uv,
                                               Vec2 &cur_pixel_uv,
                                               uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
-    ex_patch_.clear();
-    ex_patch_pixel_valid_.clear();
-    const uint32_t valid_pixel_num = this->ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_patch_rows_, ex_patch_cols_, ex_patch_, ex_patch_pixel_valid_);
+    ex_patch().clear();
+    ex_patch_pixel_valid().clear();
+    const uint32_t valid_pixel_num = this->ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_patch_rows(), ex_patch_cols(), ex_patch(), ex_patch_pixel_valid());
 
     // If this feature has no valid pixel in patch, it can not be tracked.
     if (valid_pixel_num == 0) {
@@ -40,10 +22,10 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 
     // Precompute dx, dy, hessian matrix.
-    all_dx_.clear();
-    all_dy_.clear();
+    all_dx().clear();
+    all_dy().clear();
     Mat2 hessian = Mat2::Zero();
-    PrecomputeJacobianAndHessian(ex_patch_, ex_patch_pixel_valid_, ex_patch_rows_, ex_patch_cols_, all_dx_, all_dy_, hessian);
+    PrecomputeJacobianAndHessian(ex_patch(), ex_patch_pixel_valid(), ex_patch_rows(), ex_patch_cols(), all_dx(), all_dy(), hessian);
 
     // Compute incremental by iteration.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
@@ -52,8 +34,8 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     Vec2 bias = Vec2::Zero();
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute bias.
-        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_patch_, ex_patch_pixel_valid_,
-            ex_patch_rows_, ex_patch_cols_, all_dx_, all_dy_, bias) == 0);
+        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_patch(), ex_patch_pixel_valid(),
+            ex_patch_rows(), ex_patch_cols(), all_dx(), all_dy(), bias) == 0);
 
         // Solve incremental function.
         const Vec2 v = hessian.ldlt().solve(bias);

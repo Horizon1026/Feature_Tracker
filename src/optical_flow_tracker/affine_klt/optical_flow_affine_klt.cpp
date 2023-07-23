@@ -82,12 +82,12 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                                                            const GrayImage &cur_image,
                                                            const Vec2 &ref_pixel_uv,
                                                            const Vec2 &cur_pixel_uv,
-                                                           Mat2 &affine,
+                                                           const Mat2 &affine,
                                                            Mat6 &hessian,
                                                            Vec6 &bias) {
     hessian.setZero();
     bias.setZero();
-    std::array<float, 6> temp_value = {};
+    std::array<float, 6> temp_value;
     int32_t num_of_valid_pixel = 0;
 
     if (options().kMethod == OpticalFlowMethod::kDirect) {
@@ -108,48 +108,48 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
                     cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
-                    const float ft = temp_value[5] - temp_value[4];
+                    const float dx = temp_value[1] - temp_value[0];
+                    const float dy = temp_value[3] - temp_value[2];
+                    const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
                     const float &y = row_j;
 
                     const float xx = x * x;
                     const float yy = y * y;
-                    const float fxfx = fx * fx;
-                    const float fyfy = fy * fy;
+                    const float dxdx = dx * dx;
+                    const float dydy = dy * dy;
                     const float xy = x * y;
-                    const float fxfy = fx * fy;
+                    const float dxdy = dx * dy;
 
-                    hessian(0, 0) += xx * fxfx;
-                    hessian(0, 1) += xx * fxfy;
-                    hessian(0, 2) += xy * fxfx;
-                    hessian(0, 3) += xy * fxfy;
-                    hessian(0, 4) += x * fxfx;
-                    hessian(0, 5) += x * fxfy;
-                    hessian(1, 1) += xx * fyfy;
-                    hessian(1, 2) += xy * fxfy;
-                    hessian(1, 3) += xy * fyfy;
-                    hessian(1, 4) += x * fxfy;
-                    hessian(1, 5) += x * fyfy;
-                    hessian(2, 2) += yy * fxfx;
-                    hessian(2, 3) += yy * fxfy;
-                    hessian(2, 4) += y * fxfx;
-                    hessian(2, 5) += y * fxfy;
-                    hessian(3, 3) += yy * fyfy;
-                    hessian(3, 4) += yy * fxfy;
-                    hessian(3, 5) += y * fyfy;
-                    hessian(4, 4) += fxfx;
-                    hessian(4, 5) += fxfy;
-                    hessian(5, 5) += fyfy;
+                    hessian(0, 0) += xx * dxdx;
+                    hessian(0, 1) += xx * dxdy;
+                    hessian(0, 2) += xy * dxdx;
+                    hessian(0, 3) += xy * dxdy;
+                    hessian(0, 4) += x * dxdx;
+                    hessian(0, 5) += x * dxdy;
+                    hessian(1, 1) += xx * dydy;
+                    hessian(1, 2) += xy * dxdy;
+                    hessian(1, 3) += xy * dydy;
+                    hessian(1, 4) += x * dxdy;
+                    hessian(1, 5) += x * dydy;
+                    hessian(2, 2) += yy * dxdx;
+                    hessian(2, 3) += yy * dxdy;
+                    hessian(2, 4) += y * dxdx;
+                    hessian(2, 5) += y * dxdy;
+                    hessian(3, 3) += yy * dydy;
+                    hessian(3, 4) += yy * dxdy;
+                    hessian(3, 5) += y * dydy;
+                    hessian(4, 4) += dxdx;
+                    hessian(4, 5) += dxdy;
+                    hessian(5, 5) += dydy;
 
-                    bias(0) -= ft * x * fx;
-                    bias(1) -= ft * x * fy;
-                    bias(2) -= ft * y * fx;
-                    bias(3) -= ft * y * fy;
-                    bias(4) -= ft * fx;
-                    bias(5) -= ft * fy;
+                    bias(0) -= dt * x * dx;
+                    bias(1) -= dt * x * dy;
+                    bias(2) -= dt * y * dx;
+                    bias(3) -= dt * y * dy;
+                    bias(4) -= dt * dx;
+                    bias(5) -= dt * dy;
 
                     ++num_of_valid_pixel;
                 }
@@ -173,48 +173,48 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
                     cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
-                    const float ft = temp_value[5] - temp_value[4];
+                    const float dx = temp_value[1] - temp_value[0];
+                    const float dy = temp_value[3] - temp_value[2];
+                    const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
                     const float &y = row_j;
 
                     const float xx = x * x;
                     const float yy = y * y;
-                    const float fxfx = fx * fx;
-                    const float fyfy = fy * fy;
+                    const float dxdx = dx * dx;
+                    const float dydy = dy * dy;
                     const float xy = x * y;
-                    const float fxfy = fx * fy;
+                    const float dxdy = dx * dy;
 
-                    hessian(0, 0) += xx * fxfx;
-                    hessian(0, 1) += xx * fxfy;
-                    hessian(0, 2) += xy * fxfx;
-                    hessian(0, 3) += xy * fxfy;
-                    hessian(0, 4) += x * fxfx;
-                    hessian(0, 5) += x * fxfy;
-                    hessian(1, 1) += xx * fyfy;
-                    hessian(1, 2) += xy * fxfy;
-                    hessian(1, 3) += xy * fyfy;
-                    hessian(1, 4) += x * fxfy;
-                    hessian(1, 5) += x * fyfy;
-                    hessian(2, 2) += yy * fxfx;
-                    hessian(2, 3) += yy * fxfy;
-                    hessian(2, 4) += y * fxfx;
-                    hessian(2, 5) += y * fxfy;
-                    hessian(3, 3) += yy * fyfy;
-                    hessian(3, 4) += yy * fxfy;
-                    hessian(3, 5) += y * fyfy;
-                    hessian(4, 4) += fxfx;
-                    hessian(4, 5) += fxfy;
-                    hessian(5, 5) += fyfy;
+                    hessian(0, 0) += xx * dxdx;
+                    hessian(0, 1) += xx * dxdy;
+                    hessian(0, 2) += xy * dxdx;
+                    hessian(0, 3) += xy * dxdy;
+                    hessian(0, 4) += x * dxdx;
+                    hessian(0, 5) += x * dxdy;
+                    hessian(1, 1) += xx * dydy;
+                    hessian(1, 2) += xy * dxdy;
+                    hessian(1, 3) += xy * dydy;
+                    hessian(1, 4) += x * dxdy;
+                    hessian(1, 5) += x * dydy;
+                    hessian(2, 2) += yy * dxdx;
+                    hessian(2, 3) += yy * dxdy;
+                    hessian(2, 4) += y * dxdx;
+                    hessian(2, 5) += y * dxdy;
+                    hessian(3, 3) += yy * dydy;
+                    hessian(3, 4) += yy * dxdy;
+                    hessian(3, 5) += y * dydy;
+                    hessian(4, 4) += dxdx;
+                    hessian(4, 5) += dxdy;
+                    hessian(5, 5) += dydy;
 
-                    bias(0) -= ft * x * fx;
-                    bias(1) -= ft * x * fy;
-                    bias(2) -= ft * y * fx;
-                    bias(3) -= ft * y * fy;
-                    bias(4) -= ft * fx;
-                    bias(5) -= ft * fy;
+                    bias(0) -= dt * x * dx;
+                    bias(1) -= dt * x * dy;
+                    bias(2) -= dt * y * dx;
+                    bias(3) -= dt * y * dy;
+                    bias(4) -= dt * dx;
+                    bias(5) -= dt * dy;
 
                     ++num_of_valid_pixel;
                 }

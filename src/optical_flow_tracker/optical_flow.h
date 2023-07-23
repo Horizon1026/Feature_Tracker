@@ -49,9 +49,29 @@ public:
 
     // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
+    std::vector<float> &ex_patch() { return ex_patch_; }
+    std::vector<bool> &ex_patch_pixel_valid() { return ex_patch_pixel_valid_; }
+    std::vector<float> &all_dx() { return all_dx_; }
+    std::vector<float> &all_dy() { return all_dy_; }
+    int32_t &patch_rows() { return patch_rows_; }
+    int32_t &patch_cols() { return patch_cols_; }
+    int32_t &patch_size() { return patch_size_; }
+    int32_t &ex_patch_rows() { return ex_patch_rows_; }
+    int32_t &ex_patch_cols() { return ex_patch_cols_; }
+    int32_t &ex_patch_size() { return ex_patch_size_; }
 
     // Const reference for member variables.
     const OpticalFlowOptions &options() const { return options_; }
+    const std::vector<float> &ex_patch() const { return ex_patch_; }
+    const std::vector<bool> &ex_patch_pixel_valid() const { return ex_patch_pixel_valid_; }
+    const std::vector<float> &all_dx() const { return all_dx_; }
+    const std::vector<float> &all_dy() const { return all_dy_; }
+    const int32_t &patch_rows() const { return patch_rows_; }
+    const int32_t &patch_cols() const { return patch_cols_; }
+    const int32_t &patch_size() const { return patch_size_; }
+    const int32_t &ex_patch_rows() const { return ex_patch_rows_; }
+    const int32_t &ex_patch_cols() const { return ex_patch_cols_; }
+    const int32_t &ex_patch_size() const { return ex_patch_size_; }
 
 private:
     virtual bool TrackSingleLevel(const GrayImage &ref_image,
@@ -60,13 +80,27 @@ private:
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) = 0;
 
-    virtual bool PrepareForTracking() = 0;
+    virtual bool PrepareForTracking();
 
 private:
+    // General options for optical flow trackers.
     OpticalFlowOptions options_;
 
     // Scaled reference points pixel position for multi-level tracking.
     std::vector<Vec2> scaled_ref_points_;
+
+    // Variable support for fast method.
+    std::vector<float> ex_patch_;   // Extended patch with bound size 1.
+    std::vector<bool> ex_patch_pixel_valid_;
+    std::vector<float> all_dx_;
+    std::vector<float> all_dy_;
+
+    int32_t patch_rows_ = 0;
+    int32_t patch_cols_ = 0;
+    int32_t patch_size_ = 0;
+    int32_t ex_patch_rows_ = 0;
+    int32_t ex_patch_cols_ = 0;
+    int32_t ex_patch_size_ = 0;
 
 };
 

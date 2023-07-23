@@ -18,8 +18,6 @@ public:
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) override;
 
-    virtual bool PrepareForTracking() override;
-
 private:
     // Support for inverse and direct method.
     void TrackOneFeature(const GrayImage &ref_image,
@@ -31,7 +29,7 @@ private:
                                          const GrayImage &cur_image,
                                          const Vec2 &ref_pixel_uv,
                                          const Vec2 &cur_pixel_uv,
-                                         Mat2 &affine,
+                                         const Mat2 &affine,
                                          Mat6 &hessian,
                                          Vec6 &bias);
 
@@ -60,19 +58,10 @@ private:
                         const Mat2 &affine,
                         Vec6 &bias);
 
-private:
-    // Variable support for fast method.
-    std::vector<float> ex_patch_;
-    std::vector<bool> ex_patch_pixel_valid_;
-    std::vector<float> all_dx_;
-    std::vector<float> all_dy_;
+    // Support for Sse method.
 
-    int32_t patch_rows_ = 0;
-    int32_t patch_cols_ = 0;
-    int32_t patch_size_ = 0;
-    int32_t ex_patch_rows_ = 0;
-    int32_t ex_patch_cols_ = 0;
-    int32_t ex_patch_size_ = 0;
+    // Support for Neon method.
+
 };
 
 }
