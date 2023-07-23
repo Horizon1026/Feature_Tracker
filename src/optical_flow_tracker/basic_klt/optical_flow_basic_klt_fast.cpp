@@ -61,12 +61,6 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
             break;
         }
     }
-
-    // Check if this feature is outside of current image.
-    if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 ||
-        cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
-        status = static_cast<uint8_t>(TrackStatus::kOutside);
-    }
 }
 
 void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,

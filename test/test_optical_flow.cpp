@@ -19,7 +19,9 @@
 #define DRAW_TRACKING_RESULT (1)
 #define DETECT_FEATURES_BY_OPENCV (0)
 
+#if OPENCV_IS_VALID
 #include "opencv2/opencv.hpp"
+#endif
 
 namespace {
     constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
@@ -63,8 +65,7 @@ void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel
 }
 
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
-
-#if DETECT_FEATURES_BY_OPENCV
+#if defined(OPENCV_IS_VALID) && DETECT_FEATURES_BY_OPENCV
 	cv::Mat cv_image(image.rows(), image.cols(), CV_8UC1, image.data());
     std::vector<cv::Point2f> ref_corners;
     cv::goodFeaturesToTrack(cv_image, ref_corners, kMaxNumberOfFeaturesToTrack, 0.01, 20);
@@ -73,7 +74,6 @@ void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
     for (auto &item : ref_corners) {
         pixel_uv.emplace_back(Vec2(item.x, item.y));
     }
-
 #else
     // Detect features.
     FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
@@ -99,7 +99,8 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     cur_pyramid.SetRawImage(cur_image.data(), cur_image.rows(), cur_image.cols());
 
     // Detect features.
-    std::vector<Vec2> ref_pixel_uv, cur_pixel_uv;
+    std::vector<Vec2> ref_pixel_uv;
+    std::vector<Vec2> cur_pixel_uv;
     std::vector<uint8_t> status;
     DetectFeatures(ref_image, ref_pixel_uv);
     cur_pixel_uv.reserve(ref_pixel_uv.size());
@@ -141,7 +142,8 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     ref_pyramid.SetRawImage(ref_image.data(), ref_image.rows(), ref_image.cols());
 
     // Detect features.
-    std::vector<Vec2> ref_pixel_uv, cur_pixel_uv;
+    std::vector<Vec2> ref_pixel_uv;
+    std::vector<Vec2> cur_pixel_uv;
     std::vector<uint8_t> status;
     DetectFeatures(ref_image, ref_pixel_uv);
     cur_pixel_uv.reserve(ref_pixel_uv.size());
@@ -168,17 +170,23 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
 }
 
 float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
+    float cost_time = 0.0f;
+
+#if OPENCV_IS_VALID
     cv::Mat cv_ref_image, cv_cur_image;
     cv_ref_image = cv::imread(test_ref_image_file_name, 0);
     cv_cur_image = cv::imread(test_cur_image_file_name, 0);
 
     GrayImage ref_image(cv_ref_image.data, cv_ref_image.rows, cv_ref_image.cols);
+    GrayImage cur_image(cv_cur_image.data, cv_cur_image.rows, cv_cur_image.cols);
 
     // Detect features.
-    std::vector<cv::Point2f> ref_corners, cur_corners;
+    std::vector<cv::Point2f> ref_corners;
+    std::vector<cv::Point2f> cur_corners;
     std::vector<Vec2> ref_pixel_uv;
+    std::vector<Vec2> cur_pixel_uv;
     DetectFeatures(ref_image, ref_pixel_uv);
-    for (auto &item : ref_pixel_uv) {
+    for (const auto &item : ref_pixel_uv) {
         ref_corners.emplace_back(cv::Point2f(item.x(), item.y()));
     }
 
@@ -192,30 +200,17 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
     TickTock timer;
     cv::calcOpticalFlowPyrLK(cv_ref_image, cv_cur_image, ref_corners, cur_corners, status, errors,
         cv::Size(2 * patch_size + 1, 2 * patch_size + 1), pyramid_level - 1);
-    const float cost_time = timer.TickInMillisecond();
+    cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // cv::Mat show_ref_image(cv_ref_image.rows, cv_ref_image.cols, CV_8UC3);
-    // cv::cvtColor(cv_ref_image, show_ref_image, cv::COLOR_GRAY2BGR);
-    // for (unsigned long i = 0; i < ref_corners.size(); i++) {
-    //     cv::circle(show_ref_image, ref_corners[i], 2, cv::Scalar(255, 255, 0), 3);
-    // }
-    // cv::imshow("OpenCvLk : Feature before multi tracking", show_ref_image);
-
-    cv::Mat show_cur_image(cv_cur_image.rows, cv_cur_image.cols, CV_8UC3);
-    cv::cvtColor(cv_cur_image, show_cur_image, cv::COLOR_GRAY2BGR);
-    for (unsigned long i = 0; i < cur_corners.size(); i++) {
-        if (status[i] != 1) {
-            cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 0, 255), 2);
-            continue;
-        }
-        cv::circle(show_cur_image, cur_corners[i], 2, cv::Scalar(0, 255, 255), 2);
-        cv::line(show_cur_image, ref_corners[i], cur_corners[i], cv::Scalar(0, 255, 0), 1);
+    for (const auto &item : cur_corners) {
+        cur_pixel_uv.emplace_back(Vec2(item.x, item.y));
     }
-    cv::imshow("OpenCvLk : Feature after multi tracking", show_cur_image);
-
-    cv::waitKey(0);
-#endif
+    // DrawReferenceImage(ref_image, ref_pixel_uv, "OpenCV LK : Feature before multi tracking");
+    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "OpenCV LK : Feature after multi tracking", status);
+    Visualizor::WaitKey(0);
+#endif // end of DRAW_TRACKING_RESULT
+#endif // end of OPENCV_IS_VALID
 
     return cost_time;
 }

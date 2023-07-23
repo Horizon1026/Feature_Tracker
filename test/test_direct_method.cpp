@@ -11,12 +11,17 @@
 #include "slam_memory.h"
 #include "visualizor.h"
 
-#define FEATURES_TO_TRACK (200)
+namespace {
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+}
 
 // Camera intrinsics
-float fx = 718.856f, fy = 718.856f, cx = 607.1928f, cy = 185.2157f;
+const float fx = 718.856f;
+const float fy = 718.856f;
+const float cx = 607.1928f;
+const float cy = 185.2157f;
 // baseline
-float baseline = 0.573f;
+const float baseline = 0.573f;
 std::string test_ref_image_file_name = "../example/direct_method/left.png";
 std::string test_ref_depth_file_name = "../example/direct_method/disparity.png";
 std::string test_cur_image_file_name = "../example/direct_method/000001.png";
@@ -45,7 +50,7 @@ void TestDirectMethod() {
     std::vector<Vec2> ref_pixel_uv;
     std::vector<Vec2> cur_pixel_uv;
     std::vector<float> ref_pixel_uv_depth;
-    for (int32_t i = 0; i < FEATURES_TO_TRACK; ++i) {
+    for (int32_t i = 0; i < kMaxNumberOfFeaturesToTrack; ++i) {
         ref_pixel_uv.emplace_back(Vec2(std::rand() % ref_image.cols(), std::rand() % ref_image.rows()));
         const int32_t disparity = ref_depth.GetPixelValueNoCheck(ref_pixel_uv.back().y(), ref_pixel_uv.back().x());
         ref_pixel_uv_depth.emplace_back(fx * baseline / disparity);
@@ -55,7 +60,7 @@ void TestDirectMethod() {
     uint8_t *show_ref_image_buf = (uint8_t *)SlamMemory::Malloc(ref_image.rows() * ref_image.cols() * 3);
     RgbImage show_ref_image(show_ref_image_buf, ref_image.rows(), ref_image.cols(), true);
     Visualizor::ConvertUint8ToRgb(ref_image.data(), show_ref_image.data(), ref_image.rows() * ref_image.cols());
-    for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
+    for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
         Visualizor::DrawSolidCircle(show_ref_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
             3, RgbPixel{.r = 0, .g = 255, .b = 255});
     }
@@ -99,7 +104,7 @@ void TestDirectMethod() {
         uint8_t *show_cur_image_buf = (uint8_t *)SlamMemory::Malloc(cur_image.rows() * cur_image.cols() * 3);
         RgbImage show_cur_image(show_cur_image_buf, cur_image.rows(), cur_image.cols(), true);
         Visualizor::ConvertUint8ToRgb(cur_image.data(), show_cur_image.data(), cur_image.rows() * cur_image.cols());
-        for (unsigned long i = 0; i < cur_pixel_uv.size(); i++) {
+        for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
             if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
                 continue;
             }
@@ -116,7 +121,6 @@ void TestDirectMethod() {
 }
 
 int main(int argc, char **argv) {
-
     ReportInfo(YELLOW ">> Test direct method for all images." RESET_COLOR);
     TestDirectMethod();
 

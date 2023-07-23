@@ -132,8 +132,6 @@ void TestFeaturePointMatcher() {
 }
 
 int main(int argc, char **argv) {
-
     TestFeaturePointMatcher();
-
     return 0;
 }

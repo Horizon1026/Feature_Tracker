@@ -79,7 +79,6 @@ private:
                                   const std::vector<Vec2> &ref_pixel_uv,
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) = 0;
-
     virtual bool PrepareForTracking();
 
 private:

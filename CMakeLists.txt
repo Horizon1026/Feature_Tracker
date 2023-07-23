@@ -7,7 +7,14 @@ set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall -lpthread" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 17 )
 
+# If opencv is installed, use it for comparation.
 find_package( OpenCV )
+if( OpenCV_FOUND )
+    message(">> Find opencv, define OPENCV_IS_VALID.")
+    add_definitions( -DOPENCV_IS_VALID )
+else()
+    message(">> Can not find opencv, do not define OPENCV_IS_VALID.")
+endif()
 
 # Add slam utility log and visualizor.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -58,7 +65,6 @@ target_link_libraries( test_optical_flow
     lib_slam_utility_log
     lib_slam_utility_tick_tock
     lib_slam_utility_visualize
-
     ${OpenCV_LIBS}
 )
 
