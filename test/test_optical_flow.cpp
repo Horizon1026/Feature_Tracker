@@ -33,37 +33,6 @@ namespace {
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 
-void DrawReferenceImage(const GrayImage &image, const std::vector<Vec2> &pixel_uv, const std::string &title) {
-    uint8_t *show_ref_image_buf = (uint8_t *)SlamMemory::Malloc(image.rows() * image.cols() * 3);
-    RgbImage show_ref_image(show_ref_image_buf, image.rows(), image.cols(), true);
-    Visualizor::ConvertUint8ToRgb(image.data(), show_ref_image.data(), image.rows() * image.cols());
-    for (unsigned long i = 0; i < pixel_uv.size(); i++) {
-        Visualizor::DrawSolidCircle(show_ref_image, pixel_uv[i].x(), pixel_uv[i].y(),
-            3, RgbPixel{.r = 0, .g = 255, .b = 255});
-    }
-    Visualizor::ShowImage(title, show_ref_image);
-}
-
-void DrawCurrentImage(const GrayImage &image, const std::vector<Vec2> &ref_pixel_uv, const std::vector<Vec2> &cur_pixel_uv, const std::string &title, const std::vector<uint8_t> &status) {
-    uint8_t *show_cur_image_buf = (uint8_t *)SlamMemory::Malloc(image.rows() * image.cols() * 3);
-    RgbImage show_cur_image(show_cur_image_buf, image.rows(), image.cols(), true);
-    Visualizor::ConvertUint8ToRgb(image.data(), show_cur_image.data(), image.rows() * image.cols());
-    for (unsigned long i = 0; i < ref_pixel_uv.size(); i++) {
-        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked) &&
-            status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kLargeResidual)) {
-            Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
-                3, RgbPixel{.r = 255, .g = 0, .b = 0});
-            continue;
-        }
-        Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
-            3, RgbPixel{.r = 0, .g = 200, .b = 255});
-        Visualizor::DrawBressenhanLine(show_cur_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
-            cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
-            RgbPixel{.r = 0, .g = 255, .b = 0});
-    }
-    Visualizor::ShowImage(title, show_cur_image);
-}
-
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
 #if defined(OPENCV_IS_VALID) && DETECT_FEATURES_BY_OPENCV
 	cv::Mat cv_image(image.rows(), image.cols(), CV_8UC1, image.data());
@@ -119,8 +88,8 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "Basic KLT : Feature before multi tracking");
-    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "Basic KLT : Feature after multi tracking", status);
+    // Visualizor::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor::ShowImageWithTrackedFeatures("Basic KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
     Visualizor::WaitKey(0);
 #endif
 
@@ -161,8 +130,8 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "Affine KLT : Feature before multi tracking");
-    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "Affine KLT : Feature after multi tracking", status);
+    // Visualizor::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor::ShowImageWithTrackedFeatures("Affine KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
     Visualizor::WaitKey(0);
 #endif
 
@@ -206,8 +175,8 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
     for (const auto &item : cur_corners) {
         cur_pixel_uv.emplace_back(Vec2(item.x, item.y));
     }
-    // DrawReferenceImage(ref_image, ref_pixel_uv, "OpenCV LK : Feature before multi tracking");
-    DrawCurrentImage(cur_image, ref_pixel_uv, cur_pixel_uv, "OpenCV LK : Feature after multi tracking", status);
+    // Visualizor::ShowImageWithDetectedFeatures("Opencv KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor::ShowImageWithTrackedFeatures("Opencv KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
     Visualizor::WaitKey(0);
 #endif // end of DRAW_TRACKING_RESULT
 #endif // end of OPENCV_IS_VALID
@@ -217,7 +186,7 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
 
 int main(int argc, char **argv) {
     float cost_time = TestOpencvLkOpticalFlow(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
-    ReportInfo("cv::calcOpticalFlowPyrLK cost time " << cost_time << " ms.");
+    ReportInfo("Opencv lk cost time " << cost_time << " ms.");
 
     cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("Basic klt cost time " << cost_time << " ms.");

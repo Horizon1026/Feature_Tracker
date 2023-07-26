@@ -8,8 +8,8 @@ namespace FEATURE_TRACKER {
 enum class TrackStatus : uint8_t {
     kNotTracked = 0,
     kTracked = 1,
-    kOutside = 2,
-    kLargeResidual = 3,
+    kLargeResidual = 2,
+    kOutside = 3,
     kNumericError = 4,
 };
 
