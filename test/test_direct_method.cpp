@@ -57,14 +57,7 @@ void TestDirectMethod() {
     }
 
     // Show detected features in reference image.
-    uint8_t *show_ref_image_buf = (uint8_t *)SlamMemory::Malloc(ref_image.rows() * ref_image.cols() * 3);
-    RgbImage show_ref_image(show_ref_image_buf, ref_image.rows(), ref_image.cols(), true);
-    Visualizor::ConvertUint8ToRgb(ref_image.data(), show_ref_image.data(), ref_image.rows() * ref_image.cols());
-    for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
-        Visualizor::DrawSolidCircle(show_ref_image, ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
-            3, RgbPixel{.r = 0, .g = 255, .b = 255});
-    }
-    Visualizor::ShowImage("Direct method : Feature before multi tracking", show_ref_image);
+    Visualizor::ShowImageWithDetectedFeatures("Direct method : Feature before multi tracking", ref_image, ref_pixel_uv);
 
     // Construct camera intrinsic matrix K.
     std::array<float, 4> K = {fx, fy, cx, cy};
@@ -100,22 +93,8 @@ void TestDirectMethod() {
 
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
-
-        uint8_t *show_cur_image_buf = (uint8_t *)SlamMemory::Malloc(cur_image.rows() * cur_image.cols() * 3);
-        RgbImage show_cur_image(show_cur_image_buf, cur_image.rows(), cur_image.cols(), true);
-        Visualizor::ConvertUint8ToRgb(cur_image.data(), show_cur_image.data(), cur_image.rows() * cur_image.cols());
-        for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
-            if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
-                continue;
-            }
-            Visualizor::DrawSolidCircle(show_cur_image, cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
-                3, RgbPixel{.r = 255, .g = 0, .b = 0});
-            Visualizor::DrawBressenhanLine(show_cur_image,
-                ref_pixel_uv[i].x(), ref_pixel_uv[i].y(),
-                cur_pixel_uv[i].x(), cur_pixel_uv[i].y(),
-                RgbPixel{.r = 0, .g = 255, .b = 0});
-        }
-        Visualizor::ShowImage("Direct method : Feature after multi tracking", show_cur_image);
+        Visualizor::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image,
+            ref_pixel_uv, cur_pixel_uv, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
         Visualizor::WaitKey(0);
     }
 }

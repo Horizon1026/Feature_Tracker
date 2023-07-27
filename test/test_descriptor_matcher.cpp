@@ -87,47 +87,8 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    uint8_t *merged_gray_buf = (uint8_t *)SlamMemory::Malloc(cur_image.rows() * cur_image.cols() * 2 * sizeof(uint8_t));
-    GrayImage merged_image(merged_gray_buf, cur_image.rows(), cur_image.cols() * 2, true);
-    for (int32_t v = 0; v < merged_image.rows(); ++v) {
-        for (int32_t u = 0; u < merged_image.cols(); ++u) {
-            if (u < cur_image.cols()) {
-                merged_image.SetPixelValueNoCheck(v, u, ref_image.GetPixelValueNoCheck(v, u));
-            } else {
-                merged_image.SetPixelValueNoCheck(v, u, ref_image.GetPixelValueNoCheck(v, u - cur_image.cols()));
-            }
-        }
-    }
-    // Construct image to show.
-    uint8_t *merged_rgb_buf = (uint8_t *)SlamMemory::Malloc(merged_image.rows() * merged_image.cols() * 3 * sizeof(uint8_t));
-    RgbImage show_image(merged_rgb_buf, merged_image.rows(), merged_image.cols(), true);
-    Visualizor::ConvertUint8ToRgb(merged_image.data(), show_image.data(), merged_image.rows() * merged_image.cols());
-
-    // [ALL] Draw pairs.
-    for (uint32_t i = 0; i < matched_cur_features.size(); ++i) {
-        if (status[i] != static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked)) {
-            continue;
-        }
-        Visualizor::DrawBressenhanLine(show_image,
-            ref_features[i].x(), ref_features[i].y(),
-            matched_cur_features[i].x() + cur_image.cols(),
-            matched_cur_features[i].y(),
-            RgbPixel{.r = static_cast<uint8_t>(std::rand() % 256),
-                     .g = static_cast<uint8_t>(std::rand() % 256),
-                     .b = static_cast<uint8_t>(std::rand() % 256)});
-    }
-    // [left] Draw reference points.
-    for (uint32_t i = 0; i < ref_features.size(); ++i) {
-        Visualizor::DrawSolidCircle(show_image, ref_features[i].x(), ref_features[i].y(),
-            3, RgbPixel{.r = 255, .g = 0, .b = 0});
-    }
-    // [right] Draw result points.
-    for (uint32_t i = 0; i < cur_features.size(); ++i) {
-        Visualizor::DrawSolidCircle(show_image, cur_features[i].x() + cur_image.cols(), cur_features[i].y(),
-            3, RgbPixel{.r = 0, .g = 255, .b = 255});
-    }
-
-    Visualizor::ShowImage("Features matched by Brief descriptor", show_image);
+    Visualizor::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image,
+        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor::WaitKey(0);
 }
 
