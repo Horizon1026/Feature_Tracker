@@ -49,12 +49,8 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                       Quat &q_rc,
                                       Vec3 &p_rc,
                                       std::vector<uint8_t> &status) {
-    if (ref_pixel_uv.empty()) {
-        return false;
-    }
-    if (cur_pyramid.level() != ref_pyramid.level()) {
-        return false;
-    }
+    RETURN_FALSE_IF(ref_pixel_uv.empty());
+    RETURN_FALSE_IF(cur_pyramid.level() != ref_pyramid.level());
 
     // If sizeof ref_pixel_uv is not equal to cur_pixel_uv, view it as no prediction.
     if (ref_pixel_uv.size() != cur_pixel_uv.size()) {
@@ -77,9 +73,7 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
         TrackSingleLevel(ref_image, cur_image, scaled_K, p_c_in_ref, scaled_ref_points_, cur_pixel_uv, q_rc, p_rc);
 
-        if (level_idx == 0) {
-            break;
-        }
+        BREAK_IF(level_idx == 0);
 
         // Recover scale.
         for (uint32_t i = 0; i < scaled_ref_points_.size(); ++i) {
@@ -161,11 +155,10 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
         Vec6 b = Vec6::Zero();
 
         // Use all features to construct incremental function.
-        uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
+        const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
         for (uint32_t i = 0; i < max_feature_id; ++i) {
-            if (p_c_in_ref[i].z() < kZero) {
-                continue;
-            }
+            CONTINUE_IF(p_c_in_ref[i].z() < kZero);
+
             const float p_r_x = p_c_in_ref[i].x();
             const float p_r_y = p_c_in_ref[i].y();
             const float p_r_z = p_c_in_ref[i].z();
@@ -176,9 +169,8 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
 
             // Project points to current frame.
             const Vec3 p_c_in_cur = q_rc.inverse() * (p_c_in_ref[i] - p_rc);
-            if (p_c_in_cur.z() < kZero) {
-                continue;
-            }
+            CONTINUE_IF(p_c_in_cur.z() < kZero);
+
             const Vec2 cur_norm_xy = (p_c_in_cur / p_c_in_cur.z()).head<2>();
             camera.LiftToImagePlane(cur_norm_xy, cur_pixel_uv[i]);
 
@@ -227,9 +219,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
 
         // Solve incremental function.
         Vec6 dx = H.ldlt().solve(b);
-        if (Eigen::isnan(dx.array()).any()) {
-            break;
-        }
+        BREAK_IF(Eigen::isnan(dx.array()).any());
 
         // Update current frame pose.
         p_rc += dx.head<3>();
@@ -237,9 +227,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
         q_rc.normalize();
 
         // Check if converged.
-        if (dx.squaredNorm() < options().kMaxConvergeStep) {
-            break;
-        }
+        BREAK_IF(dx.squaredNorm() < options().kMaxConvergeStep);
     }
 
     return true;

@@ -9,12 +9,10 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
                                             std::vector<Vec2> &cur_pixel_uv,
                                             std::vector<uint8_t> &status) {
     // Track per feature.
-    uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
+    const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
-        if (status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked)) {
-            continue;
-        }
+        CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:

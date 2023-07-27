@@ -1,4 +1,5 @@
 #include "optical_flow.h"
+#include "slam_operations.h"
 
 namespace FEATURE_TRACKER {
 
@@ -7,12 +8,8 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                      const std::vector<Vec2> &ref_pixel_uv,
                                      std::vector<Vec2> &cur_pixel_uv,
                                      std::vector<uint8_t> &status) {
-    if (ref_pixel_uv.empty()) {
-        return false;
-    }
-    if (cur_pyramid.level() != ref_pyramid.level()) {
-        return false;
-    }
+    RETURN_FALSE_IF(ref_pixel_uv.empty());
+    RETURN_FALSE_IF(cur_pyramid.level() != ref_pyramid.level());
 
     // If sizeof ref_pixel_uv is not equal to cur_pixel_uv, view it as no prediction.
     if (ref_pixel_uv.size() != cur_pixel_uv.size()) {
@@ -55,9 +52,7 @@ bool OpticalFlow::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
         TrackSingleLevel(ref_image, cur_image, scaled_ref_points_, cur_pixel_uv, status);
 
-        if (level_idx == 0) {
-            break;
-        }
+        BREAK_IF(level_idx == 0);
 
         for (uint32_t i = 0; i < scaled_ref_points_.size(); ++i) {
             scaled_ref_points_[i] *= 2.0f;

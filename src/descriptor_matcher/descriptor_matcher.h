@@ -70,9 +70,7 @@ template <typename DescriptorType>
 bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorType> &descriptors_ref,
                                                    const std::vector<DescriptorType> &descriptors_cur,
                                                    std::vector<int32_t> &index_pairs_in_cur) {
-    if (descriptors_cur.empty()) {
-        return false;
-    }
+    RETURN_FALSE_IF(descriptors_cur.empty());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
         index_pairs_in_cur.resize(descriptors_ref.size(), -1);
@@ -112,9 +110,7 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
                                                     const std::vector<Vec2> &pixel_uv_pred_in_cur,
                                                     const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
-    if (descriptors_cur.empty()) {
-        return false;
-    }
+    RETURN_FALSE_IF(descriptors_cur.empty());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
         index_pairs_in_cur.resize(descriptors_ref.size(), -1);
@@ -137,9 +133,7 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
                 index_pairs_in_cur[i] = j;
             }
 
-            if (distance == 0) {
-                break;
-            }
+            BREAK_IF(distance == 0);
         }
     }
 
