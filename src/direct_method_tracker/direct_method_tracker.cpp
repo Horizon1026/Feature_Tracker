@@ -190,7 +190,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
                                  fy * p_r_x * p_r_z_inv;
 
             // Compute image gradient with all pixel in the patch, create H * v = b
-            float temp_value[6] = {};
+            std::array<float, 6> temp_value;
             for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
                 for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                     const float row_i = static_cast<float>(drow) + ref_pixel_uv[i].y();
@@ -198,12 +198,12 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
                     const float row_j = static_cast<float>(drow) + cur_pixel_uv[i].y();
                     const float col_j = static_cast<float>(dcol) + cur_pixel_uv[i].x();
                     // Compute pixel gradient
-                    if (cur_image.GetPixelValue(row_j, col_j - 1.0f, temp_value) &&
-                        cur_image.GetPixelValue(row_j, col_j + 1.0f, temp_value + 1) &&
-                        cur_image.GetPixelValue(row_j - 1.0f, col_j, temp_value + 2) &&
-                        cur_image.GetPixelValue(row_j + 1.0f, col_j, temp_value + 3) &&
-                        ref_image.GetPixelValue(row_i, col_i, temp_value + 4) &&
-                        cur_image.GetPixelValue(row_j, col_j, temp_value + 5)) {
+                    if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) &&
+                        cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
+                        cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) &&
+                        cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
+                        ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
+                        cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
 
                         const Vec2 jacobian_image_pixel = Vec2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) * 0.5f;
                         const float residual = temp_value[5] - temp_value[4];
