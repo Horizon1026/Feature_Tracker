@@ -38,7 +38,7 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image,
                                          const Vec2 &ref_pixel_uv,
                                          Vec2 &cur_pixel_uv,
                                          uint8_t &status) {
-    float rotation = 0.0f;
+    float rotation = predict_theta_;
     Vec2 translation = Vec2::Zero();
 
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
