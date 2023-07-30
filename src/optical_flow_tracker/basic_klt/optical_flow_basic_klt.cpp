@@ -35,6 +35,40 @@ bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image,
     return true;
 }
 
+void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image,
+                                          const GrayImage &cur_image,
+                                          const Vec2 &ref_pixel_uv,
+                                          Vec2 &cur_pixel_uv,
+                                          uint8_t &status) {
+    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+        // Compute each pixel in the patch, create hessian * v = bias
+        Mat2 hessian = Mat2::Zero();
+        Vec2 bias = Vec2::Zero();
+        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
+
+        // Solve hessian * v = bias.
+        Vec2 v = hessian.ldlt().solve(bias);
+        if (Eigen::isnan(v.array()).any()) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+
+        // Update cur_pixel_uv.
+        cur_pixel_uv += v;
+
+        // Check converge status.
+        if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 ||
+            cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
+            status = static_cast<uint8_t>(TrackStatus::kOutside);
+            break;
+        }
+        if (v.squaredNorm() < options().kMaxConvergeStep) {
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+    }
+}
+
 int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                                                           const GrayImage &cur_image,
                                                           const Vec2 &ref_pixel_uv,
@@ -108,40 +142,6 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
     hessian(1, 0) = hessian(0, 1);
 
     return num_of_valid_pixel;
-}
-
-void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image,
-                                          const GrayImage &cur_image,
-                                          const Vec2 &ref_pixel_uv,
-                                          Vec2 &cur_pixel_uv,
-                                          uint8_t &status) {
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
-        // Compute each pixel in the patch, create hessian * v = bias
-        Mat2 hessian = Mat2::Zero();
-        Vec2 bias = Vec2::Zero();
-        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
-
-        // Solve hessian * v = bias.
-        Vec2 v = hessian.ldlt().solve(bias);
-        if (Eigen::isnan(v.array()).any()) {
-            status = static_cast<uint8_t>(TrackStatus::kNumericError);
-            break;
-        }
-
-        // Update cur_pixel_uv.
-        cur_pixel_uv += v;
-
-        // Check converge status.
-        if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 ||
-            cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
-            status = static_cast<uint8_t>(TrackStatus::kOutside);
-            break;
-        }
-        if (v.squaredNorm() < options().kMaxConvergeStep) {
-            status = static_cast<uint8_t>(TrackStatus::kTracked);
-            break;
-        }
-    }
 }
 
 }

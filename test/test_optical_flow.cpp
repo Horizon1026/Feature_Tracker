@@ -15,6 +15,7 @@
 
 #include "optical_flow_basic_klt.h"
 #include "optical_flow_affine_klt.h"
+#include "optical_flow_lssd_klt.h"
 
 #define DRAW_TRACKING_RESULT (1)
 #define DETECT_FEATURES_BY_OPENCV (0)
@@ -90,7 +91,7 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
 #if DRAW_TRACKING_RESULT
     // Visualizor::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
     Visualizor::ShowImageWithTrackedFeatures("Basic KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(0);
+    Visualizor::WaitKey(1);
 #endif
 
     return cost_time;
@@ -132,7 +133,49 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
 #if DRAW_TRACKING_RESULT
     // Visualizor::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
     Visualizor::ShowImageWithTrackedFeatures("Affine KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(0);
+    Visualizor::WaitKey(1);
+#endif
+
+    return cost_time;
+}
+
+float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t method) {
+    // Load images.
+    GrayImage ref_image;
+    GrayImage cur_image;
+    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
+
+    // Generate image pyramids.
+    ImagePyramid ref_pyramid, cur_pyramid;
+    ref_pyramid.SetPyramidBuff((uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * ref_image.rows() * ref_image.cols()), true);
+    cur_pyramid.SetPyramidBuff((uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * cur_image.rows() * cur_image.cols()), true);
+    cur_pyramid.SetRawImage(cur_image.data(), cur_image.rows(), cur_image.cols());
+    ref_pyramid.SetRawImage(ref_image.data(), ref_image.rows(), ref_image.cols());
+
+    // Detect features.
+    std::vector<Vec2> ref_pixel_uv;
+    std::vector<Vec2> cur_pixel_uv;
+    std::vector<uint8_t> status;
+    DetectFeatures(ref_image, ref_pixel_uv);
+    cur_pixel_uv.reserve(ref_pixel_uv.size());
+    status.reserve(ref_pixel_uv.size());
+
+    FEATURE_TRACKER::OpticalFlowLssdKlt klt;
+    klt.options().kPatchRowHalfSize = patch_size;
+    klt.options().kPatchColHalfSize = patch_size;
+    klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+
+    TickTock timer;
+    ref_pyramid.CreateImagePyramid(pyramid_level);
+    cur_pyramid.CreateImagePyramid(pyramid_level);
+    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
+    const float cost_time = timer.TickInMillisecond();
+
+#if DRAW_TRACKING_RESULT
+    // Visualizor::ShowImageWithDetectedFeatures("Lssd KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor::ShowImageWithTrackedFeatures("Lssd KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
+    Visualizor::WaitKey(1);
 #endif
 
     return cost_time;
@@ -177,7 +220,7 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
     }
     // Visualizor::ShowImageWithDetectedFeatures("Opencv KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
     Visualizor::ShowImageWithTrackedFeatures("Opencv KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(0);
+    Visualizor::WaitKey(1);
 #endif // end of DRAW_TRACKING_RESULT
 #endif // end of OPENCV_IS_VALID
 
@@ -194,5 +237,11 @@ int main(int argc, char **argv) {
     cost_time = TestOpticalFlowAffineKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("Affine klt cost time " << cost_time << " ms.");
 
+    cost_time = TestOpticalFlowLssdKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    ReportInfo("Lssd klt cost time " << cost_time << " ms.");
+
+#if DRAW_TRACKING_RESULT
+    Visualizor::WaitKey(0);
+#endif // end of DRAW_TRACKING_RESULT
     return 0;
 }
