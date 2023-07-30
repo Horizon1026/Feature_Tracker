@@ -101,6 +101,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
     MatInt patch_pixel_valid;
     patch_pixel_valid.setConstant(options().kPatchRowHalfSize * 2 + 1, options().kPatchColHalfSize * 2 + 1, 1);
 
+    // Precompute average value in reference and current patch.
     if (options().kMethod == OpticalFlowMethod::kInverse) {
         // For inverse optical flow, use reference image to compute gradient.
         for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
@@ -110,7 +111,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                 const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(row_i, col_i) + translation;
                 const float row_j = cur_patch_pixel_uv.y();
                 const float col_j = cur_patch_pixel_uv.x();
-                // Compute pixel gradient.
+
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) &&
                     ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) &&
@@ -134,7 +135,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                 const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(row_i, col_i) + translation;
                 const float row_j = cur_patch_pixel_uv.y();
                 const float col_j = cur_patch_pixel_uv.x();
-                // Compute pixel gradient
+
                 if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) &&
                     cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
                     cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) &&
@@ -150,8 +151,69 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
             }
         }
     }
+    ref_average_value /= static_cast<float>(num_of_valid_pixel);
+    cur_average_value /= static_cast<float>(num_of_valid_pixel);
 
     // TODO:
+    // Compute jacobian of se2.
+    Mat2x3 jacobian_se2 = Mat2x3::Zero();
+
+    // Compute jacobian and residual.
+    if (options().kMethod == OpticalFlowMethod::kInverse) {
+        // For inverse optical flow, use reference image to compute gradient.
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+                if (patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize)) {
+                    const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
+                    const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
+                    const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(row_i, col_i) + translation;
+                    const float row_j = cur_patch_pixel_uv.y();
+                    const float col_j = cur_patch_pixel_uv.x();
+
+                    temp_value[0] = ref_image.GetPixelValueNoCheck(row_i, col_i - 1.0f);
+                    temp_value[1] = ref_image.GetPixelValueNoCheck(row_i, col_i + 1.0f);
+                    temp_value[2] = ref_image.GetPixelValueNoCheck(row_i - 1.0f, col_i);
+                    temp_value[3] = ref_image.GetPixelValueNoCheck(row_i + 1.0f, col_i);
+                    temp_value[4] = ref_image.GetPixelValueNoCheck(row_i, col_i);
+                    temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
+
+                    Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]);
+                    Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
+                    Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);
+
+                    hessian += jacobian.transpose() * jacobian;
+                    bias -= jacobian.transpose() * residual;
+                }
+            }
+        }
+    } else {
+        // For direct optical flow, use current image to compute gradient.
+        for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+            for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+                if (patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize)) {
+                    const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
+                    const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
+                    const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(row_i, col_i) + translation;
+                    const float row_j = cur_patch_pixel_uv.y();
+                    const float col_j = cur_patch_pixel_uv.x();
+
+                    temp_value[0] = cur_image.GetPixelValueNoCheck(row_j, col_j - 1.0f);
+                    temp_value[1] = cur_image.GetPixelValueNoCheck(row_j, col_j + 1.0f);
+                    temp_value[2] = cur_image.GetPixelValueNoCheck(row_j - 1.0f, col_j);
+                    temp_value[3] = cur_image.GetPixelValueNoCheck(row_j + 1.0f, col_j);
+                    temp_value[4] = ref_image.GetPixelValueNoCheck(row_i, col_i);
+                    temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
+
+                    Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]);
+                    Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
+                    Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);
+
+                    hessian += jacobian.transpose() * jacobian;
+                    bias -= jacobian.transpose() * residual;
+                }
+            }
+        }
+    }
 
     return num_of_valid_pixel;
 }
