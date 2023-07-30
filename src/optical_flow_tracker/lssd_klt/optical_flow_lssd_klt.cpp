@@ -94,8 +94,12 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
     Mat2 rotation_matrix;
     rotation_matrix << cos_theta, sin_theta, -sin_theta, cos_theta;
 
-    // Compute jacobian of pixel gradient.
-    Mat2 hessian_dxy = Mat2::Zero();
+    // Compute average pixel value in reference patch and current patch.
+    float ref_average_value = 0.0f;
+    float cur_average_value = 0.0f;
+    // Check pixel valid in reference and current patch.
+    MatInt patch_pixel_valid;
+    patch_pixel_valid.setConstant(options().kPatchRowHalfSize * 2 + 1, options().kPatchColHalfSize * 2 + 1, 1);
 
     if (options().kMethod == OpticalFlowMethod::kInverse) {
         // For inverse optical flow, use reference image to compute gradient.
@@ -106,25 +110,18 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                 const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(row_i, col_i) + translation;
                 const float row_j = cur_patch_pixel_uv.y();
                 const float col_j = cur_patch_pixel_uv.x();
-                // Compute pixel gradient
+                // Compute pixel gradient.
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) &&
                     ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) &&
                     ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
                     cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
-                    const float ft = temp_value[5] - temp_value[4];
-
-                    hessian(0, 0) += fx * fx;
-                    hessian(1, 1) += fy * fy;
-                    hessian(0, 1) += fx * fy;
-
-                    bias(0) -= fx * ft;
-                    bias(1) -= fy * ft;
-
+                    ref_average_value += temp_value[4];
+                    cur_average_value += temp_value[5];
                     ++num_of_valid_pixel;
+                } else {
+                    patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize) = 0;
                 }
             }
         }
@@ -144,23 +141,17 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                     cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
                     cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
-                    const float ft = temp_value[5] - temp_value[4];
-
-                    hessian(0, 0) += fx * fx;
-                    hessian(1, 1) += fy * fy;
-                    hessian(0, 1) += fx * fy;
-
-                    bias(0) -= fx * ft;
-                    bias(1) -= fy * ft;
-
+                    ref_average_value += temp_value[4];
+                    cur_average_value += temp_value[5];
                     ++num_of_valid_pixel;
+                } else {
+                    patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize) = 0;
                 }
             }
         }
     }
-    hessian(1, 0) = hessian(0, 1);
+
+    // TODO:
 
     return num_of_valid_pixel;
 }
