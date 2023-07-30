@@ -157,6 +157,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
     // TODO:
     // Compute jacobian of se2.
     Mat2x3 jacobian_se2 = Mat2x3::Zero();
+    jacobian_se2.block<2, 2>(0, 1).setIdentity();
 
     // Compute jacobian and residual.
     if (options().kMethod == OpticalFlowMethod::kInverse) {
