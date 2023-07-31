@@ -85,7 +85,7 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
+    klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
@@ -127,7 +127,7 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
+    klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
@@ -169,7 +169,7 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
-    klt.TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
+    klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
     const float cost_time = timer.TickInMillisecond();
 
 #if DRAW_TRACKING_RESULT

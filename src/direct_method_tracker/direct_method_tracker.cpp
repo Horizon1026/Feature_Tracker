@@ -5,7 +5,7 @@
 
 namespace FEATURE_TRACKER {
 
-bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
                                       const ImagePyramid &cur_pyramid,
                                       const std::array<float, 4> &K,
                                       const Quat ref_q_wc,
@@ -33,14 +33,14 @@ bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
     q_rc_ = ref_q_cw * cur_q_wc;
     p_rc_ = ref_q_cw * (cur_p_wc - ref_p_wc);
 
-    RETURN_FALSE_IF_FALSE(TrackMultipleLevel(ref_pyramid, cur_pyramid, K, p_c_in_ref_, ref_pixel_uv, cur_pixel_uv, q_rc_, p_rc_, status));
+    RETURN_FALSE_IF_FALSE(TrackFeatures(ref_pyramid, cur_pyramid, K, p_c_in_ref_, ref_pixel_uv, cur_pixel_uv, q_rc_, p_rc_, status));
 
     cur_q_wc = ref_q_wc * q_rc_;
     cur_p_wc = ref_q_wc * p_rc_ + ref_p_wc;
     return true;
 }
 
-bool DirectMethod::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
                                       const ImagePyramid &cur_pyramid,
                                       const std::array<float, 4> &K,
                                       const std::vector<Vec3> &p_c_in_ref,

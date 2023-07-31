@@ -8,6 +8,7 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                                                const GrayImage &cur_image,
                                                const Vec2 &ref_pixel_uv,
                                                Vec2 &cur_pixel_uv,
+                                               Mat2 &affine,
                                                uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
     ex_patch().clear();
@@ -27,7 +28,6 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     PrecomputeJacobianAndHessian(ex_patch(), ex_patch_pixel_valid(), ex_patch_rows(), ex_patch_cols(), cur_pixel_uv, all_dx(), all_dy(), hessian);
 
     // Compute incremental by iteration.
-    Mat2 affine = Mat2::Identity();
     Vec6 bias = Vec6::Zero();
     float last_squared_step = INFINITY;
     uint32_t large_step_cnt = 0;

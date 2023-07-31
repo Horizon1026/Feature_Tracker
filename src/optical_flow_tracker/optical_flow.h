@@ -33,11 +33,17 @@ public:
     OpticalFlow() = default;
     virtual ~OpticalFlow() = default;
 
-    bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
-                            const ImagePyramid &cur_pyramid,
-                            const std::vector<Vec2> &ref_pixel_uv,
-                            std::vector<Vec2> &cur_pixel_uv,
-                            std::vector<uint8_t> &status);
+    bool TrackFeatures(const ImagePyramid &ref_pyramid,
+                       const ImagePyramid &cur_pyramid,
+                       const std::vector<Vec2> &ref_pixel_uv,
+                       std::vector<Vec2> &cur_pixel_uv,
+                       std::vector<uint8_t> &status);
+
+    bool TrackFeatures(const GrayImage &ref_image,
+                       const GrayImage &cur_image,
+                       const std::vector<Vec2> &ref_pixel_uv,
+                       std::vector<Vec2> &cur_pixel_uv,
+                       std::vector<uint8_t> &status);
 
     // Support for all subclass's fast method.
     uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
@@ -74,6 +80,11 @@ public:
     const int32_t &ex_patch_size() const { return ex_patch_size_; }
 
 private:
+    virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                                    const ImagePyramid &cur_pyramid,
+                                    const std::vector<Vec2> &ref_pixel_uv,
+                                    std::vector<Vec2> &cur_pixel_uv,
+                                    std::vector<uint8_t> &status) = 0;
     virtual bool TrackSingleLevel(const GrayImage &ref_image,
                                   const GrayImage &cur_image,
                                   const std::vector<Vec2> &ref_pixel_uv,
@@ -84,9 +95,6 @@ private:
 private:
     // General options for optical flow trackers.
     OpticalFlowOptions options_;
-
-    // Scaled reference points pixel position for multi-level tracking.
-    std::vector<Vec2> scaled_ref_points_;
 
     // Variable support for fast method.
     std::vector<float> ex_patch_;   // Extended patch with bound size 1.

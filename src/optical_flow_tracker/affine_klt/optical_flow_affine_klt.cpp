@@ -3,6 +3,58 @@
 
 namespace FEATURE_TRACKER {
 
+bool OpticalFlowAffineKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                                              const ImagePyramid &cur_pyramid,
+                                              const std::vector<Vec2> &ref_pixel_uv,
+                                              std::vector<Vec2> &cur_pixel_uv,
+                                              std::vector<uint8_t> &status) {
+    const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ?
+                                    ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
+    const float scale = static_cast<float>(1 << (ref_pyramid.level() - 1));
+
+    // Track each pixel per level.
+    for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
+        // Do not repeatly track features that has been tracking failed.
+        CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
+
+        // Recorder scaled ref_pixel_uv and cur_pixel_uv.
+        Vec2 scaled_ref_pixel_uv = ref_pixel_uv[feature_id] / scale;
+        Vec2 scaled_cur_pixel_uv = cur_pixel_uv[feature_id] / scale;
+
+        // Define affine transform matrix.
+        Mat2 affine = Mat2::Identity();
+
+        for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
+            const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
+            const GrayImage &cur_image = cur_pyramid.GetImageConst(level_idx);
+
+            // Track this feature in one pyramid level.
+            switch (options().kMethod) {
+                case OpticalFlowMethod::kInverse:
+                case OpticalFlowMethod::kDirect:
+                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, affine, status[feature_id]);
+                    break;
+                case OpticalFlowMethod::kFast:
+                default:
+                    TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, affine, status[feature_id]);
+                    break;
+            }
+
+            // If feature is tracked in final level, recovery its scale.
+            if (!level_idx) {
+                cur_pixel_uv[feature_id] = scaled_cur_pixel_uv;
+                break;
+            }
+
+            // Adjust result on different pyramid level.
+            scaled_ref_pixel_uv *= 2.0f;
+            scaled_cur_pixel_uv *= 2.0f;
+        }
+    }
+
+    return true;
+}
+
 bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
                                             const GrayImage &cur_image,
                                             const std::vector<Vec2> &ref_pixel_uv,
@@ -14,19 +66,18 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
         // Do not repeatly track features that has been tracking failed.
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
+        // Define affine transform matrix.
+        Mat2 affine = Mat2::Identity();
+
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:
             case OpticalFlowMethod::kDirect:
-                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
+                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], affine, status[feature_id]);
                 break;
             case OpticalFlowMethod::kFast:
             default:
-                TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
+                TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], affine, status[feature_id]);
                 break;
-        }
-
-        if (status[feature_id] == static_cast<uint8_t>(TrackStatus::kNotTracked)) {
-            status[feature_id] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
         }
     }
 
@@ -37,10 +88,10 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image,
                                            const GrayImage &cur_image,
                                            const Vec2 &ref_pixel_uv,
                                            Vec2 &cur_pixel_uv,
+                                           Mat2 &affine,
                                            uint8_t &status) {
     Mat6 hessian = Mat6::Zero();
     Vec6 bias = Vec6::Zero();
-    Mat2 affine = Mat2::Identity();    /* Affine transform matrix. */
 
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.

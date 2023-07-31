@@ -4,6 +4,55 @@
 
 namespace FEATURE_TRACKER {
 
+bool OpticalFlowBasicKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                                             const ImagePyramid &cur_pyramid,
+                                             const std::vector<Vec2> &ref_pixel_uv,
+                                             std::vector<Vec2> &cur_pixel_uv,
+                                             std::vector<uint8_t> &status) {
+    const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ?
+                                    ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
+    const float scale = static_cast<float>(1 << (ref_pyramid.level() - 1));
+
+    // Track each pixel per level.
+    for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
+        // Do not repeatly track features that has been tracking failed.
+        CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
+
+        // Recorder scaled ref_pixel_uv and cur_pixel_uv.
+        Vec2 scaled_ref_pixel_uv = ref_pixel_uv[feature_id] / scale;
+        Vec2 scaled_cur_pixel_uv = cur_pixel_uv[feature_id] / scale;
+
+        for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
+            const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
+            const GrayImage &cur_image = cur_pyramid.GetImageConst(level_idx);
+
+            // Track this feature in one pyramid level.
+            switch (options().kMethod) {
+                case OpticalFlowMethod::kInverse:
+                case OpticalFlowMethod::kDirect:
+                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
+                    break;
+                case OpticalFlowMethod::kFast:
+                default:
+                    TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
+                    break;
+            }
+
+            // If feature is tracked in final level, recovery its scale.
+            if (!level_idx) {
+                cur_pixel_uv[feature_id] = scaled_cur_pixel_uv;
+                break;
+            }
+
+            // Adjust result on different pyramid level.
+            scaled_ref_pixel_uv *= 2.0f;
+            scaled_cur_pixel_uv *= 2.0f;
+        }
+    }
+
+    return true;
+}
+
 bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image,
                                            const GrayImage &cur_image,
                                            const std::vector<Vec2> &ref_pixel_uv,
@@ -25,10 +74,6 @@ bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image,
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
-        }
-
-        if (status[feature_id] == static_cast<uint8_t>(TrackStatus::kNotTracked)) {
-            status[feature_id] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
         }
     }
 

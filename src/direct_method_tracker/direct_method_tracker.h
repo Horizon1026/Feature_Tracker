@@ -34,7 +34,7 @@ public:
     virtual ~DirectMethod() = default;
     DirectMethod(const DirectMethod &direct_method) = delete;
 
-    bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+    bool TrackFeatures(const ImagePyramid &ref_pyramid,
                             const ImagePyramid &cur_pyramid,
                             const std::array<float, 4> &K,
                             const Quat ref_q_wc,
@@ -46,7 +46,7 @@ public:
                             Vec3 &cur_p_wc,
                             std::vector<uint8_t> &status);
 
-    bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+    bool TrackFeatures(const ImagePyramid &ref_pyramid,
                             const ImagePyramid &cur_pyramid,
                             const std::array<float, 4> &K,
                             const std::vector<Vec3> &p_c_in_ref,

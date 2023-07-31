@@ -89,7 +89,7 @@ void TestDirectMethod() {
         // Construct direct method tracker.
         FEATURE_TRACKER::DirectMethod solver;
         std::vector<uint8_t> status;
-        solver.TrackMultipleLevel(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur, status);
+        solver.TrackFeatures(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur, status);
 
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));

@@ -12,18 +12,24 @@ public:
     OpticalFlowAffineKlt() : OpticalFlow() {}
     virtual ~OpticalFlowAffineKlt() = default;
 
+private:
+    virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
+                                    const ImagePyramid &cur_pyramid,
+                                    const std::vector<Vec2> &ref_pixel_uv,
+                                    std::vector<Vec2> &cur_pixel_uv,
+                                    std::vector<uint8_t> &status) override;
     virtual bool TrackSingleLevel(const GrayImage &ref_image,
                                   const GrayImage &cur_image,
                                   const std::vector<Vec2> &ref_pixel_uv,
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) override;
 
-private:
     // Support for inverse and direct method.
     void TrackOneFeature(const GrayImage &ref_image,
                          const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
                          Vec2 &cur_pixel_uv,
+                         Mat2 &affine,
                          uint8_t &status);
     int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
                                          const GrayImage &cur_image,
@@ -38,6 +44,7 @@ private:
                              const GrayImage &cur_image,
                              const Vec2 &ref_pixel_uv,
                              Vec2 &cur_pixel_uv,
+                             Mat2 &affine,
                              uint8_t &status);
     void PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
                                       const std::vector<bool> &ex_patch_pixel_valid,
