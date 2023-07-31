@@ -3,16 +3,24 @@ Intergration of some simple sparse feature track method.
 
 # Components
 - [x] Optical flow tracker
-  - [x] Direct basic klt tracker
-  - [x] Inverse basic klt tracker
-  - [x] Fast basic klt tracker
-  - [ ] SSE basic klt tracker
-  - [ ] Neon basic klt tracker
-  - [x] Direct affine klt tracker
-  - [x] Inverse affine klt tracker
-  - [x] Fast affine klt tracker
-  - [ ] SSE affine klt tracker
-  - [ ] Neon affine klt tracker
+  - [ ] Basic klt
+    - [x] Direct
+    - [x] Inverse
+    - [x] Fast
+    - [ ] SSE
+    - [ ] Neon
+  - [ ] Affine klt
+    - [x] Direct
+    - [x] Inverse
+    - [x] Fast
+    - [ ] SSE
+    - [ ] Neon
+  - [ ] Lssd klt
+    - [ ] Direct
+    - [ ] Inverse
+    - [ ] Fast
+    - [ ] SSE
+    - [ ] Neon
 - [x] Direct method tracker
   - [x] Direct
   - [x] Inverse
