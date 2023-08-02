@@ -36,6 +36,9 @@ private:
                                          Vec3 &se2_vector,
                                          Mat3 &H,
                                          Vec3 &b);
+    void TransformFeatureFromReferenceToCurrentImage(const Vec2 &ref_pixel_uv,
+                                                     const Vec3 &se2_vector,
+                                                     Vec2 &cur_pixel_uv);
 
     // Support for Sse method.
 
