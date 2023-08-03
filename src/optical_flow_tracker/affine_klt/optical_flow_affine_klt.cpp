@@ -67,7 +67,7 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
         // Define affine transform matrix.
-        Mat2 affine = Mat2::Identity();
+        Mat2 affine = predict_affine_;
 
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:

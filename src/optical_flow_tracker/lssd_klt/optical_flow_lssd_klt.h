@@ -12,6 +12,12 @@ public:
     OpticalFlowLssdKlt() : OpticalFlow() {}
     virtual ~OpticalFlowLssdKlt() = default;
 
+    // Reference for member variables.
+    Mat2 &predict_R_cr() { return predict_R_cr_; }
+
+    // Const reference for member variables.
+    const Mat2 &predict_R_cr() const { return predict_R_cr_; }
+
 private:
     virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                     const ImagePyramid &cur_pyramid,
@@ -42,6 +48,10 @@ private:
     // Support for Sse method.
 
     // Support for Neon method.
+
+private:
+    // Support for prediction.
+    Mat2 predict_R_cr_ = Mat2::Identity();
 
 };
 

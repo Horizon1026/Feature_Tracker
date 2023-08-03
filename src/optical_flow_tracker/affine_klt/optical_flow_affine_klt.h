@@ -12,6 +12,12 @@ public:
     OpticalFlowAffineKlt() : OpticalFlow() {}
     virtual ~OpticalFlowAffineKlt() = default;
 
+    // Reference for member variables.
+    Mat2 &predict_affine() { return predict_affine_; }
+
+    // Const reference for member variables.
+    const Mat2 &predict_affine() const { return predict_affine_; }
+
 private:
     virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                                     const ImagePyramid &cur_pyramid,
@@ -68,6 +74,10 @@ private:
     // Support for Sse method.
 
     // Support for Neon method.
+
+private:
+    // Support for prediction.
+    Mat2 predict_affine_ = Mat2::Identity();
 
 };
 

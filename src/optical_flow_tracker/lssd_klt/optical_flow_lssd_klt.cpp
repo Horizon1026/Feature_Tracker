@@ -20,10 +20,11 @@ bool OpticalFlowLssdKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
 
         // Recorder scaled ref_pixel_uv and cur_pixel_uv.
         Vec2 scaled_ref_pixel_uv = ref_pixel_uv[feature_id] / scale;
+        const Vec2 scaled_cur_pixel_uv = cur_pixel_uv[feature_id] / scale;
 
         // Define se2 transform.
-        Mat2 R_cr = Mat2::Identity();
-        Vec2 t_cr = Vec2::Zero();
+        Mat2 R_cr = predict_R_cr_;
+        Vec2 t_cr = scaled_cur_pixel_uv - predict_R_cr_ * scaled_ref_pixel_uv;
 
         for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
             const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
