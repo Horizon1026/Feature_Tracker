@@ -30,7 +30,7 @@ private:
                                   std::vector<Vec2> &cur_pixel_uv,
                                   std::vector<uint8_t> &status) override;
 
-    // Support for inverse/direct/fast method.
+    // Support for inverse/direct method.
     void TrackOneFeature(const GrayImage &ref_image,
                          const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
@@ -44,6 +44,14 @@ private:
                                          const Vec2 &t_cr,
                                          Mat3 &H,
                                          Vec3 &b);
+
+    // Support for fast method.
+    void TrackOneFeatureFast(const GrayImage &ref_image,
+                             const GrayImage &cur_image,
+                             const Vec2 &ref_pixel_uv,
+                             Mat2 &R_cr,
+                             Vec2 &t_cr,
+                             uint8_t &status);
 
     // Support for Sse method.
 

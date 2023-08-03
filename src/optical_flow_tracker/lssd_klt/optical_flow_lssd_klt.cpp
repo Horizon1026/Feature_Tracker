@@ -34,9 +34,11 @@ bool OpticalFlowLssdKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
             switch (options().kMethod) {
                 case OpticalFlowMethod::kInverse:
                 case OpticalFlowMethod::kDirect:
+                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, R_cr, t_cr, status[feature_id]);
+                    break;
                 case OpticalFlowMethod::kFast:
                 default:
-                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, R_cr, t_cr, status[feature_id]);
+                    TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, R_cr, t_cr, status[feature_id]);
                     break;
             }
 
@@ -74,9 +76,11 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image,
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:
             case OpticalFlowMethod::kDirect:
+                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], R_cr, t_cr, status[feature_id]);
+                break;
             case OpticalFlowMethod::kFast:
             default:
-                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], R_cr, t_cr, status[feature_id]);
+                TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], R_cr, t_cr, status[feature_id]);
                 break;
         }
     }
