@@ -28,17 +28,16 @@ private:
     void TrackOneFeature(const GrayImage &ref_image,
                          const GrayImage &cur_image,
                          const Vec2 &ref_pixel_uv,
-                         Vec3 &se2_vector,
+                         Mat2 &R_cr,
+                         Vec2 &t_cr,
                          uint8_t &status);
     int32_t ConstructIncrementalFunction(const GrayImage &ref_image,
                                          const GrayImage &cur_image,
                                          const Vec2 &ref_pixel_uv,
-                                         Vec3 &se2_vector,
+                                         const Mat2 &R_cr,
+                                         const Vec2 &t_cr,
                                          Mat3 &H,
                                          Vec3 &b);
-    void TransformFeatureFromReferenceToCurrentImage(const Vec2 &ref_pixel_uv,
-                                                     const Vec3 &se2_vector,
-                                                     Vec2 &cur_pixel_uv);
 
     // Support for Sse method.
 

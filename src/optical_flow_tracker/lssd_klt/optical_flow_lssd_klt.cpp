@@ -21,8 +21,9 @@ bool OpticalFlowLssdKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
         // Recorder scaled ref_pixel_uv and cur_pixel_uv.
         Vec2 scaled_ref_pixel_uv = ref_pixel_uv[feature_id] / scale;
 
-        // Define se2 transform vector.
-        Vec3 se2_vector = Vec3::Zero();
+        // Define se2 transform.
+        Mat2 R_cr = Mat2::Identity();
+        Vec2 t_cr = Vec2::Zero();
 
         for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
             const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
@@ -34,19 +35,19 @@ bool OpticalFlowLssdKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
                 case OpticalFlowMethod::kDirect:
                 case OpticalFlowMethod::kFast:
                 default:
-                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, se2_vector, status[feature_id]);
+                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, R_cr, t_cr, status[feature_id]);
                     break;
             }
 
             // If feature is tracked in final level, recovery its scale.
             if (!level_idx) {
-                TransformFeatureFromReferenceToCurrentImage(ref_pixel_uv[feature_id], se2_vector, cur_pixel_uv[feature_id]);
+                cur_pixel_uv[feature_id] = R_cr * ref_pixel_uv[feature_id] + t_cr;
                 break;
             }
 
             // Adjust result on different pyramid level.
             scaled_ref_pixel_uv *= 2.0f;
-            se2_vector.tail<2>() *= 2.0f;
+            t_cr *= 2.0f;
         }
     }
 
@@ -65,15 +66,16 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image,
         // Do not repeatly track features that has been tracking failed.
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
-        // Define se2 transform vector.
-        Vec3 se2_vector = Vec3::Zero();
+        // Define se2 transform.
+        Mat2 R_cr = Mat2::Identity();
+        Vec2 t_cr = Vec2::Zero();
 
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:
             case OpticalFlowMethod::kDirect:
             case OpticalFlowMethod::kFast:
             default:
-                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], se2_vector, status[feature_id]);
+                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], R_cr, t_cr, status[feature_id]);
                 break;
         }
     }
@@ -84,13 +86,16 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image,
 void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image,
                                          const GrayImage &cur_image,
                                          const Vec2 &ref_pixel_uv,
-                                         Vec3 &se2_vector,
+                                         Mat2 &R_cr,
+                                         Vec2 &t_cr,
                                          uint8_t &status) {
+    Mat2 delta_R;
+
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create hessian * v = bias
         Mat3 hessian = Mat3::Zero();
         Vec3 bias = Vec3::Zero();
-        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, se2_vector, hessian, bias) == 0);
+        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, R_cr, t_cr, hessian, bias) == 0);
 
         // Solve hessian * v = bias.
         const Vec3 v = hessian.ldlt().solve(bias);
@@ -100,7 +105,10 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image,
         }
 
         // Update rotation and translation.
-        se2_vector += v;
+        delta_R << 1, -v.x(), v.x(), 1;
+        R_cr *= delta_R;
+        R_cr /= R_cr.col(0).norm();
+        t_cr += v.tail<2>();
 
         // Check converge status.
         if (v.squaredNorm() < options().kMaxConvergeStep) {
@@ -113,17 +121,12 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image,
 int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_image,
                                                          const GrayImage &cur_image,
                                                          const Vec2 &ref_pixel_uv,
-                                                         Vec3 &se2_vector,
+                                                         const Mat2 &R_cr,
+                                                         const Vec2 &t_cr,
                                                          Mat3 &hessian,
                                                          Vec3 &bias) {
     std::array<float, 6> temp_value = {};
     int32_t num_of_valid_pixel = 0;
-
-    // Compute current pixel position.
-    const float sin_theta = std::sin(se2_vector(0));
-    const float cos_theta = std::cos(se2_vector(0));
-    Mat2 rotation_matrix;
-    rotation_matrix << cos_theta, -sin_theta, sin_theta, cos_theta;
 
     // Compute average pixel value in reference patch and current patch.
     float ref_average_value = 0.0f;
@@ -139,7 +142,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                 const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
                 const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
-                const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(col_i, row_i) + se2_vector.tail<2>();
+                const Vec2 cur_patch_pixel_uv = R_cr * Vec2(col_i, row_i) + t_cr;
                 const float row_j = cur_patch_pixel_uv.y();
                 const float col_j = cur_patch_pixel_uv.x();
 
@@ -163,7 +166,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
             for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                 const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
                 const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
-                const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(col_i, row_i) + se2_vector.tail<2>();
+                const Vec2 cur_patch_pixel_uv = R_cr * Vec2(col_i, row_i) + t_cr;
                 const float row_j = cur_patch_pixel_uv.y();
                 const float col_j = cur_patch_pixel_uv.x();
 
@@ -197,7 +200,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                 if (patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize)) {
                     const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
                     const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
-                    const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(col_i, row_i) + se2_vector.tail<2>();
+                    const Vec2 cur_patch_pixel_uv = R_cr * Vec2(col_i, row_i) + t_cr;
                     const float row_j = cur_patch_pixel_uv.y();
                     const float col_j = cur_patch_pixel_uv.x();
 
@@ -209,7 +212,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                     temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
 
                     const Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / ref_average_value;
-                    jacobian_se2.block<2, 1>(0, 0) = rotation_matrix * Vec2(-row_i, col_i);
+                    jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                     const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
                     const Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);
 
@@ -225,7 +228,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                 if (patch_pixel_valid(drow + options().kPatchRowHalfSize, dcol + options().kPatchColHalfSize)) {
                     const float row_i = static_cast<float>(drow) + ref_pixel_uv.y();
                     const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
-                    const Vec2 cur_patch_pixel_uv = rotation_matrix * Vec2(col_i, row_i) + se2_vector.tail<2>();
+                    const Vec2 cur_patch_pixel_uv = R_cr * Vec2(col_i, row_i) + t_cr;
                     const float row_j = cur_patch_pixel_uv.y();
                     const float col_j = cur_patch_pixel_uv.x();
 
@@ -237,7 +240,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                     temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
 
                     const Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / cur_average_value;
-                    jacobian_se2.block<2, 1>(0, 0) = rotation_matrix * Vec2(-row_i, col_i);
+                    jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                     const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
                     const Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);
 
@@ -249,17 +252,6 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
     }
 
     return num_of_valid_pixel;
-}
-
-void OpticalFlowLssdKlt::TransformFeatureFromReferenceToCurrentImage(const Vec2 &ref_pixel_uv,
-                                                                     const Vec3 &se2_vector,
-                                                                     Vec2 &cur_pixel_uv) {
-    const float sin_theta = std::sin(se2_vector(0));
-    const float cos_theta = std::cos(se2_vector(0));
-    Mat2 rotation_matrix;
-    rotation_matrix << cos_theta, -sin_theta, sin_theta, cos_theta;
-
-    cur_pixel_uv = rotation_matrix * ref_pixel_uv + se2_vector.tail<2>();
 }
 
 }
