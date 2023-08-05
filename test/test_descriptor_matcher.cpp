@@ -14,6 +14,7 @@
 #include "log_report.h"
 #include "slam_memory.h"
 #include "visualizor.h"
+#include "tick_tock.h"
 
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
@@ -61,6 +62,7 @@ void TestFeaturePointMatcher() {
     ReportInfo("Detect features in two images.");
 
     // Compute descriptors for these features.
+    TickTock timer;
     FEATURE_DETECTOR::BriefDescriptor descriptor;
     descriptor.options().kLength = 256;
     descriptor.options().kHalfPatchSize = 8;
@@ -79,6 +81,7 @@ void TestFeaturePointMatcher() {
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;
     const bool res = matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, matched_cur_features, status);
+    ReportInfo("Descriptor matcher cost time " << timer.TickInMillisecond() << " ms.");
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {

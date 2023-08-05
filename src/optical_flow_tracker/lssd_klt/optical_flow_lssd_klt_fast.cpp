@@ -23,10 +23,11 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 
     // Compute the average value.
-    // TODO: fix it.
     float ref_average_value = 0.0f;
-    for (const auto &pixel_value : ex_ref_patch()) {
-        ref_average_value += pixel_value;
+    for (int32_t row = 1; row < ex_ref_patch_rows() - 1; ++row) {
+        for (int32_t col = 1; col < ex_ref_patch_cols() - 1;++col) {
+            ref_average_value += ex_ref_patch()[row * ex_ref_patch_cols() + col];
+        }
     }
     ref_average_value /= static_cast<float>(valid_pixel_num);
 
