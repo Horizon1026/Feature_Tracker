@@ -122,9 +122,13 @@ bool OpticalFlow::PrepareForTracking() {
 
     ex_ref_patch_.reserve(ex_patch_size_);
     ex_ref_patch_pixel_valid_.reserve(ex_patch_size_);
+    ex_cur_patch_.reserve(ex_patch_size_);
+    ex_cur_patch_pixel_valid_.reserve(ex_patch_size_);
 
     all_dx_in_ref_patch_.reserve(patch_size_);
     all_dy_in_ref_patch_.reserve(patch_size_);
+    all_dx_in_cur_patch_.reserve(patch_size_);
+    all_dy_in_cur_patch_.reserve(patch_size_);
 
     return true;
 }
