@@ -70,8 +70,8 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image,
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
         // Define se2 transform.
-        Mat2 R_cr = Mat2::Identity();
-        Vec2 t_cr = Vec2::Zero();
+        Mat2 R_cr = predict_R_cr_;
+        Vec2 t_cr = cur_pixel_uv[feature_id] - predict_R_cr_ * ref_pixel_uv[feature_id];
 
         switch (options().kMethod) {
             case OpticalFlowMethod::kInverse:
