@@ -43,21 +43,21 @@ private:
                              const Vec2 &ref_pixel_uv,
                              Vec2 &cur_pixel_uv,
                              uint8_t &status);
-    void PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
-                                      const std::vector<bool> &ex_patch_pixel_valid,
-                                      int32_t ex_patch_rows,
-                                      int32_t ex_patch_cols,
-                                      std::vector<float> &all_dx,
-                                      std::vector<float> &all_dy,
+    void PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch,
+                                      const std::vector<bool> &ex_ref_patch_pixel_valid,
+                                      int32_t ex_ref_patch_rows,
+                                      int32_t ex_ref_patch_cols,
+                                      std::vector<float> &all_dx_in_ref_patch,
+                                      std::vector<float> &all_dy_in_ref_patch,
                                       Mat2 &hessian);
     int32_t ComputeBias(const GrayImage &cur_image,
                         const Vec2 &cur_pixel_uv,
-                        const std::vector<float> &ex_patch,
-                        const std::vector<bool> &ex_patch_pixel_valid,
-                        int32_t ex_patch_rows,
-                        int32_t ex_patch_cols,
-                        const std::vector<float> &all_dx,
-                        const std::vector<float> &all_dy,
+                        const std::vector<float> &ex_ref_patch,
+                        const std::vector<bool> &ex_ref_patch_pixel_valid,
+                        int32_t ex_ref_patch_rows,
+                        int32_t ex_ref_patch_cols,
+                        const std::vector<float> &all_dx_in_ref_patch,
+                        const std::vector<float> &all_dy_in_ref_patch,
                         Vec2 &bias);
 
     // Support for Sse method.

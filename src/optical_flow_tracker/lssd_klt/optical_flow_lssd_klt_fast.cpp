@@ -12,9 +12,9 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                                              Vec2 &t_cr,
                                              uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
-    ex_patch().clear();
-    ex_patch_pixel_valid().clear();
-    const uint32_t valid_pixel_num = ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_patch_rows(), ex_patch_cols(), ex_patch(), ex_patch_pixel_valid());
+    ex_ref_patch().clear();
+    ex_ref_patch_pixel_valid().clear();
+    const uint32_t valid_pixel_num = ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_ref_patch_rows(), ex_ref_patch_cols(), ex_ref_patch(), ex_ref_patch_pixel_valid());
 
     // If this feature has no valid pixel in patch, it can not be tracked.
     if (valid_pixel_num == 0) {

@@ -48,35 +48,35 @@ public:
     // Support for all subclass's fast method.
     uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
                                                 const Vec2 &ref_pixel_uv,
-                                                int32_t ex_patch_rows,
-                                                int32_t ex_patch_cols,
-                                                std::vector<float> &ex_patch,
-                                                std::vector<bool> &ex_patch_pixel_valid);
+                                                int32_t ex_ref_patch_rows,
+                                                int32_t ex_ref_patch_cols,
+                                                std::vector<float> &ex_ref_patch,
+                                                std::vector<bool> &ex_ref_patch_pixel_valid);
 
     // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
-    std::vector<float> &ex_patch() { return ex_patch_; }
-    std::vector<bool> &ex_patch_pixel_valid() { return ex_patch_pixel_valid_; }
-    std::vector<float> &all_dx() { return all_dx_; }
-    std::vector<float> &all_dy() { return all_dy_; }
+    std::vector<float> &ex_ref_patch() { return ex_ref_patch_; }
+    std::vector<bool> &ex_ref_patch_pixel_valid() { return ex_ref_patch_pixel_valid_; }
+    std::vector<float> &all_dx_in_ref_patch() { return all_dx_in_ref_patch_; }
+    std::vector<float> &all_dy_in_ref_patch() { return all_dy_in_ref_patch_; }
     int32_t &patch_rows() { return patch_rows_; }
     int32_t &patch_cols() { return patch_cols_; }
     int32_t &patch_size() { return patch_size_; }
-    int32_t &ex_patch_rows() { return ex_patch_rows_; }
-    int32_t &ex_patch_cols() { return ex_patch_cols_; }
+    int32_t &ex_ref_patch_rows() { return ex_patch_rows_; }
+    int32_t &ex_ref_patch_cols() { return ex_patch_cols_; }
     int32_t &ex_patch_size() { return ex_patch_size_; }
 
     // Const reference for member variables.
     const OpticalFlowOptions &options() const { return options_; }
-    const std::vector<float> &ex_patch() const { return ex_patch_; }
-    const std::vector<bool> &ex_patch_pixel_valid() const { return ex_patch_pixel_valid_; }
-    const std::vector<float> &all_dx() const { return all_dx_; }
-    const std::vector<float> &all_dy() const { return all_dy_; }
+    const std::vector<float> &ex_ref_patch() const { return ex_ref_patch_; }
+    const std::vector<bool> &ex_ref_patch_pixel_valid() const { return ex_ref_patch_pixel_valid_; }
+    const std::vector<float> &all_dx_in_ref_patch() const { return all_dx_in_ref_patch_; }
+    const std::vector<float> &all_dy_in_ref_patch() const { return all_dy_in_ref_patch_; }
     const int32_t &patch_rows() const { return patch_rows_; }
     const int32_t &patch_cols() const { return patch_cols_; }
     const int32_t &patch_size() const { return patch_size_; }
-    const int32_t &ex_patch_rows() const { return ex_patch_rows_; }
-    const int32_t &ex_patch_cols() const { return ex_patch_cols_; }
+    const int32_t &ex_ref_patch_rows() const { return ex_patch_rows_; }
+    const int32_t &ex_ref_patch_cols() const { return ex_patch_cols_; }
     const int32_t &ex_patch_size() const { return ex_patch_size_; }
 
 private:
@@ -96,12 +96,19 @@ private:
     // General options for optical flow trackers.
     OpticalFlowOptions options_;
 
-    // Variable support for fast method.
-    std::vector<float> ex_patch_;   // Extended patch with bound size 1.
-    std::vector<bool> ex_patch_pixel_valid_;
-    std::vector<float> all_dx_;
-    std::vector<float> all_dy_;
+    // Variables of reference patch supporting for fast method.
+    std::vector<float> ex_ref_patch_;   // Extended patch with bound size 1.
+    std::vector<bool> ex_ref_patch_pixel_valid_;
+    std::vector<float> all_dx_in_ref_patch_;
+    std::vector<float> all_dy_in_ref_patch_;
 
+    // Variables of current patch supporting for fast method.
+    std::vector<float> ex_cur_patch_;   // Extended patch with bound size 1.
+    std::vector<bool> ex_cur_patch_pixel_valid_;
+    std::vector<float> all_dx_in_cur_patch_;
+    std::vector<float> all_dy_in_cur_patch_;
+
+    // Parameters of ref and cur patch.
     int32_t patch_rows_ = 0;
     int32_t patch_cols_ = 0;
     int32_t patch_size_ = 0;

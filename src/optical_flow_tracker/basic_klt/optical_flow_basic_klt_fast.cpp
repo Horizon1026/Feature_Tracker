@@ -11,9 +11,9 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
                                               Vec2 &cur_pixel_uv,
                                               uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
-    ex_patch().clear();
-    ex_patch_pixel_valid().clear();
-    const uint32_t valid_pixel_num = ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_patch_rows(), ex_patch_cols(), ex_patch(), ex_patch_pixel_valid());
+    ex_ref_patch().clear();
+    ex_ref_patch_pixel_valid().clear();
+    const uint32_t valid_pixel_num = ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_ref_patch_rows(), ex_ref_patch_cols(), ex_ref_patch(), ex_ref_patch_pixel_valid());
 
     // If this feature has no valid pixel in patch, it can not be tracked.
     if (valid_pixel_num == 0) {
@@ -22,10 +22,10 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 
     // Precompute dx, dy, hessian matrix.
-    all_dx().clear();
-    all_dy().clear();
+    all_dx_in_ref_patch().clear();
+    all_dy_in_ref_patch().clear();
     Mat2 hessian = Mat2::Zero();
-    PrecomputeJacobianAndHessian(ex_patch(), ex_patch_pixel_valid(), ex_patch_rows(), ex_patch_cols(), all_dx(), all_dy(), hessian);
+    PrecomputeJacobianAndHessian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(), all_dy_in_ref_patch(), hessian);
 
     // Compute incremental by iteration.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
@@ -34,8 +34,8 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     Vec2 bias = Vec2::Zero();
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute bias.
-        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_patch(), ex_patch_pixel_valid(),
-            ex_patch_rows(), ex_patch_cols(), all_dx(), all_dy(), bias) == 0);
+        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_ref_patch(), ex_ref_patch_pixel_valid(),
+            ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(), all_dy_in_ref_patch(), bias) == 0);
 
         // Solve incremental function.
         const Vec2 v = hessian.ldlt().solve(bias);
@@ -63,40 +63,40 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 }
 
-void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_patch,
-                                                       const std::vector<bool> &ex_patch_pixel_valid,
-                                                       int32_t ex_patch_rows,
-                                                       int32_t ex_patch_cols,
-                                                       std::vector<float> &all_dx,
-                                                       std::vector<float> &all_dy,
+void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch,
+                                                       const std::vector<bool> &ex_ref_patch_pixel_valid,
+                                                       int32_t ex_ref_patch_rows,
+                                                       int32_t ex_ref_patch_cols,
+                                                       std::vector<float> &all_dx_in_ref_patch,
+                                                       std::vector<float> &all_dy_in_ref_patch,
                                                        Mat2 &hessian) {
-    const int32_t patch_rows = ex_patch_rows - 2;
-    const int32_t patch_cols = ex_patch_cols - 2;
+    const int32_t patch_rows = ex_ref_patch_rows - 2;
+    const int32_t patch_cols = ex_ref_patch_cols - 2;
     hessian.setZero();
 
     for (int32_t row = 0; row < patch_rows; ++row) {
         for (int32_t col = 0; col < patch_cols; ++col) {
-            const int32_t ex_index = (row + 1) * ex_patch_cols + col + 1;
+            const int32_t ex_index = (row + 1) * ex_ref_patch_cols + col + 1;
             const int32_t ex_index_left = ex_index - 1;
             const int32_t ex_index_right = ex_index + 1;
-            const int32_t ex_index_top = ex_index - ex_patch_cols;
-            const int32_t ex_index_bottom = ex_index + ex_patch_cols;
+            const int32_t ex_index_top = ex_index - ex_ref_patch_cols;
+            const int32_t ex_index_bottom = ex_index + ex_ref_patch_cols;
 
-            if (ex_patch_pixel_valid[ex_index_left] && ex_patch_pixel_valid[ex_index_right] &&
-                ex_patch_pixel_valid[ex_index_top] && ex_patch_pixel_valid[ex_index_bottom]) {
+            if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] &&
+                ex_ref_patch_pixel_valid[ex_index_top] && ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
-                const float dx = ex_patch[ex_index_right] - ex_patch[ex_index_left];
-                const float dy = ex_patch[ex_index_bottom] - ex_patch[ex_index_top];
-                all_dx.emplace_back(dx);
-                all_dy.emplace_back(dy);
+                const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
+                const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
+                all_dx_in_ref_patch.emplace_back(dx);
+                all_dy_in_ref_patch.emplace_back(dy);
 
                 // Compute hessian matrix.
                 hessian(0, 0) += dx * dx;
                 hessian(0, 1) += dx * dy;
                 hessian(1, 1) += dy * dy;
             } else {
-                all_dx.emplace_back(0.0f);
-                all_dy.emplace_back(0.0f);
+                all_dx_in_ref_patch.emplace_back(0.0f);
+                all_dy_in_ref_patch.emplace_back(0.0f);
             }
         }
     }
@@ -106,15 +106,15 @@ void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> 
 
 int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                                          const Vec2 &cur_pixel_uv,
-                                         const std::vector<float> &ex_patch,
-                                         const std::vector<bool> &ex_patch_pixel_valid,
-                                         int32_t ex_patch_rows,
-                                         int32_t ex_patch_cols,
-                                         const std::vector<float> &all_dx,
-                                         const std::vector<float> &all_dy,
+                                         const std::vector<float> &ex_ref_patch,
+                                         const std::vector<bool> &ex_ref_patch_pixel_valid,
+                                         int32_t ex_ref_patch_rows,
+                                         int32_t ex_ref_patch_cols,
+                                         const std::vector<float> &all_dx_in_ref_patch,
+                                         const std::vector<float> &all_dy_in_ref_patch,
                                          Vec2 &bias) {
-    const int32_t patch_rows = ex_patch_rows - 2;
-    const int32_t patch_cols = ex_patch_cols - 2;
+    const int32_t patch_rows = ex_ref_patch_rows - 2;
+    const int32_t patch_cols = ex_ref_patch_cols - 2;
     bias.setZero();
 
     // Compute the weight for linear interpolar.
@@ -145,13 +145,13 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                 CONTINUE_IF(row < 0 || row > cur_image.rows() - 2 || col < 0 || col > cur_image.cols() - 2);
 
                 const int32_t col_in_ex_patch = col + 1 - min_cur_pixel_col;
-                const int32_t index_in_ex_patch = row_in_ex_patch * ex_patch_cols + col_in_ex_patch;
+                const int32_t index_in_ex_patch = row_in_ex_patch * ex_ref_patch_cols + col_in_ex_patch;
 
                 // If this pixel is invalid in ref or cur image, discard it.
-                CONTINUE_IF(!ex_patch_pixel_valid[index_in_ex_patch]);
+                CONTINUE_IF(!ex_ref_patch_pixel_valid[index_in_ex_patch]);
 
                 // Compute pixel valud residual.
-                const float ref_pixel_value = ex_patch[index_in_ex_patch];
+                const float ref_pixel_value = ex_ref_patch[index_in_ex_patch];
                 const float cur_pixel_value = w_top_left * static_cast<float>(cur_image.GetPixelValueNoCheck(row, col)) +
                                               w_top_right * static_cast<float>(cur_image.GetPixelValueNoCheck(row, col + 1)) +
                                               w_bottom_left * static_cast<float>(cur_image.GetPixelValueNoCheck(row + 1, col)) +
@@ -162,8 +162,8 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                 const int32_t &col_in_patch = col - min_cur_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
 
-                bias(0) -= all_dx[index_in_patch] * dt;
-                bias(1) -= all_dy[index_in_patch] * dt;
+                bias(0) -= all_dx_in_ref_patch[index_in_patch] * dt;
+                bias(1) -= all_dy_in_ref_patch[index_in_patch] * dt;
 
                 // Static valid pixel number.
                 ++valid_pixel_cnt;
@@ -178,13 +178,13 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
 
             for (int32_t col = min_cur_pixel_col; col < max_cur_pixel_col; ++col) {
                 const int32_t col_in_ex_patch = col + 1 - min_cur_pixel_col;
-                const int32_t index_in_ex_patch = row_in_ex_patch * ex_patch_cols + col_in_ex_patch;
+                const int32_t index_in_ex_patch = row_in_ex_patch * ex_ref_patch_cols + col_in_ex_patch;
 
                 // If this pixel is invalid in ref or cur image, discard it.
-                CONTINUE_IF(!ex_patch_pixel_valid[index_in_ex_patch]);
+                CONTINUE_IF(!ex_ref_patch_pixel_valid[index_in_ex_patch]);
 
                 // Compute pixel valud residual.
-                const float ref_pixel_value = ex_patch[index_in_ex_patch];
+                const float ref_pixel_value = ex_ref_patch[index_in_ex_patch];
                 const float cur_pixel_value = w_top_left * static_cast<float>(cur_image.GetPixelValueNoCheck(row, col)) +
                                               w_top_right * static_cast<float>(cur_image.GetPixelValueNoCheck(row, col + 1)) +
                                               w_bottom_left * static_cast<float>(cur_image.GetPixelValueNoCheck(row + 1, col)) +
@@ -195,8 +195,8 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image,
                 const int32_t &col_in_patch = col - min_cur_pixel_col;
                 const int32_t index_in_patch = row_in_patch * patch_cols + col_in_patch;
 
-                bias(0) -= all_dx[index_in_patch] * dt;
-                bias(1) -= all_dy[index_in_patch] * dt;
+                bias(0) -= all_dx_in_ref_patch[index_in_patch] * dt;
+                bias(1) -= all_dy_in_ref_patch[index_in_patch] * dt;
 
                 // Static valid pixel number.
                 ++valid_pixel_cnt;
