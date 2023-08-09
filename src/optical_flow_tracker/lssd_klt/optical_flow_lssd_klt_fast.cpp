@@ -214,7 +214,7 @@ int32_t OpticalFlowLssdKlt::ComputeHessianAndBias(const GrayImage &cur_image,
 
             // If the pixel is both valid in ex_ref_patch and cur_patch.
             if (ex_ref_patch_pixel_valid[ex_index] && cur_patch_pixel_valid[index]) {
-                const Mat1x2 jacobian_pixel = Mat1x2(all_dx_in_ref_patch[ex_index], all_dy_in_ref_patch[ex_index]) / ref_average_value;
+                const Mat1x2 jacobian_pixel = Mat1x2(all_dx_in_ref_patch[index], all_dy_in_ref_patch[index]) / ref_average_value;
                 jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                 const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
                 const Vec1 residual = Vec1(cur_patch[index] / cur_average_value - ex_ref_patch[ex_index] / ref_average_value);
