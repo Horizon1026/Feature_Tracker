@@ -59,6 +59,10 @@ public:
     std::vector<bool> &ex_ref_patch_pixel_valid() { return ex_ref_patch_pixel_valid_; }
     std::vector<float> &all_dx_in_ref_patch() { return all_dx_in_ref_patch_; }
     std::vector<float> &all_dy_in_ref_patch() { return all_dy_in_ref_patch_; }
+    std::vector<float> &cur_patch() { return cur_patch_; }
+    std::vector<bool> &cur_patch_pixel_valid() { return cur_patch_pixel_valid_; }
+    std::vector<float> &all_dx_in_cur_patch() { return all_dx_in_cur_patch_; }
+    std::vector<float> &all_dy_in_cur_patch() { return all_dy_in_cur_patch_; }
     int32_t &patch_rows() { return patch_rows_; }
     int32_t &patch_cols() { return patch_cols_; }
     int32_t &patch_size() { return patch_size_; }
@@ -72,6 +76,10 @@ public:
     const std::vector<bool> &ex_ref_patch_pixel_valid() const { return ex_ref_patch_pixel_valid_; }
     const std::vector<float> &all_dx_in_ref_patch() const { return all_dx_in_ref_patch_; }
     const std::vector<float> &all_dy_in_ref_patch() const { return all_dy_in_ref_patch_; }
+    const std::vector<float> &cur_patch() const { return cur_patch_; }
+    const std::vector<bool> &cur_patch_pixel_valid() const { return cur_patch_pixel_valid_; }
+    const std::vector<float> &all_dx_in_cur_patch() const { return all_dx_in_cur_patch_; }
+    const std::vector<float> &all_dy_in_cur_patch() const { return all_dy_in_cur_patch_; }
     const int32_t &patch_rows() const { return patch_rows_; }
     const int32_t &patch_cols() const { return patch_cols_; }
     const int32_t &patch_size() const { return patch_size_; }
@@ -103,8 +111,8 @@ private:
     std::vector<float> all_dy_in_ref_patch_;
 
     // Variables of current patch supporting for fast method.
-    std::vector<float> ex_cur_patch_;   // Extended patch with bound size 1.
-    std::vector<bool> ex_cur_patch_pixel_valid_;
+    std::vector<float> cur_patch_;
+    std::vector<bool> cur_patch_pixel_valid_;
     std::vector<float> all_dx_in_cur_patch_;
     std::vector<float> all_dy_in_cur_patch_;
 
