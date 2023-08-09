@@ -51,6 +51,8 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
         ExtractPatchInCurrentImage(cur_image, ref_pixel_uv, R_cr, t_cr, patch_rows(), patch_cols(), cur_patch(), cur_patch_pixel_valid());
 
         // Compute hessian and bias.
+        hessian.setZero();
+        bias.setZero();
         BREAK_IF(ComputeHessianAndBias(cur_image, ref_pixel_uv, R_cr, t_cr, ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(),
             all_dx_in_ref_patch(), all_dy_in_ref_patch(), cur_patch(), cur_patch_pixel_valid(), ref_average_value, hessian, bias) == 0);
 
