@@ -78,7 +78,6 @@ private:
                                   const std::vector<float> &all_dy_in_ref_patch,
                                   const std::vector<float> &cur_patch,
                                   const std::vector<bool> &cur_patch_pixel_valid,
-                                  float ref_average_value,
                                   Mat3 &hessian,
                                   Vec3 &bias);
 

@@ -22,7 +22,7 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
         return;
     }
 
-    // Compute the average value.
+    // Compute the average value for reference patch.
     float ref_average_value = 0.0f;
     for (int32_t row = 1; row < ex_ref_patch_rows() - 1; ++row) {
         for (int32_t col = 1; col < ex_ref_patch_cols() - 1;++col) {
@@ -36,6 +36,17 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     all_dy_in_ref_patch().clear();
     PrecomputeJacobian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(), all_dy_in_ref_patch());
 
+    // Scale dx, dy and pixel value in reference patch.
+    for (auto &dx : all_dx_in_ref_patch()) {
+        dx /= ref_average_value;
+    }
+    for (auto &dy : all_dy_in_ref_patch()) {
+        dy /= ref_average_value;
+    }
+    for (auto &value : ex_ref_patch()) {
+        value /= ref_average_value;
+    }
+
     // Compute incremental by iteration.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
     float last_squared_step = INFINITY;
@@ -48,13 +59,32 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
         // Extract patch in current image, and compute average value.
         cur_patch().clear();
         cur_patch_pixel_valid().clear();
-        ExtractPatchInCurrentImage(cur_image, ref_pixel_uv, R_cr, t_cr, patch_rows(), patch_cols(), cur_patch(), cur_patch_pixel_valid());
+        const uint32_t valid_pixel_num = ExtractPatchInCurrentImage(cur_image, ref_pixel_uv, R_cr, t_cr, patch_rows(), patch_cols(), cur_patch(), cur_patch_pixel_valid());
+        BREAK_IF(valid_pixel_num == 0);
+
+        // Compute the average value for reference patch.
+        float cur_average_value = 0.0f;
+        for (int32_t row = 1; row < patch_rows() - 1; ++row) {
+            for (int32_t col = 1; col < patch_cols() - 1;++col) {
+                cur_average_value += cur_patch()[row * patch_cols() + col];
+            }
+        }
+        cur_average_value /= static_cast<float>(valid_pixel_num);
+
+        // Scale pixel value in current patch.
+        for (auto &value : cur_patch()) {
+            value /= cur_average_value;
+        }
 
         // Compute hessian and bias.
         hessian.setZero();
         bias.setZero();
         BREAK_IF(ComputeHessianAndBias(cur_image, ref_pixel_uv, R_cr, t_cr, ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(),
-            all_dx_in_ref_patch(), all_dy_in_ref_patch(), cur_patch(), cur_patch_pixel_valid(), ref_average_value, hessian, bias) == 0);
+            all_dx_in_ref_patch(), all_dy_in_ref_patch(), cur_patch(), cur_patch_pixel_valid(), hessian, bias) == 0);
+
+        // hessian = Mat3::Zero();
+        // bias = Vec3::Zero();
+        // BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, R_cr, t_cr, hessian, bias) == 0);
 
         // Solve incremental function.
         const Vec3 v = hessian.ldlt().solve(bias);
@@ -128,8 +158,8 @@ uint32_t OpticalFlowLssdKlt::ExtractPatchInCurrentImage(const GrayImage &cur_ima
     // Check if this patch inside of current image.
     const int32_t min_cur_pixel_row = static_cast<int32_t>(ref_pixel_uv.y()) - cur_patch_rows;
     const int32_t min_cur_pixel_col = static_cast<int32_t>(ref_pixel_uv.x()) - cur_patch_cols;
-    const int32_t max_cur_pixel_row = min_cur_pixel_row + cur_patch_rows * 2;
-    const int32_t max_cur_pixel_col = min_cur_pixel_col + cur_patch_cols * 2;
+    const int32_t max_cur_pixel_row = min_cur_pixel_row + cur_patch_rows;
+    const int32_t max_cur_pixel_col = min_cur_pixel_col + cur_patch_cols;
 
     float temp_value = 0.0f;
     if (min_cur_pixel_row < 0 || max_cur_pixel_row > cur_image.rows() - 2 ||
@@ -186,7 +216,6 @@ int32_t OpticalFlowLssdKlt::ComputeHessianAndBias(const GrayImage &cur_image,
                                                   const std::vector<float> &all_dy_in_ref_patch,
                                                   const std::vector<float> &cur_patch,
                                                   const std::vector<bool> &cur_patch_pixel_valid,
-                                                  float ref_average_value,
                                                   Mat3 &hessian,
                                                   Vec3 &bias) {
     int32_t num_of_valid_pixel = 0;
@@ -210,14 +239,14 @@ int32_t OpticalFlowLssdKlt::ComputeHessianAndBias(const GrayImage &cur_image,
             const float col_i = static_cast<float>(dcol) + ref_pixel_uv.x();
             const int32_t ex_index = (drow + options().kPatchRowHalfSize + 1) * ex_ref_patch_cols +
                 dcol + options().kPatchColHalfSize + 1;
-            const int32_t index = ex_index - ex_ref_patch_cols - 1;
+            const int32_t index = (drow + options().kPatchRowHalfSize) * (ex_ref_patch_cols - 2) + dcol + options().kPatchColHalfSize;
 
             // If the pixel is both valid in ex_ref_patch and cur_patch.
             if (ex_ref_patch_pixel_valid[ex_index] && cur_patch_pixel_valid[index]) {
-                const Mat1x2 jacobian_pixel = Mat1x2(all_dx_in_ref_patch[index], all_dy_in_ref_patch[index]) / ref_average_value;
+                const Mat1x2 jacobian_pixel = Mat1x2(all_dx_in_ref_patch[index], all_dy_in_ref_patch[index]);
                 jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                 const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
-                const Vec1 residual = Vec1(cur_patch[index] / cur_average_value - ex_ref_patch[ex_index] / ref_average_value);
+                const float residual = cur_patch[index] - ex_ref_patch[ex_index];
 
                 hessian += jacobian.transpose() * jacobian;
                 bias -= jacobian.transpose() * residual;
