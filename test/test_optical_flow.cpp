@@ -165,6 +165,7 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
     klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+    klt.consider_patch_luminance() = true;
 
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);

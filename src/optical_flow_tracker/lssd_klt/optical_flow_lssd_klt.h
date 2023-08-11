@@ -14,9 +14,11 @@ public:
 
     // Reference for member variables.
     Mat2 &predict_R_cr() { return predict_R_cr_; }
+    bool &consider_patch_luminance() { return consider_patch_luminance_; }
 
     // Const reference for member variables.
     const Mat2 &predict_R_cr() const { return predict_R_cr_; }
+    const bool &consider_patch_luminance() const { return consider_patch_luminance_; }
 
 private:
     virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
@@ -88,6 +90,7 @@ private:
 private:
     // Support for prediction.
     Mat2 predict_R_cr_ = Mat2::Identity();
+    bool consider_patch_luminance_ = false;
 
 };
 
