@@ -50,6 +50,13 @@ bool OpticalFlowAffineKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid,
             scaled_ref_pixel_uv *= 2.0f;
             scaled_cur_pixel_uv *= 2.0f;
         }
+
+        // If feature is outside, mark it.
+        const auto &feature = cur_pixel_uv[feature_id];
+        if (feature.x() < 0 || feature.x() > cur_pyramid.GetImageConst(0).cols() - 1||
+            feature.y() < 0 || feature.y() > cur_pyramid.GetImageConst(0).rows() - 1) {
+            status[feature_id] = static_cast<uint8_t>(TrackStatus::kOutside);
+        }
     }
 
     return true;
@@ -78,6 +85,13 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image,
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], affine, status[feature_id]);
                 break;
+        }
+
+        // If feature is outside, mark it.
+        const auto &feature = cur_pixel_uv[feature_id];
+        if (feature.x() < 0 || feature.x() > cur_image.cols() - 1||
+            feature.y() < 0 || feature.y() > cur_image.rows() - 1) {
+            status[feature_id] = static_cast<uint8_t>(TrackStatus::kOutside);
         }
     }
 
