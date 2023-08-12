@@ -16,8 +16,11 @@
 #include "visualizor.h"
 #include "tick_tock.h"
 
-std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+namespace {
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+    std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
+    std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+}
 
 class BriefMatcher : public FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType> {
 
@@ -57,8 +60,8 @@ void TestFeaturePointMatcher() {
     detector.feature().options().kMinValidResponse = 40.0f;
 
     std::vector<Vec2> ref_features, cur_features;
-    detector.DetectGoodFeatures(ref_image, 120, ref_features);
-    detector.DetectGoodFeatures(cur_image, 120, cur_features);
+    detector.DetectGoodFeatures(ref_image, kMaxNumberOfFeaturesToTrack, ref_features);
+    detector.DetectGoodFeatures(cur_image, kMaxNumberOfFeaturesToTrack, cur_features);
     ReportInfo("Detect features in two images.");
 
     // Compute descriptors for these features.
