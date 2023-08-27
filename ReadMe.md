@@ -16,9 +16,9 @@ Intergration of some simple sparse feature track method.
     - [ ] SSE
     - [ ] Neon
   - [ ] Lssd klt
-    - [ ] Direct
-    - [ ] Inverse
-    - [ ] Fast
+    - [x] Direct
+    - [x] Inverse
+    - [x] Fast
     - [ ] SSE
     - [ ] Neon
 - [x] Direct method tracker
@@ -27,7 +27,9 @@ Intergration of some simple sparse feature track method.
 - [x] Descripter matcher
 
 # Dependence
-Slam_Utility, Feature_Detector, OpenCV(Only to compare, not necessary)
+- Slam_Utility
+- Feature_Detector
+- OpenCV(Only to compare, not necessary)
 
 # Tips
 - 欢迎一起交流学习，不同意商用；
