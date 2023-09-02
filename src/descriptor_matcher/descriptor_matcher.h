@@ -111,7 +111,7 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
                                                     const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
     RETURN_FALSE_IF(descriptors_cur.empty());
-    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_pred_in_cur.size());
+    RETURN_FALSE_IF(descriptors_ref.size() != pixel_uv_pred_in_cur.size());
     RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
@@ -159,17 +159,20 @@ bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std:
                                                                       const std::vector<Vec2> &pixel_uv_cur,
                                                                       std::vector<Vec2> &matched_pixel_uv_cur,
                                                                       std::vector<uint8_t> &status) {
-    if (pixel_uv_cur.size() != status.size()) {
-        status.resize(pixel_uv_cur.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
+    if (index_pairs_in_cur.size() != status.size()) {
+        status.resize(index_pairs_in_cur.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
-    matched_pixel_uv_cur = pixel_uv_cur;
 
-    for (uint32_t i = 0; i < matched_pixel_uv_cur.size(); ++i) {
-        if (index_pairs_in_cur[i] > 0) {
-            matched_pixel_uv_cur[i] = pixel_uv_cur[index_pairs_in_cur[i]];
-            status[i] = static_cast<uint8_t>(TrackStatus::kTracked);
+    matched_pixel_uv_cur.resize(index_pairs_in_cur.size());
+    for (uint32_t ref_id = 0; ref_id < index_pairs_in_cur.size(); ++ref_id) {
+        // Do not repeatly match features that has been tracking failed.
+        CONTINUE_IF(status[ref_id] > static_cast<uint8_t>(TrackStatus::kTracked));
+
+        if (index_pairs_in_cur[ref_id] > 0) {
+            matched_pixel_uv_cur[ref_id] = pixel_uv_cur[index_pairs_in_cur[ref_id]];
+            status[ref_id] = static_cast<uint8_t>(TrackStatus::kTracked);
         } else {
-            status[i] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+            status[ref_id] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
         }
     }
 
