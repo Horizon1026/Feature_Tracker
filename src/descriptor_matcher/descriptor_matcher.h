@@ -111,6 +111,8 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
                                                     const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
     RETURN_FALSE_IF(descriptors_cur.empty());
+    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_pred_in_cur.size());
+    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
         index_pairs_in_cur.resize(descriptors_ref.size(), -1);
