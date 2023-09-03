@@ -24,7 +24,10 @@ Intergration of some simple sparse feature track method.
 - [x] Direct method tracker
   - [x] Direct
   - [x] Inverse
+  - [ ] Fast
 - [x] Descripter matcher
+  - [x] Nearby matching
+  - [x] Force matching
 
 # Dependence
 - Slam_Utility
