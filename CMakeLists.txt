@@ -27,8 +27,8 @@ endif()
 
 # Add visualizor.
 set( VISUALIZOR_PATH ${PROJECT_SOURCE_DIR}/../Visualizor2D )
-if ( NOT TARGET lib_slam_visualize )
-    add_subdirectory( ${VISUALIZOR_PATH}/src ${PROJECT_SOURCE_DIR}/build/lib_slam_visualize )
+if ( NOT TARGET lib_image_visualizor )
+    add_subdirectory( ${VISUALIZOR_PATH}/src ${PROJECT_SOURCE_DIR}/build/lib_image_visualizor )
 endif()
 
 # Add feature point/line detector and feature descriptor.
@@ -67,7 +67,7 @@ target_link_libraries( test_optical_flow
     lib_optical_flow_tracker
     lib_slam_utility_log
     lib_slam_utility_tick_tock
-    lib_slam_visualize
+    lib_image_visualizor
 
     ${OpenCV_LIBS}
 )
@@ -80,7 +80,7 @@ target_link_libraries( test_direct_method
     lib_direct_method_tracker
     lib_slam_utility_log
     lib_slam_utility_tick_tock
-    lib_slam_visualize
+    lib_image_visualizor
 )
 
 # Create executable target to test descriptor matcher.
@@ -93,5 +93,5 @@ target_link_libraries( test_descriptor_matcher
     lib_descriptor_matcher
     lib_slam_utility_log
     lib_slam_utility_tick_tock
-    lib_slam_visualize
+    lib_image_visualizor
 )
