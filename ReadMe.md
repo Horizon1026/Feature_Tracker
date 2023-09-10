@@ -32,6 +32,7 @@ Intergration of some simple sparse feature track method.
 # Dependence
 - Slam_Utility
 - Feature_Detector
+- Visualizor2D
 - OpenCV(Only to compare, not necessary)
 
 # Tips
