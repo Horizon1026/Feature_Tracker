@@ -86,7 +86,7 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    const float cost_time = timer.TickInMillisecond();
+    const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // Visualizor::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
@@ -128,7 +128,7 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    const float cost_time = timer.TickInMillisecond();
+    const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // Visualizor::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
@@ -171,7 +171,7 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    const float cost_time = timer.TickInMillisecond();
+    const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // Visualizor::ShowImageWithDetectedFeatures("Lssd KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
@@ -213,7 +213,7 @@ float TestOpencvLkOpticalFlow(int32_t pyramid_level, int32_t patch_size, uint8_t
     TickTock timer;
     cv::calcOpticalFlowPyrLK(cv_ref_image, cv_cur_image, ref_corners, cur_corners, status, errors,
         cv::Size(2 * patch_size + 1, 2 * patch_size + 1), pyramid_level - 1);
-    cost_time = timer.TickInMillisecond();
+    cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     for (const auto &item : cur_corners) {

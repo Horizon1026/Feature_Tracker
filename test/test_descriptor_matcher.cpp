@@ -84,7 +84,7 @@ void TestFeaturePointMatcher() {
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;
     const bool res = matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, matched_cur_features, status);
-    ReportInfo("Descriptor matcher cost time " << timer.TickInMillisecond() << " ms.");
+    ReportInfo("Descriptor matcher cost time " << timer.TockTickInMillisecond() << " ms.");
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
