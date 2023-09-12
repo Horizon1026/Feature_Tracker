@@ -172,7 +172,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
             CONTINUE_IF(p_c_in_cur.z() < kZero);
 
             const Vec2 cur_norm_xy = (p_c_in_cur / p_c_in_cur.z()).head<2>();
-            camera.LiftToImagePlane(cur_norm_xy, cur_pixel_uv[i]);
+            camera.LiftFromNormalizedPlaneToImagePlane(cur_norm_xy, cur_pixel_uv[i]);
 
             // Compute gradient from pixel to xi.
             Mat2x6 jacobian_pixel_xi;
