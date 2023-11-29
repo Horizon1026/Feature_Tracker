@@ -16,6 +16,8 @@
 #include "visualizor.h"
 #include "tick_tock.h"
 
+using namespace SLAM_VISUALIZOR;
+
 namespace {
     constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
     std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";

@@ -17,6 +17,8 @@
 #include "optical_flow_affine_klt.h"
 #include "optical_flow_lssd_klt.h"
 
+using namespace SLAM_VISUALIZOR;
+
 #define DRAW_TRACKING_RESULT (1)
 #define DETECT_FEATURES_BY_OPENCV (0)
 

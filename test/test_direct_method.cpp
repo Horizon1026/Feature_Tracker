@@ -12,6 +12,8 @@
 #include "visualizor.h"
 #include "tick_tock.h"
 
+using namespace SLAM_VISUALIZOR;
+
 namespace {
     constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
 }
