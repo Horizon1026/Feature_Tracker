@@ -1,7 +1,7 @@
 #ifndef _DIRECT_METHOD_TRACKER_H_
 #define _DIRECT_METHOD_TRACKER_H_
 
-#include "datatype_basic.h"
+#include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
 #include "slam_basic_math.h"

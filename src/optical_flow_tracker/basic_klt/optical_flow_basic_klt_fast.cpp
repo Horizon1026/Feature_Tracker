@@ -1,5 +1,4 @@
 #include "optical_flow_basic_klt.h"
-#include "slam_memory.h"
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 

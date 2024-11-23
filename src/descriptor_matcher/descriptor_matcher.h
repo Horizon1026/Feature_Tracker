@@ -1,7 +1,7 @@
 #ifndef _DESCRIPTOR_MATCHER_H_
 #define _DESCRIPTOR_MATCHER_H_
 
-#include "datatype_basic.h"
+#include "basic_type.h"
 #include "slam_basic_math.h"
 #include "slam_operations.h"
 #include "feature_tracker.h"

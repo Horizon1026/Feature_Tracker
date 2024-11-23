@@ -1,7 +1,7 @@
 #ifndef _FEATURE_TRACKER_H_
 #define _FEATURE_TRACKER_H_
 
-#include "datatype_basic.h"
+#include "basic_type.h"
 
 namespace FEATURE_TRACKER {
 
