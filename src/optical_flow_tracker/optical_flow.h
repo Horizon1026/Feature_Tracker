@@ -4,7 +4,7 @@
 #include "datatype_basic.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
-#include "math_kinematics.h"
+#include "slam_basic_math.h"
 #include "feature_tracker.h"
 
 namespace FEATURE_TRACKER {

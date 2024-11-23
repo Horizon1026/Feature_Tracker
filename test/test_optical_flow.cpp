@@ -5,7 +5,7 @@
 #include "ctime"
 #include "thread"
 
-#include "log_report.h"
+#include "slam_log_reporter.h"
 #include "slam_memory.h"
 #include "tick_tock.h"
 #include "visualizor.h"

@@ -11,7 +11,7 @@
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
 
-#include "log_report.h"
+#include "slam_log_reporter.h"
 #include "slam_memory.h"
 #include "visualizor.h"
 #include "tick_tock.h"
