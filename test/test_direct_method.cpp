@@ -9,7 +9,7 @@
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "visualizor.h"
+#include "visualizor_2d.h"
 #include "tick_tock.h"
 
 using namespace SLAM_VISUALIZOR;
