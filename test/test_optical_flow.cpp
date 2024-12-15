@@ -43,8 +43,8 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
-    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
-    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
+    Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
 
     // Generate image pyramids.
     ImagePyramid ref_pyramid, cur_pyramid;
@@ -74,9 +74,9 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // Visualizor::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
-    Visualizor::ShowImageWithTrackedFeatures("Basic KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(1);
+    // Visualizor2D::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor2D::ShowImageWithTrackedFeatures("Basic KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
+    Visualizor2D::WaitKey(1);
 #endif
 
     return cost_time;
@@ -86,8 +86,8 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
-    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
-    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
+    Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
 
     // Generate image pyramids.
     ImagePyramid ref_pyramid, cur_pyramid;
@@ -116,9 +116,9 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // Visualizor::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
-    Visualizor::ShowImageWithTrackedFeatures("Affine KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(1);
+    // Visualizor2D::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor2D::ShowImageWithTrackedFeatures("Affine KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
+    Visualizor2D::WaitKey(1);
 #endif
 
     return cost_time;
@@ -128,8 +128,8 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
-    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
-    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
+    Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
 
     // Generate image pyramids.
     ImagePyramid ref_pyramid, cur_pyramid;
@@ -159,9 +159,9 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // Visualizor::ShowImageWithDetectedFeatures("Lssd KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
-    Visualizor::ShowImageWithTrackedFeatures("Lssd KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
-    Visualizor::WaitKey(1);
+    // Visualizor2D::ShowImageWithDetectedFeatures("Lssd KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor2D::ShowImageWithTrackedFeatures("Lssd KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
+    Visualizor2D::WaitKey(1);
 #endif
 
     return cost_time;
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
     ReportInfo("Lssd klt cost time " << cost_time << " ms.");
 
 #if DRAW_TRACKING_RESULT
-    Visualizor::WaitKey(0);
+    Visualizor2D::WaitKey(0);
 #endif // end of DRAW_TRACKING_RESULT
     return 0;
 }

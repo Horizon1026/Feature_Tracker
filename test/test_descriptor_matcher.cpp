@@ -52,8 +52,8 @@ void TestFeaturePointMatcher() {
     // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
-    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
-    Visualizor::LoadImage(test_cur_image_file_name, cur_image);
+    Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.
@@ -95,9 +95,9 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image,
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image,
         ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
-    Visualizor::WaitKey(0);
+    Visualizor2D::WaitKey(0);
 }
 
 int main(int argc, char **argv) {

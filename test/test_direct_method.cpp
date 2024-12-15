@@ -40,8 +40,8 @@ void TestDirectMethod() {
     // Load images and pyramids.
     GrayImage ref_image;
     GrayImage ref_depth;
-    Visualizor::LoadImage(test_ref_image_file_name, ref_image);
-    Visualizor::LoadImage(test_ref_depth_file_name, ref_depth);
+    Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
+    Visualizor2D::LoadImage(test_ref_depth_file_name, ref_depth);
 
     uint8_t *ref_buf = (uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * ref_image.rows() * ref_image.cols());
     ImagePyramid ref_pyramid;
@@ -60,7 +60,7 @@ void TestDirectMethod() {
     }
 
     // Show detected features in reference image.
-    Visualizor::ShowImageWithDetectedFeatures("Direct method : Feature before multi tracking", ref_image, ref_pixel_uv);
+    Visualizor2D::ShowImageWithDetectedFeatures("Direct method : Feature before multi tracking", ref_image, ref_pixel_uv);
 
     // Construct camera intrinsic matrix K.
     std::array<float, 4> K = {fx, fy, cx, cy};
@@ -81,7 +81,7 @@ void TestDirectMethod() {
     for (uint32_t i = 0; i < test_cur_image_file_names.size(); ++i) {
         // Prepare for tracking.
         GrayImage cur_image;
-        Visualizor::LoadImage(test_cur_image_file_names[i], cur_image);
+        Visualizor2D::LoadImage(test_cur_image_file_names[i], cur_image);
 
         uint8_t *cur_buf = (uint8_t *)SlamMemory::Malloc(sizeof(uint8_t) * cur_image.rows() * cur_image.cols());
         ImagePyramid cur_pyramid;
@@ -98,9 +98,9 @@ void TestDirectMethod() {
 
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
-        Visualizor::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image,
+        Visualizor2D::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image,
             ref_pixel_uv, cur_pixel_uv, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
-        Visualizor::WaitKey(0);
+        Visualizor2D::WaitKey(0);
     }
 }
 
