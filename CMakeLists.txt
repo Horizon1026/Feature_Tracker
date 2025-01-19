@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.10 )
+cmake_minimum_required( VERSION 3.0 )
 
 project( optical_flow )
 
@@ -25,13 +25,16 @@ endif()
 # Add feature point/line detector and feature descriptor.
 set( FEATURE_DETECTOR_PATH ${PROJECT_SOURCE_DIR}/../Feature_Detector )
 if ( NOT TARGET lib_feature_point_detector )
-add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_point_detector ${PROJECT_SOURCE_DIR}/build/lib_feature_point_detector )
+    add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_point_detector ${PROJECT_SOURCE_DIR}/build/lib_feature_point_detector )
 endif()
 if ( NOT TARGET lib_feature_line_detector )
-add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_line_detector ${PROJECT_SOURCE_DIR}/build/lib_feature_line_detector )
+    add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_line_detector ${PROJECT_SOURCE_DIR}/build/lib_feature_line_detector )
 endif()
 if ( NOT TARGET lib_feature_descriptor )
-add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_descriptor ${PROJECT_SOURCE_DIR}/build/lib_feature_descriptor )
+    add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_descriptor ${PROJECT_SOURCE_DIR}/build/lib_feature_descriptor )
+endif()
+if ( NOT TARGET lib_nn_feature_point_detector )
+    add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/nn_feature_point_detector ${PROJECT_SOURCE_DIR}/build/lib_nn_feature_point_detector )
 endif()
 
 # Add descriptor matcher.
@@ -72,13 +75,25 @@ target_link_libraries( test_direct_method
     lib_2d_visualizor
 )
 
-# Create executable target to test descriptor matcher.
-add_executable( test_descriptor_matcher
-    test/test_descriptor_matcher.cpp
+# Create executable target to test descriptor matcher on brief.
+add_executable( test_descriptor_matcher_brief
+    test/test_descriptor_matcher_brief.cpp
 )
-target_link_libraries( test_descriptor_matcher
+target_link_libraries( test_descriptor_matcher_brief
     lib_feature_point_detector
     lib_feature_descriptor
+    lib_descriptor_matcher
+    lib_slam_utility_log
+    lib_slam_utility_tick_tock
+    lib_2d_visualizor
+)
+
+# Create executable target to test descriptor matcher on xfeat.
+add_executable( test_descriptor_matcher_xfeat
+    test/test_descriptor_matcher_xfeat.cpp
+)
+target_link_libraries( test_descriptor_matcher_xfeat
+    lib_nn_feature_point_detector
     lib_descriptor_matcher
     lib_slam_utility_log
     lib_slam_utility_tick_tock
