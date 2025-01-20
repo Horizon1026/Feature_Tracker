@@ -16,6 +16,7 @@
 
 using namespace SLAM_VISUALIZOR;
 using namespace FEATURE_DETECTOR;
+using namespace FEATURE_TRACKER;
 
 namespace {
     constexpr int32_t kMaxNumberOfFeaturesToTrack = 100;
@@ -23,14 +24,14 @@ namespace {
     std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }
 
-class XFeatMatcher : public FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::XFeatType> {
+class XFeatMatcher : public DescriptorMatcher<XFeatDescriptorType> {
 
 public:
-    XFeatMatcher() : FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::XFeatType>() {}
+    XFeatMatcher() : DescriptorMatcher<XFeatDescriptorType>() {}
     virtual ~XFeatMatcher() = default;
 
-    virtual int32_t ComputeDistance(const FEATURE_DETECTOR::XFeatType &descriptor_ref,
-                                    const FEATURE_DETECTOR::XFeatType &descriptor_cur) override {
+    virtual int32_t ComputeDistance(const XFeatDescriptorType &descriptor_ref,
+                                    const XFeatDescriptorType &descriptor_cur) override {
         float sum = 0.0f;
         for (uint32_t i = 0; i < descriptor_ref.size(); ++i) {
             sum += std::abs(descriptor_ref[i] - descriptor_cur[i]);
@@ -52,14 +53,14 @@ void TestFeaturePointMatcher() {
 
     // Initialize the detector.
     NNFeaturePointDetector detector("../../Feature_Detector/src/nn_feature_point_detector/models/xfeat_cpu_1_1_h_w.pt");
+    detector.options().kModelType = NNFeaturePointDetector::ModelType::kXFeat;
+    detector.options().kMinResponse = 0.4f;
 
     // Detect features and compute descriptors.
     std::vector<Vec2> ref_features, cur_features;
-    std::vector<FEATURE_DETECTOR::XFeatType> ref_descriptors, cur_descriptors;
-    detector.DetectGoodFeatures(ref_image, kMaxNumberOfFeaturesToTrack, ref_features);
-    detector.ExtractDescriptors<64>(ref_features, ref_descriptors);
-    detector.DetectGoodFeatures(cur_image, kMaxNumberOfFeaturesToTrack, cur_features);
-    detector.ExtractDescriptors<64>(cur_features, cur_descriptors);
+    std::vector<XFeatDescriptorType> ref_descriptors, cur_descriptors;
+    detector.DetectGoodFeaturesWithDescriptor(ref_image, kMaxNumberOfFeaturesToTrack, ref_features, ref_descriptors);
+    detector.DetectGoodFeaturesWithDescriptor(cur_image, kMaxNumberOfFeaturesToTrack, cur_features, cur_descriptors);
 
     // Match features with descriptors.
     XFeatMatcher matcher;
@@ -75,13 +76,13 @@ void TestFeaturePointMatcher() {
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
-        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked);
+        cnt += status[i] == static_cast<uint8_t>(TrackStatus::kTracked);
     }
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
     Visualizor2D::ShowImageWithTrackedFeatures("Features matched by XFeat", ref_image, cur_image,
-        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+        ref_features, matched_cur_features, status, static_cast<uint8_t>(TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 
