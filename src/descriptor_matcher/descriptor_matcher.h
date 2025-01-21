@@ -11,7 +11,7 @@ namespace FEATURE_TRACKER {
 struct DescriptorMatcherOptions {
     int32_t kMaxValidPredictRowDistance = 40;
     int32_t kMaxValidPredictColDistance = 40;
-    int32_t kMaxValidDescriptorDistance = 50;
+    float kMaxValidDescriptorDistance = 0.0f;
 };
 
 /* Class Descriptor Matcher Declaration. */
@@ -52,8 +52,8 @@ public:
     const DescriptorMatcherOptions &options() const { return options_; }
 
 private:
-    virtual int32_t ComputeDistance(const DescriptorType &descriptor_ref,
-                                    const DescriptorType &descriptor_cur) = 0;
+    virtual float ComputeDistance(const DescriptorType &descriptor_ref,
+                                  const DescriptorType &descriptor_cur) = 0;
 
     bool FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur,
                                        const std::vector<Vec2> &pixel_uv_cur,
@@ -80,9 +80,9 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
     const int32_t max_i = descriptors_ref.size();
     const int32_t max_j = descriptors_cur.size();
     for (int32_t i = 0; i < max_i; ++i) {
-        int32_t min_distance = kMaxInt32;
+        float min_distance = options_.kMaxValidDescriptorDistance;
         for (int32_t j = 0; j < max_j; ++j) {
-            const int32_t distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
+            const float distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
             if (distance < min_distance && distance < options_.kMaxValidDescriptorDistance) {
                 min_distance = distance;
                 index_pairs_in_cur[i] = j;
@@ -122,14 +122,14 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     const uint32_t max_i = descriptors_ref.size();
     const uint32_t max_j = descriptors_cur.size();
     for (uint32_t i = 0; i < max_i; ++i) {
-        int32_t min_distance = kMaxInt32;
+        float min_distance = options_.kMaxValidDescriptorDistance;
         for (uint32_t j = 0; j < max_j; ++j) {
             if (std::fabs(pixel_uv_pred_in_cur[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidPredictColDistance ||
                 std::fabs(pixel_uv_pred_in_cur[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidPredictRowDistance) {
                 continue;
             }
 
-            const int32_t distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
+            const float distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
             if (distance < min_distance && distance < options_.kMaxValidDescriptorDistance) {
                 min_distance = distance;
                 index_pairs_in_cur[i] = j;

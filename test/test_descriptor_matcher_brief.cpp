@@ -30,8 +30,8 @@ public:
     BriefMatcher() : FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType>() {}
     virtual ~BriefMatcher() = default;
 
-    virtual int32_t ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref,
-                                    const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
+    virtual float ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref,
+                                  const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
         if (descriptor_ref.empty() || descriptor_cur.empty()) {
             return kMaxInt32;
         }
@@ -42,12 +42,12 @@ public:
                 ++distance;
             }
         }
-        return distance;
+        return static_cast<float>(distance);
     }
 };
 
 void TestFeaturePointMatcher() {
-    ReportInfo(YELLOW ">> Test Feature Point Matcher." RESET_COLOR);
+    ReportInfo(YELLOW ">> Test Feature Point Matcher with Brief." RESET_COLOR);
 
     // Load images.
     GrayImage ref_image;

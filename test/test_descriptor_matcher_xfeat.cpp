@@ -19,7 +19,7 @@ using namespace FEATURE_DETECTOR;
 using namespace FEATURE_TRACKER;
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 100;
+    constexpr int32_t kMaxNumberOfFeaturesToTrack = 200;
     std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
     std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }
@@ -30,19 +30,28 @@ public:
     XFeatMatcher() : DescriptorMatcher<XFeatDescriptorType>() {}
     virtual ~XFeatMatcher() = default;
 
-    virtual int32_t ComputeDistance(const XFeatDescriptorType &descriptor_ref,
-                                    const XFeatDescriptorType &descriptor_cur) override {
-        float sum = 0.0f;
+    virtual float ComputeDistance(const XFeatDescriptorType &descriptor_ref,
+                                  const XFeatDescriptorType &descriptor_cur) override {
+        // Calculate cosine similarity.
+        float dot = 0.0f;
+        float norm_ref = 0.0f;
+        float norm_cur = 0.0f;
         for (uint32_t i = 0; i < descriptor_ref.size(); ++i) {
-            sum += std::abs(descriptor_ref[i] - descriptor_cur[i]);
+            dot += descriptor_cur[i] * descriptor_ref[i];
+            norm_ref += descriptor_ref[i] * descriptor_ref[i];
+            norm_cur += descriptor_cur[i] * descriptor_cur[i];
         }
-        return sum;
+        norm_ref = std::sqrt(norm_ref);
+        norm_cur = std::sqrt(norm_cur);
+
+        const float cosine_similarity = dot / norm_ref / norm_cur;
+        return 2.0f - cosine_similarity;
     }
 
 };
 
 void TestFeaturePointMatcher() {
-    ReportInfo(YELLOW ">> Test Feature Point Matcher." RESET_COLOR);
+    ReportInfo(YELLOW ">> Test Feature Point Matcher with XFeat." RESET_COLOR);
 
     // Load images.
     GrayImage ref_image;
@@ -54,19 +63,21 @@ void TestFeaturePointMatcher() {
     // Initialize the detector.
     NNFeaturePointDetector detector("../../Feature_Detector/src/nn_feature_point_detector/models/xfeat_cpu_1_1_h_w.pt");
     detector.options().kModelType = NNFeaturePointDetector::ModelType::kXFeat;
-    detector.options().kMinResponse = 0.4f;
+    detector.options().kMinResponse = 0.6f;
 
     // Detect features and compute descriptors.
     std::vector<Vec2> ref_features, cur_features;
     std::vector<XFeatDescriptorType> ref_descriptors, cur_descriptors;
     detector.DetectGoodFeaturesWithDescriptor(ref_image, kMaxNumberOfFeaturesToTrack, ref_features, ref_descriptors);
     detector.DetectGoodFeaturesWithDescriptor(cur_image, kMaxNumberOfFeaturesToTrack, cur_features, cur_descriptors);
+    ReportInfo("Detect " << ref_features.size() << " features in ref image and " << cur_features.size() <<
+        " features in cur image.");
 
     // Match features with descriptors.
     XFeatMatcher matcher;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
-    matcher.options().kMaxValidDescriptorDistance = 60;
+    matcher.options().kMaxValidDescriptorDistance = 1.1f;
 
     TickTock timer;
     std::vector<Vec2> matched_cur_features;
