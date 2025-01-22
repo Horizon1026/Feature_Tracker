@@ -64,6 +64,7 @@ void TestFeaturePointMatcher() {
     NNFeaturePointDetector detector("../../Feature_Detector/src/nn_feature_point_detector/models/xfeat_cpu_1_1_h_w.pt");
     detector.options().kModelType = NNFeaturePointDetector::ModelType::kXFeat;
     detector.options().kMinResponse = 0.6f;
+    detector.options().kMinFeatureDistance = 10;
 
     // Detect features and compute descriptors.
     std::vector<Vec2> ref_features, cur_features;
@@ -77,7 +78,7 @@ void TestFeaturePointMatcher() {
     XFeatMatcher matcher;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
-    matcher.options().kMaxValidDescriptorDistance = 1.1f;
+    matcher.options().kMaxValidDescriptorDistance = 1.2f;
 
     TickTock timer;
     std::vector<Vec2> matched_cur_features;
