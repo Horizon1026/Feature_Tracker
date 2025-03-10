@@ -21,6 +21,9 @@ Intergration of some simple sparse feature track method.
     - [x] Fast
     - [ ] SSE
     - [ ] Neon
+- [ ] Dense optical flow tracker
+  - [ ] RAFT
+  - [ ] Farneback
 - [x] Direct method tracker
   - [x] Direct
   - [x] Inverse
@@ -29,12 +32,14 @@ Intergration of some simple sparse feature track method.
   - [x] Nearby matching
   - [x] Force matching
 
-# Dependence
+# Dependence (C++)
 - Slam_Utility
 - Feature_Detector
 - Visualizor2D
-- OpenCV (Only to compare, not necessary)
-- libtorch (nn feature match needed)
+- libtorch (only nn feature match needed)
+
+# Dependence (python)
+- pytorch
 
 # Compile and Run
 - 第三方仓库的话需要自行 apt-get install 安装
