@@ -57,7 +57,7 @@ class CorrelationPyramid():
             # window_height = window_width = 2 * r + 1.
             dx = torch.linspace(-r, r, 2 * r + 1)
             dy = torch.linspace(-r, r, 2 * r + 1)
-            delta = torch.stack(torch.meshgrid(dy, dx), dim = -1).to(correlation.device)
+            delta = torch.stack(torch.meshgrid(dy, dx, indexing = 'ij'), dim = -1).to(correlation.device)
             # Compute location of all pixels in search window with respect to the center pixel.
             # Scale the pixel locations to the current level of the pyramid.
             scale = 2 ** i
@@ -96,3 +96,4 @@ if __name__ == '__main__':
         print(f'out_{i}.size():', out.size())
     sample_output = torch.cat(out_pyramid, dim = -1).permute(0, 3, 1, 2).contiguous().float()
     print('sample_output.size():', sample_output.size())
+    print('Done.')

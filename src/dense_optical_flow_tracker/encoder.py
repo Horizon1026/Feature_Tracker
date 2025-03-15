@@ -81,3 +81,4 @@ if __name__ == '__main__':
     context, hidden = context_encoder(img)
     print('context.size():', context.size())
     print('hidden.size():', hidden.size())
+    print('Done.')

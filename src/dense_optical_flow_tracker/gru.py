@@ -2,11 +2,11 @@ import torch
 
 # Standard GRU.
 class Gru(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels):
+    def __init__(self, x_channels, h_channels):
         super(Gru, self).__init__()
-        self.fc_z = torch.nn.Linear(in_channels + hidden_channels, hidden_channels)
-        self.fc_r = torch.nn.Linear(in_channels + hidden_channels, hidden_channels)
-        self.fc_q = torch.nn.Linear(in_channels + hidden_channels, hidden_channels)
+        self.fc_z = torch.nn.Linear(x_channels + h_channels, h_channels)
+        self.fc_r = torch.nn.Linear(x_channels + h_channels, h_channels)
+        self.fc_q = torch.nn.Linear(x_channels + h_channels, h_channels)
         self.sigmoid = torch.nn.Sigmoid()
         self.tanh = torch.nn.Tanh()
     def forward(self, x, h):
@@ -22,13 +22,13 @@ class Gru(torch.nn.Module):
 
 # Standard convolutional GRU.
 class ConvGru(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, kernel_size):
+    def __init__(self, x_channels, h_channels, kernel_size):
         super(ConvGru, self).__init__()
         assert kernel_size % 2 == 1, 'Kernel size must be odd.'
         padding = kernel_size // 2
-        self.conv_z = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, kernel_size, stride = 1, padding = padding)
-        self.conv_r = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, kernel_size, stride = 1, padding = padding)
-        self.conv_q = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, kernel_size, stride = 1, padding = padding)
+        self.conv_z = torch.nn.Conv2d(x_channels + h_channels, h_channels, kernel_size, stride = 1, padding = padding)
+        self.conv_r = torch.nn.Conv2d(x_channels + h_channels, h_channels, kernel_size, stride = 1, padding = padding)
+        self.conv_q = torch.nn.Conv2d(x_channels + h_channels, h_channels, kernel_size, stride = 1, padding = padding)
         self.sigmoid = torch.nn.Sigmoid()
         self.tanh = torch.nn.Tanh()
     def forward(self, x, h):
@@ -44,16 +44,16 @@ class ConvGru(torch.nn.Module):
 
 # Separable convolutional GRU.
 class SepConvGru(torch.nn.Module):
-    def __init__(self, in_channels, hidden_channels, kernel_size):
+    def __init__(self, x_channels, h_channels, kernel_size):
         super(SepConvGru, self).__init__()
         assert kernel_size % 2 == 1, 'Kernel size must be odd.'
         padding = kernel_size // 2
-        self.conv_z_horizontal = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (1, kernel_size), stride = 1, padding = (0, padding))
-        self.conv_r_horizontal = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (1, kernel_size), stride = 1, padding = (0, padding))
-        self.conv_q_horizontal = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (1, kernel_size), stride = 1, padding = (0, padding))
-        self.conv_z_vertical = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
-        self.conv_r_vertical = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
-        self.conv_q_vertical = torch.nn.Conv2d(in_channels + hidden_channels, hidden_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
+        self.conv_z_horizontal = torch.nn.Conv2d(x_channels + h_channels, h_channels, (1, kernel_size), stride = 1, padding = (0, padding))
+        self.conv_r_horizontal = torch.nn.Conv2d(x_channels + h_channels, h_channels, (1, kernel_size), stride = 1, padding = (0, padding))
+        self.conv_q_horizontal = torch.nn.Conv2d(x_channels + h_channels, h_channels, (1, kernel_size), stride = 1, padding = (0, padding))
+        self.conv_z_vertical = torch.nn.Conv2d(x_channels + h_channels, h_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
+        self.conv_r_vertical = torch.nn.Conv2d(x_channels + h_channels, h_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
+        self.conv_q_vertical = torch.nn.Conv2d(x_channels + h_channels, h_channels, (kernel_size, 1), stride = 1, padding = (padding, 0))
         self.sigmoid = torch.nn.Sigmoid()
         self.tanh = torch.nn.Tanh()
     def forward(self, x, h):
@@ -78,20 +78,21 @@ class SepConvGru(torch.nn.Module):
 
 if __name__ == '__main__':
     batch_size = 5
-    in_channels = 3
-    hidden_channels = 16
+    x_channels = 3
+    h_channels = 16
 
-    x = torch.randn(batch_size, in_channels)
-    h = torch.randn(batch_size, hidden_channels)
+    x = torch.randn(batch_size, x_channels)
+    h = torch.randn(batch_size, h_channels)
     print('>> Test Gru:')
-    gru = Gru(in_channels = in_channels, hidden_channels = hidden_channels)
+    gru = Gru(x_channels = x_channels, h_channels = h_channels)
     print('Gru output size:', gru(x, h).size())
 
-    x = torch.randn(batch_size, in_channels, 224, 224)
-    h = torch.randn(batch_size, hidden_channels, 224, 224)
+    x = torch.randn(batch_size, x_channels, 224, 224)
+    h = torch.randn(batch_size, h_channels, 224, 224)
     print('>> Test ConvGru:')
-    conv_gru = ConvGru(in_channels = in_channels, hidden_channels = hidden_channels, kernel_size = 5)
+    conv_gru = ConvGru(x_channels = x_channels, h_channels = h_channels, kernel_size = 5)
     print('ConvGru output size:', conv_gru(x, h).size())
     print('>> Test SepConvGru:')
-    sep_conv_gru = SepConvGru(in_channels = in_channels, hidden_channels = hidden_channels, kernel_size = 5)
+    sep_conv_gru = SepConvGru(x_channels = x_channels, h_channels = h_channels, kernel_size = 5)
     print('SepConvGru output size:', sep_conv_gru(x, h).size())
+    print('Done.')
