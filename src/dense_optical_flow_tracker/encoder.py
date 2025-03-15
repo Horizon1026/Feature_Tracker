@@ -59,6 +59,7 @@ class ContextEncoder(nn.Module):
         super().__init__()
         self.context_channels = context_channels
         self.hidden_channels = hidden_channels
+        # ContextEncoder uses the same architecture as FeatureEncoder.
         self.net = FeatureEncoder(in_channels, context_channels + hidden_channels)
     def forward(self, img):
         x = self.net(img)
