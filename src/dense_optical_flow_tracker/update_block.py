@@ -46,11 +46,11 @@ class UpdateBlock(torch.nn.Module):
     def __init__(self, net_in_channels, inp_in_channels, corr_in_channels,
                  corr_hidden_channels, corr_out_channels,
                  flow_hidden_channels, flow_out_channels,
-                 encoder_out_channels, mask_hidden_channels):
+                 motion_out_channels, mask_hidden_channels):
         super(UpdateBlock, self).__init__()
-        self.encoder = MotionEncoder(corr_in_channels, corr_hidden_channels, corr_out_channels,
-                                     flow_hidden_channels, flow_out_channels, encoder_out_channels)
-        self.gru = SepConvGru(x_channels = inp_in_channels + encoder_out_channels,
+        self.motion_encoder = MotionEncoder(corr_in_channels, corr_hidden_channels, corr_out_channels,
+                                            flow_hidden_channels, flow_out_channels, motion_out_channels)
+        self.gru = SepConvGru(x_channels = inp_in_channels + motion_out_channels,
                               h_channels = net_in_channels, kernel_size = 5)
         self.flow_head = FlowHead(net_in_channels, flow_out_channels)
         self.mask = torch.nn.Sequential(
@@ -59,7 +59,7 @@ class UpdateBlock(torch.nn.Module):
             torch.nn.Conv2d(mask_hidden_channels, 8 * 8 * 9, kernel_size = 1, padding = 0),
         )
     def forward(self, net, inp, correlation, flow):
-        motion = self.encoder(correlation, flow)
+        motion = self.motion_encoder(correlation, flow)
         inp_motion = torch.cat([inp, motion], dim = 1)
         new_net = self.gru(inp_motion, net)
         delta_flow = self.flow_head(new_net)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         corr_out_channels = 192,
         flow_hidden_channels = 128,
         flow_out_channels = 64,
-        encoder_out_channels = 128,
+        motion_out_channels = 128,
         mask_hidden_channels = 256,
     )
     new_net, mask, delta_flow = model(net, inp, correlation, flow)

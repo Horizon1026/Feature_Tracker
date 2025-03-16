@@ -22,7 +22,7 @@ Intergration of some simple sparse feature track method.
     - [ ] SSE
     - [ ] Neon
 - [ ] Dense optical flow tracker
-  - [ ] RAFT
+  - [x] RAFT
   - [ ] Farneback
 - [x] Direct method tracker
   - [x] Direct

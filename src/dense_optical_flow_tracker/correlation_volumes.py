@@ -82,14 +82,14 @@ class CorrelationPyramid():
 
 # Test the model.
 if __name__ == '__main__':
-    fmap0 = torch.randn(5, 256, 32, 32)
-    fmap1 = torch.randn(5, 256, 32, 32)
-    model = CorrelationPyramid(fmap0, fmap1, num_levels = 4, radius = 3)
+    fmap0 = torch.randn(5, 128, 8, 8)
+    fmap1 = torch.randn(5, 128, 8, 8)
+    model = CorrelationPyramid(fmap0, fmap1, num_levels = 3, radius = 3)
     # Print the correlation pyramid.
     for i, correlation in enumerate(model.correlation_pyramid):
         print(f'correlation_{i}.size():', correlation.size())
 
-    pixel_locations = torch.randn(5, 2, 32, 32)
+    pixel_locations = torch.randn(5, 2, 8, 8)
     out_pyramid = model(pixel_locations)
     # Print the output pyramid.
     for i, out in enumerate(out_pyramid):
