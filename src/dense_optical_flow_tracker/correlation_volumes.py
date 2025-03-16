@@ -39,7 +39,8 @@ class CorrelationPyramid():
         fmap0 = fmap0.view(batch_size, channels, height * width)
         fmap1 = fmap1.view(batch_size, channels, height * width)
         # Compute correlation.
-        # [batch_size, channels, height * width] * [batch_size, height * width, channels] -> [batch_size, height * width, height * width]
+        # correlation: [batch_size, channels, height * width] * [batch_size, height * width, channels]
+        #           -> [batch_size, height * width, height * width]
         correlation = torch.matmul(fmap0.transpose(1, 2), fmap1)
         correlation = correlation.view(batch_size, height, width, 1, height, width)
         return correlation / torch.sqrt(torch.tensor(channels).float())
@@ -57,24 +58,25 @@ class CorrelationPyramid():
             # window_height = window_width = 2 * r + 1.
             dx = torch.linspace(-r, r, 2 * r + 1)
             dy = torch.linspace(-r, r, 2 * r + 1)
-            delta = torch.stack(torch.meshgrid(dy, dx, indexing = 'ij'), dim = -1).to(correlation.device)
+            neighbors = torch.stack(torch.meshgrid(dy, dx, indexing = 'ij'), dim = -1).to(correlation.device)
             # Compute location of all pixels in search window with respect to the center pixel.
             # Scale the pixel locations to the current level of the pyramid.
             scale = 2 ** i
             centriod = pixel_locations / scale
             # centriod: [batch_size, height, width, 2] -> [batch_size * height * width, 1, 1, 2]
             centriod = centriod.reshape(batch_size * height * width, 1, 1, 2)
-            # delta: [2 * r + 1, 2 * r + 1, 2] -> [1, 2 * r + 1, 2 * r + 1, 2]
-            delta = delta.reshape(1, 2 * r + 1, 2 * r + 1, 2)
+            # neighbors: [2 * r + 1, 2 * r + 1, 2] -> [1, 2 * r + 1, 2 * r + 1, 2]
+            neighbors = neighbors.reshape(1, 2 * r + 1, 2 * r + 1, 2)
             # For each center pixel (with number of batch_size * height * width),
-            # search all pixels (with number of (2r+1)^2) in the search window centered at the pixel.
-            # [batch_size * height * width, 1, 1, 2] + [1, 2 * r + 1, 2 * r + 1, 2] ->
-            # [batch_size * height * width, 2 * r + 1, 2 * r + 1, 2]
-            scaled_pixel_locations = centriod + delta
-            # Search neibor features for each pixel in correlation volume.
-            sampled_correlation = BilinearSampler(correlation, scaled_pixel_locations)
+            # Search all pixels (with number of (2r+1)^2) in the search window centered at the pixel.
+            # locations_of_pixel_to_be_sampled: [batch_size * height * width, 1, 1, 2] + [1, 2 * r + 1, 2 * r + 1, 2]
+            #                                -> [batch_size * height * width, 2 * r + 1, 2 * r + 1, 2]
+            locations_of_pixel_to_be_sampled = centriod + neighbors
+            # Search neighbor features for each pixel in correlation volume.
+            # correlation: [batch_size * height * width, 1, height, width].
+            sampled_correlation = BilinearSampler(correlation, locations_of_pixel_to_be_sampled)
             # sampled_correlation: [batch_size * height * width, channels, window_height, window_width]
-            # -> [batch_size, height, width, (2 * r + 1) ** 2]
+            #                   -> [batch_size, height, width, (2 * r + 1) ** 2]
             sampled_correlation = sampled_correlation.view(batch_size, height, width, (2 * r + 1) ** 2)
             out_pyramid.append(sampled_correlation)
         return out_pyramid
