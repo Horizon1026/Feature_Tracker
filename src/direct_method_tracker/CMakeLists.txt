@@ -2,30 +2,30 @@ aux_source_directory( . AUX_SRC_DIRECT_METHOD_TRACKER )
 
 # Add all relative components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility )
-if ( NOT TARGET lib_slam_utility_basic_type )
+if( NOT TARGET lib_slam_utility_basic_type )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/basic_type ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_basic_type )
 endif()
-if ( NOT TARGET lib_slam_utility_math )
+if( NOT TARGET lib_slam_utility_math )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/math ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_math )
 endif()
-if ( NOT TARGET lib_slam_utility_operate )
+if( NOT TARGET lib_slam_utility_operate )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/operate ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_operate )
 endif()
-if ( NOT TARGET lib_slam_utility_log )
+if( NOT TARGET lib_slam_utility_log )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/log ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_log )
 endif()
 
 # Add all relative components of slam utility data type.
-if ( NOT TARGET lib_image )
+if( NOT TARGET lib_image )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/data_type/image ${PROJECT_SOURCE_DIR}/build/lib_image )
 endif()
-if ( NOT TARGET lib_image_pyramid )
+if( NOT TARGET lib_image_pyramid )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/data_type/image_pyramid ${PROJECT_SOURCE_DIR}/build/lib_image_pyramid )
 endif()
 
 # Add camera model.
 set( SENSOR_CAMERA_MODEL_PATH ${PROJECT_SOURCE_DIR}/../Sensor_Model )
-if ( NOT TARGET lib_camera_model )
+if( NOT TARGET lib_camera_model )
     add_subdirectory( ${SENSOR_CAMERA_MODEL_PATH}/src/camera ${PROJECT_SOURCE_DIR}/build/lib_camera_model )
 endif()
 
