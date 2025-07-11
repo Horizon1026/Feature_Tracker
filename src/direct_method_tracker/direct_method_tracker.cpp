@@ -23,7 +23,7 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
     p_c_in_ref_.clear();
 
     const Quat ref_q_cw = ref_q_wc.inverse();
-    for (const auto &pos_w : p_w) {
+    for (const auto &pos_w: p_w) {
         p_c_in_ref_.emplace_back(ref_q_cw * (pos_w - ref_p_wc));
     }
 

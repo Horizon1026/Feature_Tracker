@@ -37,13 +37,13 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
         ref_average_value /= static_cast<float>(valid_pixel_num);
 
         // Scale dx, dy and pixel value in reference patch.
-        for (auto &dx : all_dx_in_ref_patch()) {
+        for (auto &dx: all_dx_in_ref_patch()) {
             dx /= ref_average_value;
         }
-        for (auto &dy : all_dy_in_ref_patch()) {
+        for (auto &dy: all_dy_in_ref_patch()) {
             dy /= ref_average_value;
         }
-        for (auto &value : ex_ref_patch()) {
+        for (auto &value: ex_ref_patch()) {
             value /= ref_average_value;
         }
     }
@@ -74,7 +74,7 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image,
             cur_average_value /= static_cast<float>(valid_pixel_num);
 
             // Scale pixel value in current patch.
-            for (auto &value : cur_patch()) {
+            for (auto &value: cur_patch()) {
                 value /= cur_average_value;
             }
         }
