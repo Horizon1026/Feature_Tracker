@@ -157,7 +157,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
         // Use all features to construct incremental function.
         const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
         for (uint32_t i = 0; i < max_feature_id; ++i) {
-            CONTINUE_IF(p_c_in_ref[i].z() < kZerofloat);
+            CONTINUE_IF(p_c_in_ref[i].z() < kZeroFloat);
 
             const float p_r_x = p_c_in_ref[i].x();
             const float p_r_y = p_c_in_ref[i].y();
@@ -169,7 +169,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
 
             // Project points to current frame.
             const Vec3 p_c_in_cur = q_rc.inverse() * (p_c_in_ref[i] - p_rc);
-            CONTINUE_IF(p_c_in_cur.z() < kZerofloat);
+            CONTINUE_IF(p_c_in_cur.z() < kZeroFloat);
 
             const Vec2 cur_norm_xy = (p_c_in_cur / p_c_in_cur.z()).head<2>();
             camera.LiftFromNormalizedPlaneToImagePlane(cur_norm_xy, cur_pixel_uv[i]);
