@@ -33,9 +33,6 @@ endif()
 if( NOT TARGET lib_feature_descriptor )
     add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/feature_descriptor ${PROJECT_SOURCE_DIR}/build/lib_feature_descriptor )
 endif()
-if( NOT TARGET lib_nn_feature_point_detector )
-    add_subdirectory( ${FEATURE_DETECTOR_PATH}/src/nn_feature_point_detector ${PROJECT_SOURCE_DIR}/build/lib_nn_feature_point_detector )
-endif()
 
 # Add descriptor matcher.
 if( NOT TARGET lib_descriptor_matcher )
@@ -82,18 +79,6 @@ add_executable( test_descriptor_matcher_brief
 target_link_libraries( test_descriptor_matcher_brief
     lib_feature_point_detector
     lib_feature_descriptor
-    lib_descriptor_matcher
-    lib_slam_utility_log
-    lib_slam_utility_tick_tock
-    lib_2d_visualizor
-)
-
-# Create executable target to test descriptor matcher on xfeat.
-add_executable( test_descriptor_matcher_xfeat
-    test/test_descriptor_matcher_xfeat.cpp
-)
-target_link_libraries( test_descriptor_matcher_xfeat
-    lib_nn_feature_point_detector
     lib_descriptor_matcher
     lib_slam_utility_log
     lib_slam_utility_tick_tock
