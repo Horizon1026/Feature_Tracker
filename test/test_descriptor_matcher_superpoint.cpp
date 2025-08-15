@@ -50,7 +50,7 @@ void TestFeaturePointMatcher() {
     detector.options().kMinResponse = 0.1f;
     detector.options().kMinFeatureDistance = 20;
     detector.options().kMaxNumberOfDetectedFeatures = kMaxNumberOfFeaturesToTrack;
-    detector.options().kModelType = NNFeaturePointDetector::ModelType::kSuperpoint;
+    detector.options().kModelType = NNFeaturePointDetector::ModelType::kSuperpointNms;
     detector.options().kMaxImageRows = ref_image.rows();
     detector.options().kMaxImageCols = ref_image.cols();
     detector.Initialize();
