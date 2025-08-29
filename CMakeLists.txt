@@ -88,11 +88,23 @@ target_link_libraries( test_descriptor_matcher_brief
     lib_2d_visualizor
 )
 
-# Create executable target to test descriptor matcher on superpoint.
+# Create executable target to test descriptor matcher on disk.
 add_executable( test_descriptor_matcher_superpoint
     test/test_descriptor_matcher_superpoint.cpp
 )
 target_link_libraries( test_descriptor_matcher_superpoint
+    lib_nn_feature_point_detector
+    lib_descriptor_matcher
+    lib_slam_utility_log
+    lib_slam_utility_tick_tock
+    lib_2d_visualizor
+)
+
+# Create executable target to test descriptor matcher on disk.
+add_executable( test_descriptor_matcher_disk
+    test/test_descriptor_matcher_disk.cpp
+)
+target_link_libraries( test_descriptor_matcher_disk
     lib_nn_feature_point_detector
     lib_descriptor_matcher
     lib_slam_utility_log

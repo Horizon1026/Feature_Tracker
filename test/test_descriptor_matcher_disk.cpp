@@ -23,20 +23,20 @@ namespace {
     std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }
 
-class SuperpointMatcher: public FEATURE_TRACKER::DescriptorMatcher<SuperpointDescriptorType> {
+class DiskMatcher: public FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType> {
 
 public:
-    SuperpointMatcher(): FEATURE_TRACKER::DescriptorMatcher<SuperpointDescriptorType>() {}
-    virtual ~SuperpointMatcher() = default;
+    DiskMatcher(): FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType>() {}
+    virtual ~DiskMatcher() = default;
 
-    virtual float ComputeDistance(const SuperpointDescriptorType &descriptor_ref,
-                                  const SuperpointDescriptorType &descriptor_cur) override {
+    virtual float ComputeDistance(const DiskDescriptorType &descriptor_ref,
+                                  const DiskDescriptorType &descriptor_cur) override {
         return 0.5f - descriptor_ref.dot(descriptor_cur) / descriptor_ref.norm() / descriptor_cur.norm() * 0.5f;
     }
 };
 
 void TestFeaturePointMatcher() {
-    ReportInfo(YELLOW ">> Test Feature Point Matcher with Superpoint." RESET_COLOR);
+    ReportInfo(YELLOW ">> Test Feature Point Matcher with Disk." RESET_COLOR);
 
     // Load images.
     GrayImage ref_image;
@@ -50,20 +50,20 @@ void TestFeaturePointMatcher() {
     detector.options().kMinResponse = 0.1f;
     detector.options().kMinFeatureDistance = 20;
     detector.options().kMaxNumberOfDetectedFeatures = kMaxNumberOfFeaturesToTrack;
-    detector.options().kModelType = NNFeaturePointDetector::ModelType::kSuperpointNms;
+    detector.options().kModelType = NNFeaturePointDetector::ModelType::kDiskNms;
     detector.options().kMaxImageRows = ref_image.rows();
     detector.options().kMaxImageCols = ref_image.cols();
     detector.Initialize();
 
     // Detect features.
     std::vector<Vec2> ref_features, cur_features;
-    std::vector<SuperpointDescriptorType> ref_desp, cur_desp;
+    std::vector<DiskDescriptorType> ref_desp, cur_desp;
     detector.DetectGoodFeaturesWithDescriptor(ref_image, ref_features, ref_desp);
     detector.DetectGoodFeaturesWithDescriptor(cur_image, cur_features, cur_desp);
     ReportInfo("Detect features with descritors in two images.");
 
     // Match features with descriptors.
-    SuperpointMatcher matcher;
+    DiskMatcher matcher;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
     matcher.options().kMaxValidDescriptorDistance = 0.1f;
@@ -81,7 +81,7 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Superpoint descriptor", ref_image, cur_image,
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image,
         ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
