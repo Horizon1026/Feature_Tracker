@@ -8,15 +8,16 @@
 
 namespace FEATURE_TRACKER {
 
-struct DescriptorMatcherOptions {
-    int32_t kMaxValidPredictRowDistance = 40;
-    int32_t kMaxValidPredictColDistance = 40;
-    float kMaxValidDescriptorDistance = 0.0f;
-};
-
 /* Class Descriptor Matcher Declaration. */
 template <typename DescriptorType>
 class DescriptorMatcher {
+
+public:
+    struct Options {
+        int32_t kMaxValidPredictRowDistance = 40;
+        int32_t kMaxValidPredictColDistance = 40;
+        float kMaxValidDescriptorDistance = 0.0f;
+    };
 
 public:
     DescriptorMatcher() = default;
@@ -46,10 +47,9 @@ public:
                      std::vector<uint8_t> &status);
 
     // Reference for member variables.
-    DescriptorMatcherOptions &options() { return options_; }
-
+    Options &options() { return options_; }
     // Const reference for member variables.
-    const DescriptorMatcherOptions &options() const { return options_; }
+    const Options &options() const { return options_; }
 
 private:
     virtual float ComputeDistance(const DescriptorType &descriptor_ref,
@@ -61,7 +61,7 @@ private:
                                        std::vector<uint8_t> &status);
 
 private:
-    DescriptorMatcherOptions options_;
+    Options options_;
 
 };
 

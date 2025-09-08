@@ -25,12 +25,14 @@ Intergration of some simple sparse feature track method.
 - [x] Descripter matcher
   - [x] Nearby matching
   - [x] Force matching
+- [ ] NN feature matcher
+  - [ ] Lightglue - superpoint
 
 # Dependence (C++)
 - Slam_Utility
 - Feature_Detector
 - Visualizor2D
-- libtorch (only nn feature match needed)
+- onnxruntime (only nn feature match needed)
 
 # Dependence (python)
 - pytorch

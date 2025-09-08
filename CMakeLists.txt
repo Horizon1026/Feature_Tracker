@@ -52,6 +52,11 @@ if( NOT TARGET lib_optical_flow_tracker )
     add_subdirectory( src/optical_flow_tracker ${PROJECT_SOURCE_DIR}/build/lib_optical_flow_tracker )
 endif()
 
+# Add nn feature matcher.
+if( NOT TARGET lib_nn_feature_matcher )
+    add_subdirectory( src/nn_feature_matcher ${PROJECT_SOURCE_DIR}/build/lib_nn_feature_matcher )
+endif()
+
 # Create executable target to test optical flow.
 add_executable( test_optical_flow
     test/test_optical_flow.cpp
@@ -88,7 +93,7 @@ target_link_libraries( test_descriptor_matcher_brief
     lib_2d_visualizor
 )
 
-# Create executable target to test descriptor matcher on disk.
+# Create executable target to test descriptor matcher on superpoint.
 add_executable( test_descriptor_matcher_superpoint
     test/test_descriptor_matcher_superpoint.cpp
 )
@@ -106,6 +111,19 @@ add_executable( test_descriptor_matcher_disk
 )
 target_link_libraries( test_descriptor_matcher_disk
     lib_nn_feature_point_detector
+    lib_descriptor_matcher
+    lib_slam_utility_log
+    lib_slam_utility_tick_tock
+    lib_2d_visualizor
+)
+
+# Create executable target to test nn feature matcher.
+add_executable( test_nn_feature_matcher
+    test/test_nn_feature_matcher.cpp
+)
+target_link_libraries( test_nn_feature_matcher
+    lib_nn_feature_point_detector
+    lib_nn_feature_matcher
     lib_descriptor_matcher
     lib_slam_utility_log
     lib_slam_utility_tick_tock
