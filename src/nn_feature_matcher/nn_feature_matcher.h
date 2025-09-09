@@ -14,13 +14,14 @@ class NNFeatureMatcher {
 
 public:
     enum class ModelType: uint8_t {
-        kLightglueForSuperpoint = 0,
-        kLightglueForSuperpointFused = 1,
+        kLightglueForSuperpointScoreMat = 0,
+        kLightglueForSuperpointMatches = 1,
     };
 
     struct Options {
-        float kMinValidMatchScore = std::log(0.03f);
-        ModelType kModelType = ModelType::kLightglueForSuperpoint;
+        int32_t kMaxNumberOfMatches = 300;
+        float kMinValidMatchScore = -3.0f;
+        ModelType kModelType = ModelType::kLightglueForSuperpointScoreMat;
     };
 
 public:

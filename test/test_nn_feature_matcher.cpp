@@ -53,8 +53,8 @@ void TestNNFeatureMatcher() {
 
     // Match features with descriptors.
     NNFeatureMatcher matcher;
-    matcher.options().kMinValidMatchScore = std::log(0.001f);
-    matcher.options().kModelType = NNFeatureMatcher::ModelType::kLightglueForSuperpointFused;
+    matcher.options().kMinValidMatchScore = std::log(0.03f);
+    matcher.options().kModelType = NNFeatureMatcher::ModelType::kLightglueForSuperpointScoreMat;
     matcher.Initialize();
 
     std::vector<Vec2> matched_cur_features;
