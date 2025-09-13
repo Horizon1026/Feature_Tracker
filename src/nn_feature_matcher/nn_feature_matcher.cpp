@@ -20,6 +20,14 @@ bool NNFeatureMatcher::Initialize() {
             model_path = model_root_path + "superpoint_lightglue_fused.onnx";
             break;
         }
+        case ModelType::kLightglueForDiskScoreMat: {
+            model_path = model_root_path + "disk_lightglue.onnx";
+            break;
+        }
+        case ModelType::kLightglueForDiskMatches: {
+            model_path = model_root_path + "disk_lightglue_fused.onnx";
+            break;
+        }
     }
 
     // Initialize session options if needed.
@@ -46,13 +54,20 @@ bool NNFeatureMatcher::Initialize() {
     memory_info_ = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeDefault);
 
     // Infer session once.
+    std::vector<Vec2> pixel_uv_ref(options_.kMaxNumberOfMatches);
+    std::vector<Vec2> pixel_uv_cur(options_.kMaxNumberOfMatches);
     switch (options_.kModelType) {
         case ModelType::kLightglueForSuperpointScoreMat:
         case ModelType::kLightglueForSuperpointMatches: {
             std::vector<SuperpointDescriptorType> descriptors_ref(options_.kMaxNumberOfMatches);
             std::vector<SuperpointDescriptorType> descriptors_cur(options_.kMaxNumberOfMatches);
-            std::vector<Vec2> pixel_uv_ref(options_.kMaxNumberOfMatches);
-            std::vector<Vec2> pixel_uv_cur(options_.kMaxNumberOfMatches);
+            InferenceSession(descriptors_ref, descriptors_cur, pixel_uv_ref, pixel_uv_cur);
+            break;
+        }
+        case ModelType::kLightglueForDiskScoreMat:
+        case ModelType::kLightglueForDiskMatches: {
+            std::vector<DiskDescriptorType> descriptors_ref(options_.kMaxNumberOfMatches);
+            std::vector<DiskDescriptorType> descriptors_cur(options_.kMaxNumberOfMatches);
             InferenceSession(descriptors_ref, descriptors_cur, pixel_uv_ref, pixel_uv_cur);
             break;
         }
@@ -74,8 +89,7 @@ bool NNFeatureMatcher::InferenceSession(const std::vector<NNFeatureDescriptorTyp
                                         const std::vector<Vec2> &pixel_uv_cur) {
     // Validate session and input.
     RETURN_FALSE_IF(descriptors_ref.empty());
-    RETURN_FALSE_IF(descriptors_ref.size() != descriptors_cur.size() ||
-                    pixel_uv_ref.size() != pixel_uv_cur.size() ||
+    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size() ||
                     descriptors_ref.size() != pixel_uv_ref.size());
     RETURN_FALSE_IF(!session_);
     RETURN_FALSE_IF(input_tensor_matrices_.size() != 4);
@@ -114,6 +128,11 @@ bool NNFeatureMatcher::InferenceSession(const std::vector<NNFeatureDescriptorTyp
         output_names_ptr.emplace_back(name.c_str());
     }
     output_tensors_ = session_.Run(run_options_, input_names_ptr.data(), input_tensors_.data(), input_tensors_.size(), output_names_ptr.data(), output_names_ptr.size());
+
+    // Print output tensors.
+    for (const auto &tensor: output_tensors_) {
+        OnnxRuntime::ReportInformationOfOrtValue(tensor);
+    }
 
     return true;
 }

@@ -16,6 +16,8 @@ public:
     enum class ModelType: uint8_t {
         kLightglueForSuperpointScoreMat = 0,
         kLightglueForSuperpointMatches = 1,
+        kLightglueForDiskScoreMat = 2,
+        kLightglueForDiskMatches = 3,
     };
 
     struct Options {
