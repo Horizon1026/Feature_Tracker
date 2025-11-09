@@ -10,7 +10,7 @@
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-#include "feature_harris.h"
+#include "feature_point_harris_detector.h"
 #include "feature_point_detector.h"
 
 #include "optical_flow_affine_klt.h"
@@ -32,10 +32,9 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
-    feature_detector::FeaturePointDetector<feature_detector::HarrisFeature> detector;
+    feature_detector::FeaturePointHarrisDetector detector;
     detector.options().kMinFeatureDistance = 25;
-    detector.feature().options().kHalfPatchSize = 1;
-    detector.feature().options().kMinValidResponse = 40.0f;
+    detector.options().kMinValidResponse = 40.0f;
     detector.DetectGoodFeatures(image, kMaxNumberOfFeaturesToTrack, pixel_uv);
 }
 

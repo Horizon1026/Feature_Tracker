@@ -8,7 +8,7 @@
 
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
-#include "feature_harris.h"
+#include "feature_point_harris_detector.h"
 #include "feature_point_detector.h"
 
 #include "slam_log_reporter.h"
@@ -57,9 +57,9 @@ void TestFeaturePointMatcher() {
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.
-    feature_detector::FeaturePointDetector<feature_detector::HarrisFeature> detector;
+    feature_detector::FeaturePointHarrisDetector detector;
     detector.options().kMinFeatureDistance = 20;
-    detector.feature().options().kMinValidResponse = 40.0f;
+    detector.options().kMinValidResponse = 40.0f;
 
     std::vector<Vec2> ref_features, cur_features;
     detector.DetectGoodFeatures(ref_image, kMaxNumberOfFeaturesToTrack, ref_features);
