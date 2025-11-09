@@ -23,11 +23,10 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class DiskMatcher : public feature_tracker::DescriptorMatcher<DiskDescriptorType> {
+class DiskMatcher: public feature_tracker::DescriptorMatcher<DiskDescriptorType> {
 
 public:
-    DiskMatcher()
-        : feature_tracker::DescriptorMatcher<DiskDescriptorType>() {}
+    DiskMatcher(): feature_tracker::DescriptorMatcher<DiskDescriptorType>() {}
     virtual ~DiskMatcher() = default;
 
     virtual float ComputeDistance(const DiskDescriptorType &descriptor_ref, const DiskDescriptorType &descriptor_cur) override {

@@ -10,8 +10,8 @@
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-#include "feature_point_harris_detector.h"
 #include "feature_point_detector.h"
+#include "feature_point_harris_detector.h"
 
 #include "optical_flow_affine_klt.h"
 #include "optical_flow_basic_klt.h"

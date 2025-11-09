@@ -6,11 +6,10 @@
 
 namespace feature_tracker {
 
-class OpticalFlowAffineKlt : public OpticalFlow {
+class OpticalFlowAffineKlt: public OpticalFlow {
 
 public:
-    OpticalFlowAffineKlt()
-        : OpticalFlow() {}
+    OpticalFlowAffineKlt(): OpticalFlow() {}
     virtual ~OpticalFlowAffineKlt() = default;
 
     // Reference for member variables.

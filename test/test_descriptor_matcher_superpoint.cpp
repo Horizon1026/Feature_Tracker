@@ -23,11 +23,10 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class SuperpointMatcher : public feature_tracker::DescriptorMatcher<SuperpointDescriptorType> {
+class SuperpointMatcher: public feature_tracker::DescriptorMatcher<SuperpointDescriptorType> {
 
 public:
-    SuperpointMatcher()
-        : feature_tracker::DescriptorMatcher<SuperpointDescriptorType>() {}
+    SuperpointMatcher(): feature_tracker::DescriptorMatcher<SuperpointDescriptorType>() {}
     virtual ~SuperpointMatcher() = default;
 
     virtual float ComputeDistance(const SuperpointDescriptorType &descriptor_ref, const SuperpointDescriptorType &descriptor_cur) override {

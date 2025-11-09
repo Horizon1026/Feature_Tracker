@@ -6,11 +6,10 @@
 
 namespace feature_tracker {
 
-class OpticalFlowBasicKlt : public OpticalFlow {
+class OpticalFlowBasicKlt: public OpticalFlow {
 
 public:
-    OpticalFlowBasicKlt()
-        : OpticalFlow() {}
+    OpticalFlowBasicKlt(): OpticalFlow() {}
     virtual ~OpticalFlowBasicKlt() = default;
 
 private:

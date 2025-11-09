@@ -8,8 +8,8 @@
 
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
-#include "feature_point_harris_detector.h"
 #include "feature_point_detector.h"
+#include "feature_point_harris_detector.h"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
@@ -24,11 +24,10 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class BriefMatcher : public feature_tracker::DescriptorMatcher<feature_detector::BriefType> {
+class BriefMatcher: public feature_tracker::DescriptorMatcher<feature_detector::BriefType> {
 
 public:
-    BriefMatcher()
-        : feature_tracker::DescriptorMatcher<feature_detector::BriefType>() {}
+    BriefMatcher(): feature_tracker::DescriptorMatcher<feature_detector::BriefType>() {}
     virtual ~BriefMatcher() = default;
 
     virtual float ComputeDistance(const feature_detector::BriefType &descriptor_ref, const feature_detector::BriefType &descriptor_cur) override {
