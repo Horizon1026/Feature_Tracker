@@ -1,28 +1,28 @@
-#include "iostream"
 #include "cstdint"
-#include "string"
-#include "vector"
 #include "ctime"
-#include "thread"
+#include "iostream"
 #include "random"
+#include "string"
+#include "thread"
+#include "vector"
 
-#include "nn_feature_point_detector.h"
 #include "nn_feature_matcher.h"
+#include "nn_feature_point_detector.h"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "visualizor_2d.h"
 #include "tick_tock.h"
+#include "visualizor_2d.h"
 
 using namespace SLAM_VISUALIZOR;
 using namespace FEATURE_DETECTOR;
 using namespace FEATURE_TRACKER;
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 250;
-    std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-    std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
-}
+constexpr int32_t kMaxNumberOfFeaturesToTrack = 250;
+std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
+std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+}  // namespace
 
 void TestNNFeatureMatcher_SuperpointLightglue() {
     ReportInfo(YELLOW ">> Test NN Feature Matcher with Superpoint." RESET_COLOR);
@@ -71,8 +71,8 @@ void TestNNFeatureMatcher_SuperpointLightglue() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Superpoint descriptor", ref_image, cur_image,
-        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Superpoint descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 
@@ -123,8 +123,8 @@ void TestNNFeatureMatcher_DiskLightglue() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image,
-        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 

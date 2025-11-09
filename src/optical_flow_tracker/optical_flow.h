@@ -4,8 +4,8 @@
 #include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
-#include "slam_basic_math.h"
 #include "feature_tracker.h"
+#include "slam_basic_math.h"
 
 namespace FEATURE_TRACKER {
 
@@ -33,25 +33,15 @@ public:
     OpticalFlow() = default;
     virtual ~OpticalFlow() = default;
 
-    bool TrackFeatures(const ImagePyramid &ref_pyramid,
-                       const ImagePyramid &cur_pyramid,
-                       const std::vector<Vec2> &ref_pixel_uv,
-                       std::vector<Vec2> &cur_pixel_uv,
+    bool TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                        std::vector<uint8_t> &status);
 
-    bool TrackFeatures(const GrayImage &ref_image,
-                       const GrayImage &cur_image,
-                       const std::vector<Vec2> &ref_pixel_uv,
-                       std::vector<Vec2> &cur_pixel_uv,
+    bool TrackFeatures(const GrayImage &ref_image, const GrayImage &cur_image, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                        std::vector<uint8_t> &status);
 
     // Support for all subclass's fast method.
-    uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
-                                                const Vec2 &ref_pixel_uv,
-                                                int32_t ex_ref_patch_rows,
-                                                int32_t ex_ref_patch_cols,
-                                                std::vector<float> &ex_ref_patch,
-                                                std::vector<bool> &ex_ref_patch_pixel_valid);
+    uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image, const Vec2 &ref_pixel_uv, int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
+                                                std::vector<float> &ex_ref_patch, std::vector<bool> &ex_ref_patch_pixel_valid);
 
     // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
@@ -88,16 +78,10 @@ public:
     const int32_t &ex_patch_size() const { return ex_patch_size_; }
 
 private:
-    virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid,
-                                    const ImagePyramid &cur_pyramid,
-                                    const std::vector<Vec2> &ref_pixel_uv,
-                                    std::vector<Vec2> &cur_pixel_uv,
-                                    std::vector<uint8_t> &status) = 0;
-    virtual bool TrackSingleLevel(const GrayImage &ref_image,
-                                  const GrayImage &cur_image,
-                                  const std::vector<Vec2> &ref_pixel_uv,
-                                  std::vector<Vec2> &cur_pixel_uv,
-                                  std::vector<uint8_t> &status) = 0;
+    virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
+                                    std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) = 0;
+    virtual bool TrackSingleLevel(const GrayImage &ref_image, const GrayImage &cur_image, const std::vector<Vec2> &ref_pixel_uv,
+                                  std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) = 0;
     virtual bool PrepareForTracking();
 
 private:
@@ -105,7 +89,7 @@ private:
     OpticalFlowOptions options_;
 
     // Variables of reference patch supporting for fast method.
-    std::vector<float> ex_ref_patch_;   // Extended patch with bound size 1.
+    std::vector<float> ex_ref_patch_;  // Extended patch with bound size 1.
     std::vector<bool> ex_ref_patch_pixel_valid_;
     std::vector<float> all_dx_in_ref_patch_;
     std::vector<float> all_dy_in_ref_patch_;
@@ -123,9 +107,8 @@ private:
     int32_t ex_patch_rows_ = 0;
     int32_t ex_patch_cols_ = 0;
     int32_t ex_patch_size_ = 0;
-
 };
 
-}
+}  // namespace FEATURE_TRACKER
 
 #endif

@@ -1,21 +1,21 @@
 #include "iostream"
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <ctime>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include "direct_method_tracker.h"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "visualizor_2d.h"
 #include "tick_tock.h"
+#include "visualizor_2d.h"
 
 using namespace SLAM_VISUALIZOR;
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
 }
 
 // Camera intrinsics
@@ -28,13 +28,9 @@ const float baseline = 0.573f;
 std::string test_ref_image_file_name = "../example/direct_method/left.png";
 std::string test_ref_depth_file_name = "../example/direct_method/disparity.png";
 std::string test_cur_image_file_name = "../example/direct_method/000001.png";
-std::array<std::string, 5> test_cur_image_file_names = {
-    "../example/direct_method/000001.png",
-    "../example/direct_method/000002.png",
-    "../example/direct_method/000003.png",
-    "../example/direct_method/000004.png",
-    "../example/direct_method/000005.png"
-};
+std::array<std::string, 5> test_cur_image_file_names = {"../example/direct_method/000001.png", "../example/direct_method/000002.png",
+                                                        "../example/direct_method/000003.png", "../example/direct_method/000004.png",
+                                                        "../example/direct_method/000005.png"};
 
 void TestDirectMethod() {
     // Load images and pyramids.
@@ -98,8 +94,8 @@ void TestDirectMethod() {
 
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
-        Visualizor2D::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image,
-            ref_pixel_uv, cur_pixel_uv, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+        Visualizor2D::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status,
+                                                   static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
         Visualizor2D::WaitKey(0);
     }
 }

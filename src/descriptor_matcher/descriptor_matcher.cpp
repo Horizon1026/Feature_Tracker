@@ -1,5 +1,3 @@
 #include "descriptor_matcher.h"
 
-namespace FEATURE_TRACKER {
-
-}
+namespace FEATURE_TRACKER {}

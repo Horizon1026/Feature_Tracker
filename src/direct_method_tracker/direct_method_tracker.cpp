@@ -1,21 +1,13 @@
 #include "direct_method_tracker.h"
 #include "camera_basic.h"
-#include "slam_operations.h"
 #include "slam_log_reporter.h"
+#include "slam_operations.h"
 
 namespace FEATURE_TRACKER {
 
-bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
-                                      const ImagePyramid &cur_pyramid,
-                                      const std::array<float, 4> &K,
-                                      const Quat ref_q_wc,
-                                      const Vec3 ref_p_wc,
-                                      const std::vector<Vec3> &p_w,
-                                      const std::vector<Vec2> &ref_pixel_uv,
-                                      std::vector<Vec2> &cur_pixel_uv,
-                                      Quat &cur_q_wc,
-                                      Vec3 &cur_p_wc,
-                                      std::vector<uint8_t> &status) {
+bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::array<float, 4> &K, const Quat ref_q_wc,
+                                 const Vec3 ref_p_wc, const std::vector<Vec3> &p_w, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
+                                 Quat &cur_q_wc, Vec3 &cur_p_wc, std::vector<uint8_t> &status) {
     // Lift all points in world frame to reference camera frame.
     if (p_c_in_ref_.capacity() < p_w.size()) {
         p_c_in_ref_.reserve(p_w.size());
@@ -40,15 +32,9 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
     return true;
 }
 
-bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
-                                      const ImagePyramid &cur_pyramid,
-                                      const std::array<float, 4> &K,
-                                      const std::vector<Vec3> &p_c_in_ref,
-                                      const std::vector<Vec2> &ref_pixel_uv,
-                                      std::vector<Vec2> &cur_pixel_uv,
-                                      Quat &q_rc,
-                                      Vec3 &p_rc,
-                                      std::vector<uint8_t> &status) {
+bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::array<float, 4> &K,
+                                 const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc,
+                                 Vec3 &p_rc, std::vector<uint8_t> &status) {
     RETURN_FALSE_IF(ref_pixel_uv.empty());
     RETURN_FALSE_IF(cur_pyramid.level() != ref_pyramid.level());
 
@@ -64,7 +50,7 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
     for (uint32_t i = 0; i < ref_pixel_uv.size(); ++i) {
         scaled_ref_points_.emplace_back(ref_pixel_uv[i] / scale);
     }
-    std::array<float, 4> scaled_K = { K[0] / scale, K[1] / scale, K[2] / scale, K[3] / scale };
+    std::array<float, 4> scaled_K = {K[0] / scale, K[1] / scale, K[2] / scale, K[3] / scale};
 
     // Track per level.
     for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
@@ -90,8 +76,8 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
     }
     const GrayImage &bottom_image = ref_pyramid.GetImageConst(0);
     for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
-        if (cur_pixel_uv[i].x() < 0 || cur_pixel_uv[i].x() > bottom_image.cols() - 1 ||
-            cur_pixel_uv[i].y() < 0 || cur_pixel_uv[i].y() > bottom_image.rows() - 1) {
+        if (cur_pixel_uv[i].x() < 0 || cur_pixel_uv[i].x() > bottom_image.cols() - 1 || cur_pixel_uv[i].y() < 0 ||
+            cur_pixel_uv[i].y() > bottom_image.rows() - 1) {
             status[i] = static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kOutside);
         }
     }
@@ -99,52 +85,36 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid,
     return true;
 }
 
-bool DirectMethod::TrackSingleLevel(const GrayImage &ref_image,
-                                    const GrayImage &cur_image,
-                                    const std::array<float, 4> &K,
-                                    const std::vector<Vec3> &p_c_in_ref,
-                                    const std::vector<Vec2> &ref_pixel_uv,
-                                    std::vector<Vec2> &cur_pixel_uv,
-                                    Quat &q_rc,
-                                    Vec3 &p_rc) {
+bool DirectMethod::TrackSingleLevel(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                                    const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc) {
     // Track all features together.
     switch (options().kMethod) {
         case kInverse:
-        	RETURN_FALSE_IF_FALSE(TrackAllFeaturesInverse(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
+            RETURN_FALSE_IF_FALSE(TrackAllFeaturesInverse(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
             break;
         case kDirect:
-         	RETURN_FALSE_IF_FALSE(TrackAllFeaturesDirect(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
+            RETURN_FALSE_IF_FALSE(TrackAllFeaturesDirect(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
             break;
         case kFast:
-		default:
-        	RETURN_FALSE_IF_FALSE(TrackAllFeaturesFast(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
-         	break;
+        default:
+            RETURN_FALSE_IF_FALSE(TrackAllFeaturesFast(ref_image, cur_image, K, p_c_in_ref, ref_pixel_uv, cur_pixel_uv, q_rc, p_rc));
+            break;
     }
 
     return true;
 }
 
 
-bool DirectMethod::TrackAllFeaturesInverse(const GrayImage &ref_image,
-                                           const GrayImage &cur_image,
-                                           const std::array<float, 4> &K,
-                                           const std::vector<Vec3> &p_c_in_ref,
-                                           const std::vector<Vec2> &ref_pixel_uv,
-                                           std::vector<Vec2> &cur_pixel_uv,
-                                           Quat &q_rc,
-                                           Vec3 &p_rc) {
+bool DirectMethod::TrackAllFeaturesInverse(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K,
+                                           const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
+                                           Quat &q_rc, Vec3 &p_rc) {
 
     return true;
 }
 
-bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
-                                          const GrayImage &cur_image,
-                                          const std::array<float, 4> &K,
-                                          const std::vector<Vec3> &p_c_in_ref,
-                                          const std::vector<Vec2> &ref_pixel_uv,
-                                          std::vector<Vec2> &cur_pixel_uv,
-                                          Quat &q_rc,
-                                          Vec3 &p_rc) {
+bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K,
+                                          const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
+                                          Quat &q_rc, Vec3 &p_rc) {
     // Construct camera model with K.
     SENSOR_MODEL::CameraBasic camera(K[0], K[1], K[2], K[3]);
 
@@ -176,34 +146,22 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
 
             // Compute gradient from pixel to xi.
             Mat2x6 jacobian_pixel_xi;
-            jacobian_pixel_xi << fx * p_r_z_inv,
-                                 0,
-                                 -fx * p_r_x * p_r_z2_inv,
-                                 -fx * p_r_x * p_r_y * p_r_z2_inv,
-                                 fx + fx * p_r_x * p_r_x * p_r_z2_inv,
-                                 -fx * p_r_y * p_r_z_inv,
-                                 0,
-                                 fy * p_r_z_inv,
-                                 -fy * p_r_y * p_r_z2_inv,
-                                 -fy - fy * p_r_y * p_r_y * p_r_z2_inv,
-                                 fy * p_r_x * p_r_y * p_r_z2_inv,
-                                 fy * p_r_x * p_r_z_inv;
+            jacobian_pixel_xi << fx * p_r_z_inv, 0, -fx * p_r_x * p_r_z2_inv, -fx * p_r_x * p_r_y * p_r_z2_inv, fx + fx * p_r_x * p_r_x * p_r_z2_inv,
+                -fx * p_r_y * p_r_z_inv, 0, fy * p_r_z_inv, -fy * p_r_y * p_r_z2_inv, -fy - fy * p_r_y * p_r_y * p_r_z2_inv, fy * p_r_x * p_r_y * p_r_z2_inv,
+                fy * p_r_x * p_r_z_inv;
 
             // Compute image gradient with all pixel in the patch, create H * v = b
             std::array<float, 6> temp_value;
-            for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
-                for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+            for (int32_t drow = -options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+                for (int32_t dcol = -options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
                     const float row_i = static_cast<float>(drow) + ref_pixel_uv[i].y();
                     const float col_i = static_cast<float>(dcol) + ref_pixel_uv[i].x();
                     const float row_j = static_cast<float>(drow) + cur_pixel_uv[i].y();
                     const float col_j = static_cast<float>(dcol) + cur_pixel_uv[i].x();
                     // Compute pixel gradient
-                    if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) &&
-                        cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
-                        cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) &&
-                        cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
-                        ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) &&
-                        cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
+                    if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) && cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
+                        cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) && cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
+                        ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
 
                         const Vec2 jacobian_image_pixel = Vec2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) * 0.5f;
                         const float residual = temp_value[5] - temp_value[4];
@@ -233,16 +191,11 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image,
     return true;
 }
 
-bool DirectMethod::TrackAllFeaturesFast(const GrayImage &ref_image,
-                                        const GrayImage &cur_image,
-                                        const std::array<float, 4> &K,
-                              			const std::vector<Vec3> &p_c_in_ref,
-                              			const std::vector<Vec2> &ref_pixel_uv,
-                              			std::vector<Vec2> &cur_pixel_uv,
-                              			Quat &q_rc,
-                              			Vec3 &p_rc) {
+bool DirectMethod::TrackAllFeaturesFast(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K,
+                                        const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc,
+                                        Vec3 &p_rc) {
 
     return true;
 }
 
-}
+}  // namespace FEATURE_TRACKER

@@ -79,18 +79,18 @@ bool NNFeatureMatcher::Initialize() {
 }
 
 template bool NNFeatureMatcher::InferenceSession<SuperpointDescriptorType>(const std::vector<SuperpointDescriptorType> &descriptors_ref,
-    const std::vector<SuperpointDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur);
+                                                                           const std::vector<SuperpointDescriptorType> &descriptors_cur,
+                                                                           const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur);
 template bool NNFeatureMatcher::InferenceSession<DiskDescriptorType>(const std::vector<DiskDescriptorType> &descriptors_ref,
-    const std::vector<DiskDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur);
+                                                                     const std::vector<DiskDescriptorType> &descriptors_cur,
+                                                                     const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur);
 template <typename NNFeatureDescriptorType>
 bool NNFeatureMatcher::InferenceSession(const std::vector<NNFeatureDescriptorType> &descriptors_ref,
-                                        const std::vector<NNFeatureDescriptorType> &descriptors_cur,
-                                        const std::vector<Vec2> &pixel_uv_ref,
+                                        const std::vector<NNFeatureDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref,
                                         const std::vector<Vec2> &pixel_uv_cur) {
     // Validate session and input.
     RETURN_FALSE_IF(descriptors_ref.empty());
-    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size() ||
-                    descriptors_ref.size() != pixel_uv_ref.size());
+    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size() || descriptors_ref.size() != pixel_uv_ref.size());
     RETURN_FALSE_IF(!session_);
     RETURN_FALSE_IF(input_tensor_matrices_.size() != 4);
 
@@ -127,7 +127,8 @@ bool NNFeatureMatcher::InferenceSession(const std::vector<NNFeatureDescriptorTyp
     for (const auto &name: output_names_) {
         output_names_ptr.emplace_back(name.c_str());
     }
-    output_tensors_ = session_.Run(run_options_, input_names_ptr.data(), input_tensors_.data(), input_tensors_.size(), output_names_ptr.data(), output_names_ptr.size());
+    output_tensors_ =
+        session_.Run(run_options_, input_names_ptr.data(), input_tensors_.data(), input_tensors_.size(), output_names_ptr.data(), output_names_ptr.size());
 
     // Print output tensors.
     for (const auto &tensor: output_tensors_) {
@@ -138,17 +139,16 @@ bool NNFeatureMatcher::InferenceSession(const std::vector<NNFeatureDescriptorTyp
 }
 
 template bool NNFeatureMatcher::Match<SuperpointDescriptorType>(const std::vector<SuperpointDescriptorType> &descriptors_ref,
-    const std::vector<SuperpointDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur,
-    std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
+                                                                const std::vector<SuperpointDescriptorType> &descriptors_cur,
+                                                                const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur,
+                                                                std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
 template bool NNFeatureMatcher::Match<DiskDescriptorType>(const std::vector<DiskDescriptorType> &descriptors_ref,
-    const std::vector<DiskDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur,
-    std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
+                                                          const std::vector<DiskDescriptorType> &descriptors_cur, const std::vector<Vec2> &pixel_uv_ref,
+                                                          const std::vector<Vec2> &pixel_uv_cur, std::vector<Vec2> &matched_pixel_uv_cur,
+                                                          std::vector<uint8_t> &status);
 template <typename NNFeatureDescriptorType>
-bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descriptors_ref,
-                             const std::vector<NNFeatureDescriptorType> &descriptors_cur,
-                             const std::vector<Vec2> &pixel_uv_ref,
-                             const std::vector<Vec2> &pixel_uv_cur,
-                             std::vector<Vec2> &matched_pixel_uv_cur,
+bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descriptors_ref, const std::vector<NNFeatureDescriptorType> &descriptors_cur,
+                             const std::vector<Vec2> &pixel_uv_ref, const std::vector<Vec2> &pixel_uv_cur, std::vector<Vec2> &matched_pixel_uv_cur,
                              std::vector<uint8_t> &status) {
     RETURN_FALSE_IF(!InferenceSession(descriptors_ref, descriptors_cur, pixel_uv_ref, pixel_uv_cur));
 
@@ -216,5 +216,4 @@ bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descrip
 }
 
 
-
-} // namespace FEATURE_TRACKER
+}  // namespace FEATURE_TRACKER

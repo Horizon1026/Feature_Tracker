@@ -1,20 +1,20 @@
-#include "iostream"
 #include "cstdint"
-#include "string"
-#include "vector"
 #include "ctime"
+#include "iostream"
+#include "string"
 #include "thread"
+#include "vector"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-#include "feature_point_detector.h"
 #include "feature_harris.h"
+#include "feature_point_detector.h"
 
-#include "optical_flow_basic_klt.h"
 #include "optical_flow_affine_klt.h"
+#include "optical_flow_basic_klt.h"
 #include "optical_flow_lssd_klt.h"
 
 using namespace SLAM_VISUALIZOR;
@@ -22,11 +22,11 @@ using namespace SLAM_VISUALIZOR;
 #define DRAW_TRACKING_RESULT (1)
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
-    constexpr int32_t kHalfPatchSize = 6;
-    constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
-    constexpr int32_t kMaxPyramidLevel = 4;
-}
+constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+constexpr int32_t kHalfPatchSize = 6;
+constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
+constexpr int32_t kMaxPyramidLevel = 4;
+}  // namespace
 
 std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
@@ -74,7 +74,8 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // Visualizor2D::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    // Visualizor2D::ShowImageWithDetectedFeatures("Basic KLT : Feature before multi tracking", ref_image,
+    // ref_pixel_uv);
     Visualizor2D::ShowImageWithTrackedFeatures("Basic KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
     Visualizor2D::WaitKey(1);
 #endif
@@ -116,7 +117,8 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     const float cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
-    // Visualizor2D::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
+    // Visualizor2D::ShowImageWithDetectedFeatures("Affine KLT : Feature before multi tracking", ref_image,
+    // ref_pixel_uv);
     Visualizor2D::ShowImageWithTrackedFeatures("Affine KLT : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status);
     Visualizor2D::WaitKey(1);
 #endif
@@ -179,6 +181,6 @@ int main(int argc, char **argv) {
 
 #if DRAW_TRACKING_RESULT
     Visualizor2D::WaitKey(0);
-#endif // end of DRAW_TRACKING_RESULT
+#endif  // end of DRAW_TRACKING_RESULT
     return 0;
 }

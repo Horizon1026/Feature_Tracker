@@ -1,37 +1,37 @@
-#include "iostream"
 #include "cstdint"
-#include "string"
-#include "vector"
 #include "ctime"
-#include "thread"
+#include "iostream"
 #include "random"
+#include "string"
+#include "thread"
+#include "vector"
 
-#include "feature_point_detector.h"
-#include "feature_harris.h"
 #include "descriptor_brief.h"
 #include "descriptor_matcher.h"
+#include "feature_harris.h"
+#include "feature_point_detector.h"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "visualizor_2d.h"
 #include "tick_tock.h"
+#include "visualizor_2d.h"
 
 using namespace SLAM_VISUALIZOR;
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
-    std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-    std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
-}
+constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
+std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+}  // namespace
 
 class BriefMatcher : public FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType> {
 
 public:
-    BriefMatcher() : FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType>() {}
+    BriefMatcher()
+        : FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType>() {}
     virtual ~BriefMatcher() = default;
 
-    virtual float ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref,
-                                  const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
+    virtual float ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref, const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
         if (descriptor_ref.empty() || descriptor_cur.empty()) {
             return kMaxInt32;
         }
@@ -95,8 +95,8 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image,
-        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 

@@ -1,19 +1,16 @@
 #include "optical_flow_affine_klt.h"
-#include "slam_operations.h"
 #include "slam_log_reporter.h"
+#include "slam_operations.h"
 
 namespace FEATURE_TRACKER {
 
-void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
-                                               const GrayImage &cur_image,
-                                               const Vec2 &ref_pixel_uv,
-                                               Vec2 &cur_pixel_uv,
-                                               Mat2 &affine,
-                                               uint8_t &status) {
+void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv,
+                                               Mat2 &affine, uint8_t &status) {
     // Confirm extended patch size. Extract it from reference image.
     ex_ref_patch().clear();
     ex_ref_patch_pixel_valid().clear();
-    const uint32_t valid_pixel_num = ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_ref_patch_rows(), ex_ref_patch_cols(), ex_ref_patch(), ex_ref_patch_pixel_valid());
+    const uint32_t valid_pixel_num =
+        ExtractExtendPatchInReferenceImage(ref_image, ref_pixel_uv, ex_ref_patch_rows(), ex_ref_patch_cols(), ex_ref_patch(), ex_ref_patch_pixel_valid());
 
     // If this feature has no valid pixel in patch, it can not be tracked.
     if (valid_pixel_num == 0) {
@@ -25,7 +22,8 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     all_dx_in_ref_patch().clear();
     all_dy_in_ref_patch().clear();
     Mat6 hessian = Mat6::Zero();
-    PrecomputeJacobianAndHessian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), cur_pixel_uv, all_dx_in_ref_patch(), all_dy_in_ref_patch(), hessian);
+    PrecomputeJacobianAndHessian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), cur_pixel_uv, all_dx_in_ref_patch(),
+                                 all_dy_in_ref_patch(), hessian);
 
     // Compute incremental by iteration.
     Vec6 bias = Vec6::Zero();
@@ -36,8 +34,8 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
 
         // Compute bias.
-        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_ref_patch(), ex_ref_patch_pixel_valid(),
-            ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(), all_dy_in_ref_patch(), affine, bias) == 0);
+        BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(),
+                             all_dx_in_ref_patch(), all_dy_in_ref_patch(), affine, bias) == 0);
 
         // Solve incremental function.
         const Vec6 z = hessian.ldlt().solve(bias);
@@ -70,14 +68,9 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image,
     }
 }
 
-void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch,
-                                                        const std::vector<bool> &ex_ref_patch_pixel_valid,
-                                                        int32_t ex_ref_patch_rows,
-                                                        int32_t ex_ref_patch_cols,
-                                                        const Vec2 &cur_pixel_uv,
-                                                        std::vector<float> &all_dx_in_ref_patch,
-                                                        std::vector<float> &all_dy_in_ref_patch,
-                                                        Mat6 &hessian) {
+void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid,
+                                                        int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols, const Vec2 &cur_pixel_uv,
+                                                        std::vector<float> &all_dx_in_ref_patch, std::vector<float> &all_dy_in_ref_patch, Mat6 &hessian) {
     const int32_t patch_rows = ex_ref_patch_rows - 2;
     const int32_t patch_cols = ex_ref_patch_cols - 2;
     hessian.setZero();
@@ -90,8 +83,8 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
             const int32_t ex_index_top = ex_index - ex_ref_patch_cols;
             const int32_t ex_index_bottom = ex_index + ex_ref_patch_cols;
 
-            if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] &&
-                ex_ref_patch_pixel_valid[ex_index_top] && ex_ref_patch_pixel_valid[ex_index_bottom]) {
+            if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] && ex_ref_patch_pixel_valid[ex_index_top] &&
+                ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
                 const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
                 const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
@@ -144,21 +137,15 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
     }
 }
 
-int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
-                                          const Vec2 &cur_pixel_uv,
-                                          const std::vector<float> &ex_ref_patch,
-                                          const std::vector<bool> &ex_ref_patch_pixel_valid,
-                                          int32_t ex_ref_patch_rows,
-                                          int32_t ex_ref_patch_cols,
-                                          const std::vector<float> &all_dx_in_ref_patch,
-                                          const std::vector<float> &all_dy_in_ref_patch,
-                                          const Mat2 &affine,
+int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image, const Vec2 &cur_pixel_uv, const std::vector<float> &ex_ref_patch,
+                                          const std::vector<bool> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
+                                          const std::vector<float> &all_dx_in_ref_patch, const std::vector<float> &all_dy_in_ref_patch, const Mat2 &affine,
                                           Vec6 &bias) {
     int32_t valid_pixel_cnt = 0;
     bias.setZero();
 
-    for (int32_t drow = - options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
-        for (int32_t dcol = - options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
+    for (int32_t drow = -options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
+        for (int32_t dcol = -options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
             // Check if the pixel in patch is valid in current image.
             const Vec2 affined_dcol_drow = affine * Vec2(dcol, drow);
             const float row_in_cur_image = affined_dcol_drow.y() + cur_pixel_uv.y();
@@ -200,4 +187,4 @@ int32_t OpticalFlowAffineKlt::ComputeBias(const GrayImage &cur_image,
     return valid_pixel_cnt;
 }
 
-}
+}  // namespace FEATURE_TRACKER

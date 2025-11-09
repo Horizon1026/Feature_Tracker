@@ -15,4 +15,4 @@ enum class TrackStatus : uint8_t {
 
 }
 
-#endif // end of _FEATURE_TRACKER_H_
+#endif  // end of _FEATURE_TRACKER_H_

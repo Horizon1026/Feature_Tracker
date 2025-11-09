@@ -4,8 +4,8 @@
 #include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
-#include "slam_basic_math.h"
 #include "feature_tracker.h"
+#include "slam_basic_math.h"
 
 #include "memory"
 
@@ -34,27 +34,12 @@ public:
     virtual ~DirectMethod() = default;
     DirectMethod(const DirectMethod &direct_method) = delete;
 
-    bool TrackFeatures(const ImagePyramid &ref_pyramid,
-                            const ImagePyramid &cur_pyramid,
-                            const std::array<float, 4> &K,
-                            const Quat ref_q_wc,
-                            const Vec3 ref_p_wc,
-                            const std::vector<Vec3> &p_w,
-                            const std::vector<Vec2> &ref_pixel_uv,
-                            std::vector<Vec2> &cur_pixel_uv,
-                            Quat &cur_q_wc,
-                            Vec3 &cur_p_wc,
-                            std::vector<uint8_t> &status);
+    bool TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::array<float, 4> &K, const Quat ref_q_wc,
+                       const Vec3 ref_p_wc, const std::vector<Vec3> &p_w, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
+                       Quat &cur_q_wc, Vec3 &cur_p_wc, std::vector<uint8_t> &status);
 
-    bool TrackFeatures(const ImagePyramid &ref_pyramid,
-                            const ImagePyramid &cur_pyramid,
-                            const std::array<float, 4> &K,
-                            const std::vector<Vec3> &p_c_in_ref,
-                            const std::vector<Vec2> &ref_pixel_uv,
-                            std::vector<Vec2> &cur_pixel_uv,
-                            Quat &q_rc,
-                            Vec3 &p_rc,
-                            std::vector<uint8_t> &status);
+    bool TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                       const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc, std::vector<uint8_t> &status);
 
     // Reference for member variables.
     DirectMethodOptions &options() { return options_; }
@@ -63,41 +48,17 @@ public:
     const DirectMethodOptions &options() const { return options_; }
 
 private:
-    virtual bool TrackSingleLevel(const GrayImage &ref_image,
-                                  const GrayImage &cur_image,
-                                  const std::array<float, 4> &K,
-                                  const std::vector<Vec3> &p_c_in_ref,
-                                  const std::vector<Vec2> &ref_pixel_uv,
-                                  std::vector<Vec2> &cur_pixel_uv,
-                                  Quat &q_rc,
-                                  Vec3 &p_rc);
+    virtual bool TrackSingleLevel(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                                  const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc);
 
-    bool TrackAllFeaturesInverse(const GrayImage &ref_image,
-                                 const GrayImage &cur_image,
-                                 const std::array<float, 4> &K,
-                                 const std::vector<Vec3> &p_c_in_ref,
-                                 const std::vector<Vec2> &ref_pixel_uv,
-                                 std::vector<Vec2> &cur_pixel_uv,
-                                 Quat &q_rc,
-                                 Vec3 &p_rc);
+    bool TrackAllFeaturesInverse(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                                 const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc);
 
-    bool TrackAllFeaturesDirect(const GrayImage &ref_image,
-                          const GrayImage &cur_image,
-                          const std::array<float, 4> &K,
-                          const std::vector<Vec3> &p_c_in_ref,
-                          const std::vector<Vec2> &ref_pixel_uv,
-                          std::vector<Vec2> &cur_pixel_uv,
-                          Quat &q_rc,
-                          Vec3 &p_rc);
+    bool TrackAllFeaturesDirect(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                                const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc);
 
-    bool TrackAllFeaturesFast(const GrayImage &ref_image,
-                              const GrayImage &cur_image,
-                              const std::array<float, 4> &K,
-                              const std::vector<Vec3> &p_c_in_ref,
-                              const std::vector<Vec2> &ref_pixel_uv,
-                              std::vector<Vec2> &cur_pixel_uv,
-                              Quat &q_rc,
-                              Vec3 &p_rc);
+    bool TrackAllFeaturesFast(const GrayImage &ref_image, const GrayImage &cur_image, const std::array<float, 4> &K, const std::vector<Vec3> &p_c_in_ref,
+                              const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv, Quat &q_rc, Vec3 &p_rc);
 
 private:
     DirectMethodOptions options_;
@@ -113,6 +74,6 @@ private:
     Vec3 p_rc_ = Vec3::Zero();
 };
 
-}
+}  // namespace FEATURE_TRACKER
 
-#endif // end of _DIRECT_METHOD_TRACKER_H_
+#endif  // end of _DIRECT_METHOD_TRACKER_H_

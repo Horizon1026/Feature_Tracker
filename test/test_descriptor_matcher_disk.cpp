@@ -1,36 +1,36 @@
-#include "iostream"
 #include "cstdint"
-#include "string"
-#include "vector"
 #include "ctime"
-#include "thread"
+#include "iostream"
 #include "random"
+#include "string"
+#include "thread"
+#include "vector"
 
-#include "nn_feature_point_detector.h"
 #include "descriptor_matcher.h"
+#include "nn_feature_point_detector.h"
 
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "visualizor_2d.h"
 #include "tick_tock.h"
+#include "visualizor_2d.h"
 
 using namespace SLAM_VISUALIZOR;
 using namespace FEATURE_DETECTOR;
 
 namespace {
-    constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
-    std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-    std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
-}
+constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
+std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
+std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+}  // namespace
 
-class DiskMatcher: public FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType> {
+class DiskMatcher : public FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType> {
 
 public:
-    DiskMatcher(): FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType>() {}
+    DiskMatcher()
+        : FEATURE_TRACKER::DescriptorMatcher<DiskDescriptorType>() {}
     virtual ~DiskMatcher() = default;
 
-    virtual float ComputeDistance(const DiskDescriptorType &descriptor_ref,
-                                  const DiskDescriptorType &descriptor_cur) override {
+    virtual float ComputeDistance(const DiskDescriptorType &descriptor_ref, const DiskDescriptorType &descriptor_cur) override {
         return 0.5f - descriptor_ref.dot(descriptor_cur) / descriptor_ref.norm() / descriptor_cur.norm() * 0.5f;
     }
 };
@@ -81,8 +81,8 @@ void TestFeaturePointMatcher() {
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image,
-        ref_features, matched_cur_features, status, static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 

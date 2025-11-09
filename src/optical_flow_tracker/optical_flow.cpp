@@ -3,11 +3,8 @@
 
 namespace FEATURE_TRACKER {
 
-bool OpticalFlow::TrackFeatures(const ImagePyramid &ref_pyramid,
-                                const ImagePyramid &cur_pyramid,
-                                const std::vector<Vec2> &ref_pixel_uv,
-                                std::vector<Vec2> &cur_pixel_uv,
-                                std::vector<uint8_t> &status) {
+bool OpticalFlow::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
+                                std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) {
     RETURN_FALSE_IF(ref_pixel_uv.empty());
     RETURN_FALSE_IF(cur_pyramid.level() != ref_pyramid.level());
 
@@ -28,10 +25,7 @@ bool OpticalFlow::TrackFeatures(const ImagePyramid &ref_pyramid,
     return TrackMultipleLevel(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
 }
 
-bool OpticalFlow::TrackFeatures(const GrayImage &ref_image,
-                                const GrayImage &cur_image,
-                                const std::vector<Vec2> &ref_pixel_uv,
-                                std::vector<Vec2> &cur_pixel_uv,
+bool OpticalFlow::TrackFeatures(const GrayImage &ref_image, const GrayImage &cur_image, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                                 std::vector<uint8_t> &status) {
     RETURN_FALSE_IF(ref_pixel_uv.empty());
 
@@ -52,11 +46,8 @@ bool OpticalFlow::TrackFeatures(const GrayImage &ref_image,
     return TrackSingleLevel(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, status);
 }
 
-uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_image,
-                                                         const Vec2 &ref_pixel_uv,
-                                                         int32_t ex_ref_patch_rows,
-                                                         int32_t ex_ref_patch_cols,
-                                                         std::vector<float> &ex_ref_patch,
+uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_image, const Vec2 &ref_pixel_uv, int32_t ex_ref_patch_rows,
+                                                         int32_t ex_ref_patch_cols, std::vector<float> &ex_ref_patch,
                                                          std::vector<bool> &ex_ref_patch_pixel_valid) {
     // Compute the weight for linear interpolar.
     const float int_pixel_row = std::floor(ref_pixel_uv.y());
@@ -74,8 +65,7 @@ uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_im
     const int32_t max_ref_pixel_row = min_ref_pixel_row + ex_ref_patch_rows;
     const int32_t max_ref_pixel_col = min_ref_pixel_col + ex_ref_patch_cols;
 
-    if (min_ref_pixel_row < 0 || max_ref_pixel_row > ref_image.rows() - 2 ||
-        min_ref_pixel_col < 0 || max_ref_pixel_col > ref_image.cols() - 2) {
+    if (min_ref_pixel_row < 0 || max_ref_pixel_row > ref_image.rows() - 2 || min_ref_pixel_col < 0 || max_ref_pixel_col > ref_image.cols() - 2) {
         // If this patch is partly outside of reference image.
         uint32_t valid_pixel_cnt = 0;
         for (int32_t row = min_ref_pixel_row; row < max_ref_pixel_row; ++row) {
@@ -133,4 +123,4 @@ bool OpticalFlow::PrepareForTracking() {
     return true;
 }
 
-}
+}  // namespace FEATURE_TRACKER
