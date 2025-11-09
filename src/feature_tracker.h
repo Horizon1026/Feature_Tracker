@@ -3,7 +3,7 @@
 
 #include "basic_type.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 enum class TrackStatus : uint8_t {
     kNotTracked = 0,

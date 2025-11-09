@@ -14,9 +14,9 @@
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-using namespace SLAM_VISUALIZOR;
-using namespace FEATURE_DETECTOR;
-using namespace FEATURE_TRACKER;
+using namespace slam_visualizor;
+using namespace feature_detector;
+using namespace feature_tracker;
 
 namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 250;
@@ -66,13 +66,13 @@ void TestNNFeatureMatcher_SuperpointLightglue() {
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
-        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked);
+        cnt += status[i] == static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
     }
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
     Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Superpoint descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
-                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 
@@ -118,13 +118,13 @@ void TestNNFeatureMatcher_DiskLightglue() {
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
-        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked);
+        cnt += status[i] == static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
     }
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
     Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
-                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 

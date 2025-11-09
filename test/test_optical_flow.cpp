@@ -17,14 +17,14 @@
 #include "optical_flow_basic_klt.h"
 #include "optical_flow_lssd_klt.h"
 
-using namespace SLAM_VISUALIZOR;
+using namespace slam_visualizor;
 
 #define DRAW_TRACKING_RESULT (1)
 
 namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
 constexpr int32_t kHalfPatchSize = 6;
-constexpr FEATURE_TRACKER::OpticalFlowMethod kDefaultMethod = FEATURE_TRACKER::OpticalFlowMethod::kFast;
+constexpr feature_tracker::OpticalFlowMethod kDefaultMethod = feature_tracker::OpticalFlowMethod::kFast;
 constexpr int32_t kMaxPyramidLevel = 4;
 }  // namespace
 
@@ -32,7 +32,7 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
-    FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
+    feature_detector::FeaturePointDetector<feature_detector::HarrisFeature> detector;
     detector.options().kMinFeatureDistance = 25;
     detector.feature().options().kHalfPatchSize = 1;
     detector.feature().options().kMinValidResponse = 40.0f;
@@ -62,10 +62,10 @@ float TestOpticalFlowBasicKlt(int32_t pyramid_level, int32_t patch_size, uint8_t
     status.reserve(ref_pixel_uv.size());
 
     // Use LK optical tracker.
-    FEATURE_TRACKER::OpticalFlowBasicKlt klt;
+    feature_tracker::OpticalFlowBasicKlt klt;
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
-    klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+    klt.options().kMethod = static_cast<feature_tracker::OpticalFlowMethod>(method);
 
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
@@ -105,10 +105,10 @@ float TestOpticalFlowAffineKlt(int32_t pyramid_level, int32_t patch_size, uint8_
     cur_pixel_uv.reserve(ref_pixel_uv.size());
     status.reserve(ref_pixel_uv.size());
 
-    FEATURE_TRACKER::OpticalFlowAffineKlt klt;
+    feature_tracker::OpticalFlowAffineKlt klt;
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
-    klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+    klt.options().kMethod = static_cast<feature_tracker::OpticalFlowMethod>(method);
 
     TickTock timer;
     ref_pyramid.CreateImagePyramid(pyramid_level);
@@ -148,10 +148,10 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     cur_pixel_uv.reserve(ref_pixel_uv.size());
     status.reserve(ref_pixel_uv.size());
 
-    FEATURE_TRACKER::OpticalFlowLssdKlt klt;
+    feature_tracker::OpticalFlowLssdKlt klt;
     klt.options().kPatchRowHalfSize = patch_size;
     klt.options().kPatchColHalfSize = patch_size;
-    klt.options().kMethod = static_cast<FEATURE_TRACKER::OpticalFlowMethod>(method);
+    klt.options().kMethod = static_cast<feature_tracker::OpticalFlowMethod>(method);
     klt.consider_patch_luminance() = false;
 
     TickTock timer;

@@ -1,7 +1,7 @@
 #include "optical_flow_affine_klt.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 bool OpticalFlowAffineKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
                                               std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) {
@@ -272,4 +272,4 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
     return num_of_valid_pixel;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

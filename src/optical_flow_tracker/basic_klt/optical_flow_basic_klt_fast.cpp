@@ -2,7 +2,7 @@
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv,
                                               uint8_t &status) {
@@ -194,4 +194,4 @@ int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image, const Vec2 
     return valid_pixel_cnt;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

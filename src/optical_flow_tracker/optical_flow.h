@@ -7,7 +7,7 @@
 #include "feature_tracker.h"
 #include "slam_basic_math.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 enum class OpticalFlowMethod : uint8_t {
     kInverse = 0,
@@ -109,6 +109,6 @@ private:
     int32_t ex_patch_size_ = 0;
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif

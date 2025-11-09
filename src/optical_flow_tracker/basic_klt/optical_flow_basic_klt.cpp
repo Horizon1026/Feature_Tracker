@@ -2,7 +2,7 @@
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 bool OpticalFlowBasicKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
                                              std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) {
@@ -180,4 +180,4 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
     return num_of_valid_pixel;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

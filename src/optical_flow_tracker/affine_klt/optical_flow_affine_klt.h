@@ -4,7 +4,7 @@
 #include "optical_flow.h"
 #include <vector>
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 class OpticalFlowAffineKlt : public OpticalFlow {
 
@@ -49,6 +49,6 @@ private:
     Mat2 predict_affine_ = Mat2::Identity();
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _OPTICAL_FLOW_AFFINE_KLT_H_

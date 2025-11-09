@@ -9,7 +9,7 @@
 
 #include "memory"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 enum DirectMethodMethod : uint8_t {
     kInverse = 0,
@@ -74,6 +74,6 @@ private:
     Vec3 p_rc_ = Vec3::Zero();
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _DIRECT_METHOD_TRACKER_H_

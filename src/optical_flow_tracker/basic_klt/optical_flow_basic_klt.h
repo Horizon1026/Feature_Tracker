@@ -4,7 +4,7 @@
 #include "optical_flow.h"
 #include <vector>
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 class OpticalFlowBasicKlt : public OpticalFlow {
 
@@ -38,6 +38,6 @@ private:
     // Support for Neon method.
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _OPTICAL_FLOW_BASIC_KLT_H_

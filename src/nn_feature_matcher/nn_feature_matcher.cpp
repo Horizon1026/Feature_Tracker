@@ -3,7 +3,7 @@
 #include "slam_operations.h"
 #include "tick_tock.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 Ort::Env NNFeatureMatcher::onnx_environment_ = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "NNFeatureMatcher");
 
@@ -216,4 +216,4 @@ bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descrip
 }
 
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

@@ -1,7 +1,7 @@
 #include "optical_flow.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 bool OpticalFlow::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
                                 std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) {
@@ -123,4 +123,4 @@ bool OpticalFlow::PrepareForTracking() {
     return true;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

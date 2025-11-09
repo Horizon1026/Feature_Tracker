@@ -16,7 +16,7 @@
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-using namespace SLAM_VISUALIZOR;
+using namespace slam_visualizor;
 
 namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
@@ -24,14 +24,14 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class BriefMatcher : public FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType> {
+class BriefMatcher : public feature_tracker::DescriptorMatcher<feature_detector::BriefType> {
 
 public:
     BriefMatcher()
-        : FEATURE_TRACKER::DescriptorMatcher<FEATURE_DETECTOR::BriefType>() {}
+        : feature_tracker::DescriptorMatcher<feature_detector::BriefType>() {}
     virtual ~BriefMatcher() = default;
 
-    virtual float ComputeDistance(const FEATURE_DETECTOR::BriefType &descriptor_ref, const FEATURE_DETECTOR::BriefType &descriptor_cur) override {
+    virtual float ComputeDistance(const feature_detector::BriefType &descriptor_ref, const feature_detector::BriefType &descriptor_cur) override {
         if (descriptor_ref.empty() || descriptor_cur.empty()) {
             return kMaxInt32;
         }
@@ -57,7 +57,7 @@ void TestFeaturePointMatcher() {
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
     // Detect features.
-    FEATURE_DETECTOR::FeaturePointDetector<FEATURE_DETECTOR::HarrisFeature> detector;
+    feature_detector::FeaturePointDetector<feature_detector::HarrisFeature> detector;
     detector.options().kMinFeatureDistance = 20;
     detector.feature().options().kMinValidResponse = 40.0f;
 
@@ -68,11 +68,11 @@ void TestFeaturePointMatcher() {
 
     // Compute descriptors for these features.
     TickTock timer;
-    FEATURE_DETECTOR::BriefDescriptor descriptor;
+    feature_detector::BriefDescriptor descriptor;
     descriptor.options().kLength = 256;
     descriptor.options().kHalfPatchSize = 8;
 
-    std::vector<FEATURE_DETECTOR::BriefType> ref_desp, cur_desp;
+    std::vector<feature_detector::BriefType> ref_desp, cur_desp;
     descriptor.Compute(ref_image, ref_features, ref_desp);
     descriptor.Compute(cur_image, cur_features, cur_desp);
     ReportInfo("Compute descriptor for all features in ref and cur image.");
@@ -90,13 +90,13 @@ void TestFeaturePointMatcher() {
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
-        cnt += status[i] == static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked);
+        cnt += status[i] == static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
     }
     ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
 
     // Show match result.
     Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
-                                               static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
     Visualizor2D::WaitKey(0);
 }
 

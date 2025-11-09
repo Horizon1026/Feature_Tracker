@@ -2,7 +2,7 @@
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Mat2 &R_cr, Vec2 &t_cr,
                                              uint8_t &status) {
@@ -228,4 +228,4 @@ int32_t OpticalFlowLssdKlt::ComputeHessianAndBias(const GrayImage &cur_image, co
     return num_of_valid_pixel;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

@@ -3,7 +3,7 @@
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::array<float, 4> &K, const Quat ref_q_wc,
                                  const Vec3 ref_p_wc, const std::vector<Vec3> &p_w, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
@@ -72,13 +72,13 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyr
 
     // Check if outside.
     if (status.size() != ref_pixel_uv.size()) {
-        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
     }
     const GrayImage &bottom_image = ref_pyramid.GetImageConst(0);
     for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {
         if (cur_pixel_uv[i].x() < 0 || cur_pixel_uv[i].x() > bottom_image.cols() - 1 || cur_pixel_uv[i].y() < 0 ||
             cur_pixel_uv[i].y() > bottom_image.rows() - 1) {
-            status[i] = static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kOutside);
+            status[i] = static_cast<uint8_t>(feature_tracker::TrackStatus::kOutside);
         }
     }
 
@@ -116,7 +116,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image, const Gray
                                           const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                                           Quat &q_rc, Vec3 &p_rc) {
     // Construct camera model with K.
-    SENSOR_MODEL::CameraBasic camera(K[0], K[1], K[2], K[3]);
+    sensor_model::CameraBasic camera(K[0], K[1], K[2], K[3]);
 
     // Iterate to estimate q_rc and p_rc.
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
@@ -198,4 +198,4 @@ bool DirectMethod::TrackAllFeaturesFast(const GrayImage &ref_image, const GrayIm
     return true;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker

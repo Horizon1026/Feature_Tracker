@@ -4,7 +4,7 @@
 #include "optical_flow.h"
 #include <vector>
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 class OpticalFlowLssdKlt : public OpticalFlow {
 
@@ -53,6 +53,6 @@ private:
     bool consider_patch_luminance_ = false;
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _OPTICAL_FLOW_LSSD_KLT_H_

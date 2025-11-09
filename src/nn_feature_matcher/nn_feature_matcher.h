@@ -7,7 +7,7 @@
 #include "slam_basic_math.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 /* Class NNFeatureMatcher Declaration. */
 class NNFeatureMatcher {
@@ -61,6 +61,6 @@ private:
     std::vector<Ort::Value> output_tensors_;
 };
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _NN_FEATURE_MATCHER_H_

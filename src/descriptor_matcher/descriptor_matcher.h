@@ -6,7 +6,7 @@
 #include "slam_basic_math.h"
 #include "slam_operations.h"
 
-namespace FEATURE_TRACKER {
+namespace feature_tracker {
 
 /* Class Descriptor Matcher Declaration. */
 template <typename DescriptorType>
@@ -155,6 +155,6 @@ bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std:
     return true;
 }
 
-}  // namespace FEATURE_TRACKER
+}  // namespace feature_tracker
 
 #endif  // end of _DESCRIPTOR_MATCHER_H_

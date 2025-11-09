@@ -12,7 +12,7 @@
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
-using namespace SLAM_VISUALIZOR;
+using namespace slam_visualizor;
 
 namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
@@ -87,7 +87,7 @@ void TestDirectMethod() {
 
         // Construct direct method tracker.
         TickTock timer;
-        FEATURE_TRACKER::DirectMethod solver;
+        feature_tracker::DirectMethod solver;
         std::vector<uint8_t> status;
         solver.TrackFeatures(ref_pyramid, cur_pyramid, K, q_ref, p_ref, p_w, ref_pixel_uv, cur_pixel_uv, q_cur, p_cur, status);
         ReportInfo("Direct method cost time " << timer.TockTickInMillisecond() << " ms.");
@@ -95,7 +95,7 @@ void TestDirectMethod() {
         // Show result.
         ReportInfo("Solved result is q_rc " << LogQuat(q_cur) << ", p_rc " << LogVec(p_cur));
         Visualizor2D::ShowImageWithTrackedFeatures("Direct method : Feature after multi tracking", cur_image, ref_pixel_uv, cur_pixel_uv, status,
-                                                   static_cast<uint8_t>(FEATURE_TRACKER::TrackStatus::kTracked));
+                                                   static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
         Visualizor2D::WaitKey(0);
     }
 }
