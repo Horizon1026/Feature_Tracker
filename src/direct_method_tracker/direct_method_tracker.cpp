@@ -1,5 +1,5 @@
 #include "direct_method_tracker.h"
-#include "camera_basic.h"
+#include "camera_pinhole.h"
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
@@ -116,7 +116,7 @@ bool DirectMethod::TrackAllFeaturesDirect(const GrayImage &ref_image, const Gray
                                           const std::vector<Vec3> &p_c_in_ref, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                                           Quat &q_rc, Vec3 &p_rc) {
     // Construct camera model with K.
-    sensor_model::CameraBasic camera(K[0], K[1], K[2], K[3]);
+    sensor_model::CameraPinhole camera(K[0], K[1], K[2], K[3], ref_image.rows(), ref_image.cols());
 
     // Iterate to estimate q_rc and p_rc.
     for (uint32_t iter = 0; iter < options_.kMaxIteration; ++iter) {
