@@ -12,6 +12,8 @@ public:
     OpticalFlowLssdKlt(): OpticalFlow() {}
     virtual ~OpticalFlowLssdKlt() = default;
 
+    virtual std::string OpticalFlowMethodName() const override { return "Lssd-Klt"; }
+
     // Reference for member variables.
     Mat2 &predict_R_cr() { return predict_R_cr_; }
     bool &consider_patch_luminance() { return consider_patch_luminance_; }

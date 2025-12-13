@@ -12,6 +12,8 @@ public:
     OpticalFlowAffineKlt(): OpticalFlow() {}
     virtual ~OpticalFlowAffineKlt() = default;
 
+    virtual std::string OpticalFlowMethodName() const override { return "Affine-Klt"; }
+
     // Reference for member variables.
     Mat2 &predict_affine() { return predict_affine_; }
 
