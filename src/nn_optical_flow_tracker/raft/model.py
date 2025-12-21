@@ -83,7 +83,6 @@ class Raft(torch.nn.Module):
         # Update the flow.
         all_predictions = []
         for iter in range(self.max_iterations):
-            cur_pixel_locations = cur_pixel_locations.detach()
             # Extract correlation volumes.
             correlation_volume = correlation_map(cur_pixel_locations)
             correlation = torch.cat(correlation_volume, dim = -1).permute(0, 3, 1, 2).contiguous().float()

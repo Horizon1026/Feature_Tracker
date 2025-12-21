@@ -24,8 +24,8 @@ class CorrelationPyramid():
         self.correlation_pyramid = []
         # Compute basic correlation.
         correlation_0 = self.ComputeCorrelation(fmap0, fmap1)
-        b, h, w, dim, h, w = correlation_0.size()
-        correlation_0 = correlation_0.view(b * h * w, dim, h, w)
+        b, h, w, dim, h2, w2 = correlation_0.size()
+        correlation_0 = correlation_0.view(b * h * w, dim, h2, w2)
         self.correlation_pyramid.append(correlation_0)
         # Compute correlation pyramid.
         correlation = correlation_0
@@ -43,7 +43,7 @@ class CorrelationPyramid():
         #           -> [batch_size, height * width, height * width]
         correlation = torch.matmul(fmap0.transpose(1, 2), fmap1)
         correlation = correlation.view(batch_size, height, width, 1, height, width)
-        return correlation / torch.sqrt(torch.tensor(channels).float())
+        return correlation / (channels ** 0.5)
 
     def __call__(self, pixel_locations):
         # pixel_locations: [batch_size, 2, height, width] -> [batch_size, height, width, 2]
@@ -58,7 +58,8 @@ class CorrelationPyramid():
             # window_height = window_width = 2 * r + 1.
             dx = torch.linspace(-r, r, 2 * r + 1)
             dy = torch.linspace(-r, r, 2 * r + 1)
-            neighbors = torch.stack(torch.meshgrid(dy, dx, indexing = 'ij'), dim = -1).to(correlation.device)
+            dy, dx = torch.meshgrid(dy, dx, indexing = 'ij')
+            neighbors = torch.stack([dx, dy], dim = -1).to(correlation.device)
             # Compute location of all pixels in search window with respect to the center pixel.
             # Scale the pixel locations to the current level of the pyramid.
             scale = 2 ** i

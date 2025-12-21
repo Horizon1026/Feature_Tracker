@@ -1,6 +1,4 @@
-cd src/dense_optical_flow_tracker/
-python3 raft.py
-cd ../..
+python3 src/nn_optical_flow_tracker/raft/model.py
 
 cd build/
 ./test_optical_flow
