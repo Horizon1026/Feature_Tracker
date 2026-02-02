@@ -1,4 +1,5 @@
 /[Bb]uild/
+/[Oo]utput/
 /.vscode/
 /.cache/
 /src/nn_optical_flow_tracker/raft/__pycache__/
