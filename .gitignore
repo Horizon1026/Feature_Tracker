@@ -1,6 +1,5 @@
-/[Bb]uild/
-/[Oo]utput/
-/.vscode/
-/.cache/
-/src/nn_optical_flow_tracker/raft/__pycache__/
-/src/nn_optical_flow_tracker/co_tracker/__pycache__/
+[Bb]uild
+[Oo]utput
+.vscode
+.cache
+__pycache__
