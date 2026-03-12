@@ -26,25 +26,48 @@ if( NOT TARGET lib_image_pyramid )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/data_type/image_pyramid ${PROJECT_SOURCE_DIR}/build/lib_image_pyramid )
 endif()
 
+option(ENABLE_OPENMP "Enable OpenMP for parallel computing" ON)
+
+if(ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        add_definitions(-DUSE_OPENMP)
+    endif()
+endif()
+
 add_library( lib_optical_flow_tracker
     ${AUX_SRC_OPTICAL_FLOW_TRACKER}
     ${AUX_SRC_OPTICAL_FLOW_BASIC_KLT}
     ${AUX_SRC_OPTICAL_FLOW_AFFINE_KLT}
     ${AUX_SRC_OPTICAL_FLOW_LSSD_KLT}
 )
+
 target_include_directories( lib_optical_flow_tracker PUBLIC
     .
     ..
-    basic_klt
-    affine_klt
-    lssd_klt
+    ./basic_klt
+    ./affine_klt
+    ./lssd_klt
+    ${SLAM_UTILITY_PATH}/src/math
 )
-target_link_libraries( lib_optical_flow_tracker
-    lib_slam_utility_basic_type
-    lib_slam_utility_math
-    lib_slam_utility_operate
-    lib_slam_utility_log
 
-    lib_image
-    lib_image_pyramid
-)
+if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+    target_link_libraries( lib_optical_flow_tracker
+        OpenMP::OpenMP_CXX
+        lib_slam_utility_basic_type
+        lib_slam_utility_math
+        lib_slam_utility_operate
+        lib_slam_utility_log
+        lib_image
+        lib_image_pyramid
+    )
+else()
+    target_link_libraries( lib_optical_flow_tracker
+        lib_slam_utility_basic_type
+        lib_slam_utility_math
+        lib_slam_utility_operate
+        lib_slam_utility_log
+        lib_image
+        lib_image_pyramid
+    )
+endif()

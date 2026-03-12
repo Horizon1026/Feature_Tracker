@@ -1,4 +1,7 @@
 #include "optical_flow_basic_klt.h"
+
+#include <omp.h>
+
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
@@ -9,10 +12,12 @@ bool OpticalFlowBasicKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, co
     const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
     const float scale = static_cast<float>(1 << (ref_pyramid.level() - 1));
 
-    // Track each pixel per level.
+#ifdef USE_OPENMP
+    #pragma omp parallel for if(options().kEnableParallelFeature)
+#endif
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
-        CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
+        if (status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked)) continue;
 
         // Recorder scaled ref_pixel_uv and cur_pixel_uv.
         Vec2 scaled_ref_pixel_uv = ref_pixel_uv[feature_id] / scale;
@@ -23,16 +28,8 @@ bool OpticalFlowBasicKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, co
             const GrayImage &cur_image = cur_pyramid.GetImageConst(level_idx);
 
             // Track this feature in one pyramid level.
-            switch (options().kMethod) {
-                case OpticalFlowMethod::kInverse:
-                case OpticalFlowMethod::kDirect:
-                    TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
-                    break;
-                case OpticalFlowMethod::kFast:
-                default:
-                    TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
-                    break;
-            }
+            // Note: Parallel mode MUST use TrackOneFeature (Inverse/Direct) because TrackOneFeatureFast is not thread-safe.
+            TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
 
             // If feature is tracked in final level, recovery its scale.
             if (!level_idx) {
@@ -60,20 +57,15 @@ bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image, const Gra
                                            std::vector<Vec2> &cur_pixel_uv, std::vector<uint8_t> &status) {
     // Track per feature.
     const uint32_t max_feature_id = ref_pixel_uv.size() < options().kMaxTrackPointsNumber ? ref_pixel_uv.size() : options().kMaxTrackPointsNumber;
+    
+#ifdef USE_OPENMP
+    #pragma omp parallel for if(options().kEnableParallelFeature)
+#endif
     for (uint32_t feature_id = 0; feature_id < max_feature_id; ++feature_id) {
         // Do not repeatly track features that has been tracking failed.
-        CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
+        if (status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked)) continue;
 
-        switch (options().kMethod) {
-            case OpticalFlowMethod::kInverse:
-            case OpticalFlowMethod::kDirect:
-                TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
-                break;
-            case OpticalFlowMethod::kFast:
-            default:
-                TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
-                break;
-        }
+        TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
 
         // If feature is outside, mark it.
         const auto &feature = cur_pixel_uv[feature_id];
@@ -91,7 +83,11 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
         // Compute each pixel in the patch, create hessian * v = bias
         Mat2 hessian = Mat2::Zero();
         Vec2 bias = Vec2::Zero();
-        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
+        if (options().kEnableSimd) {
+            BREAK_IF(ConstructIncrementalFunctionSIMD(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
+        } else {
+            BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
+        }
 
         // Solve hessian * v = bias.
         Vec2 v = hessian.ldlt().solve(bias);

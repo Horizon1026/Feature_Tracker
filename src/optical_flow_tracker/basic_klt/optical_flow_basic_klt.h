@@ -24,6 +24,8 @@ private:
     void TrackOneFeature(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv, uint8_t &status);
     int32_t ConstructIncrementalFunction(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Vec2 &cur_pixel_uv, Mat2 &H,
                                          Vec2 &b);
+    int32_t ConstructIncrementalFunctionSIMD(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Vec2 &cur_pixel_uv, Mat2 &H,
+                                         Vec2 &b);
 
     // Support for fast method.
     void TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv, uint8_t &status);

@@ -24,6 +24,8 @@ struct OpticalFlowOptions {
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 4e-2f;
+    bool kEnableSimd = true;
+    bool kEnableParallelFeature = true;
     OpticalFlowMethod kMethod = OpticalFlowMethod::kFast;
 };
 
