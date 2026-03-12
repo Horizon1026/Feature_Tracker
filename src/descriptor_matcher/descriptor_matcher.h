@@ -144,8 +144,9 @@ bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std:
         // Do not repeatly match features that has been tracking failed.
         CONTINUE_IF(status[ref_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
-        if (index_pairs_in_cur[ref_id] > 0) {
-            matched_pixel_uv_cur[ref_id] = pixel_uv_cur[index_pairs_in_cur[ref_id]];
+        const int32_t cur_id = index_pairs_in_cur[ref_id];
+        if (cur_id >= 0 && static_cast<size_t>(cur_id) < pixel_uv_cur.size()) {
+            matched_pixel_uv_cur[ref_id] = pixel_uv_cur[cur_id];
             status[ref_id] = static_cast<uint8_t>(TrackStatus::kTracked);
         } else {
             status[ref_id] = static_cast<uint8_t>(TrackStatus::kLargeResidual);
