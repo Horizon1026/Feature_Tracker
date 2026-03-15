@@ -72,7 +72,7 @@ bool DirectMethod::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyr
 
     // Check if outside.
     if (status.size() != ref_pixel_uv.size()) {
-        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
+        status.assign(ref_pixel_uv.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
     }
     const GrayImage &bottom_image = ref_pyramid.GetImageConst(0);
     for (uint32_t i = 0; i < cur_pixel_uv.size(); ++i) {

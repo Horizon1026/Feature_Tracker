@@ -153,7 +153,7 @@ bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descrip
     RETURN_FALSE_IF(!InferenceSession(descriptors_ref, descriptors_cur, pixel_uv_ref, pixel_uv_cur));
 
     // Convert output tensors to image matrices.
-    status.resize(pixel_uv_ref.size(), static_cast<uint8_t>(TrackStatus::kLargeResidual));
+    status.assign(pixel_uv_ref.size(), static_cast<uint8_t>(TrackStatus::kLargeResidual));
     matched_pixel_uv_cur = pixel_uv_cur;
     if (output_tensors_.size() == 2) {
         // Convert output tensors to image matrices.

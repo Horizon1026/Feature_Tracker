@@ -58,7 +58,7 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
     RETURN_FALSE_IF(descriptors_cur.empty());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
-        index_pairs_in_cur.resize(descriptors_ref.size(), -1);
+        index_pairs_in_cur.assign(descriptors_ref.size(), -1);
     }
 
     // For each descriptor in ref, find best pair in cur.
@@ -96,7 +96,7 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size());
 
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
-        index_pairs_in_cur.resize(descriptors_ref.size(), -1);
+        index_pairs_in_cur.assign(descriptors_ref.size(), -1);
     }
 
     // For each descriptor in ref, find best pair in cur.
@@ -136,7 +136,7 @@ template <typename DescriptorType>
 bool DescriptorMatcher<DescriptorType>::FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur, const std::vector<Vec2> &pixel_uv_cur,
                                                                       std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status) {
     if (index_pairs_in_cur.size() != status.size()) {
-        status.resize(index_pairs_in_cur.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
+        status.assign(index_pairs_in_cur.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
 
     matched_pixel_uv_cur.resize(index_pairs_in_cur.size());

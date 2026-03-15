@@ -15,7 +15,7 @@ bool OpticalFlow::TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyra
 
     // If sizeof ref_pixel_uv is not equal to status, view it as all features haven't been tracked.
     if (ref_pixel_uv.size() != status.size()) {
-        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
+        status.assign(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
 
     // Prepare for tracking.
@@ -36,7 +36,7 @@ bool OpticalFlow::TrackFeatures(const GrayImage &ref_image, const GrayImage &cur
 
     // If sizeof ref_pixel_uv is not equal to status, view it as all features haven't been tracked.
     if (ref_pixel_uv.size() != status.size()) {
-        status.resize(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
+        status.assign(ref_pixel_uv.size(), static_cast<uint8_t>(TrackStatus::kNotTracked));
     }
 
     // Prepare for tracking.
