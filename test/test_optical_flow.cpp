@@ -157,7 +157,7 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
     ref_pyramid.CreateImagePyramid(pyramid_level);
     cur_pyramid.CreateImagePyramid(pyramid_level);
     klt.TrackFeatures(ref_pyramid, cur_pyramid, ref_pixel_uv, cur_pixel_uv, status);
-    const float cost_time = timer.TockTickInMillisecond();
+    const double cost_time = timer.TockTickInMillisecond();
 
 #if DRAW_TRACKING_RESULT
     // Visualizor2D::ShowImageWithDetectedFeatures("Lssd KLT : Feature before multi tracking", ref_image, ref_pixel_uv);
@@ -169,7 +169,7 @@ float TestOpticalFlowLssdKlt(int32_t pyramid_level, int32_t patch_size, uint8_t 
 }
 
 int main(int argc, char **argv) {
-    float cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
+    double cost_time = TestOpticalFlowBasicKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
     ReportInfo("Basic klt cost time " << cost_time << " ms.");
 
     cost_time = TestOpticalFlowAffineKlt(kMaxPyramidLevel, kHalfPatchSize, static_cast<uint8_t>(kDefaultMethod));
