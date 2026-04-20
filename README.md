@@ -29,13 +29,20 @@ Intergration of some simple sparse feature track method.
   - [ ] Lightglue - superpoint
 
 # Dependence (C++)
+
+### 项目仓库依赖（源码在 repo 中）
 - Slam_Utility
 - Feature_Detector
 - Visualizor2D
-- onnxruntime (only nn feature match needed)
+
+### 第三方仓库依赖
+- Eigen3 (>= 3.3.7)（`sudo apt install libeigen3-dev`）
+- onnxruntime（NN feature match 需要，需下载后放至指定目录，官网：https://github.com/microsoft/onnxruntime）
 
 # Dependence (python)
-- pytorch
+
+### 第三方仓库依赖
+- pytorch（`pip install torch torchvision`）
 
 # Compile and Run
 - 第三方仓库的话需要自行 apt-get install 安装
