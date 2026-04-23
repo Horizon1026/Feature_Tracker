@@ -1,12 +1,5 @@
-#include "iostream"
-#include <cstdint>
-#include <ctime>
-#include <string>
-#include <thread>
-#include <vector>
-
 #include "direct_method_tracker.h"
-
+#include "iostream"
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
 #include "tick_tock.h"
