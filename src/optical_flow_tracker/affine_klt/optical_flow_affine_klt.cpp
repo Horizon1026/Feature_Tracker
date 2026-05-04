@@ -150,8 +150,8 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) && cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
                     cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) && cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float dx = 0.5f * (temp_value[1] - temp_value[0]);
-                    const float dy = 0.5f * (temp_value[3] - temp_value[2]);
+                    const float dx = temp_value[1] - temp_value[0];
+                    const float dy = temp_value[3] - temp_value[2];
                     const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
@@ -212,8 +212,8 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) && ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) && ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float dx = 0.5f * (temp_value[1] - temp_value[0]);
-                    const float dy = 0.5f * (temp_value[3] - temp_value[2]);
+                    const float dx = temp_value[1] - temp_value[0];
+                    const float dy = temp_value[3] - temp_value[2];
                     const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
