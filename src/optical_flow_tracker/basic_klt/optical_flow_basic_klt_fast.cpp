@@ -79,8 +79,8 @@ void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> 
             if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] && ex_ref_patch_pixel_valid[ex_index_top] &&
                 ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
-                const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
-                const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
+                const float dx = 0.5f * (ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left]);
+                const float dy = 0.5f * (ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top]);
                 all_dx_in_ref_patch.emplace_back(dx);
                 all_dy_in_ref_patch.emplace_back(dy);
 
