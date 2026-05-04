@@ -2,7 +2,7 @@
 #define _OPTICAL_FLOW_LSSD_KLT_H_
 
 #include "optical_flow.h"
-#include <vector>
+#include "vector"
 
 namespace feature_tracker {
 

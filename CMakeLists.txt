@@ -52,6 +52,11 @@ if( NOT TARGET lib_optical_flow_tracker )
     add_subdirectory( src/optical_flow_tracker ${PROJECT_SOURCE_DIR}/build/lib_optical_flow_tracker )
 endif()
 
+# Add dense optical flow tracker.
+if( NOT TARGET lib_dense_optical_flow_tracker )
+    add_subdirectory( src/dense_optical_flow_tracker ${PROJECT_SOURCE_DIR}/build/lib_dense_optical_flow_tracker )
+endif()
+
 # Add nn feature matcher.
 if( NOT TARGET lib_nn_feature_matcher )
     add_subdirectory( src/nn_feature_matcher ${PROJECT_SOURCE_DIR}/build/lib_nn_feature_matcher )
@@ -64,6 +69,17 @@ add_executable( test_optical_flow
 target_link_libraries( test_optical_flow
     lib_feature_point_detector
     lib_optical_flow_tracker
+    lib_slam_utility_log
+    lib_slam_utility_tick_tock
+    lib_2d_visualizor
+)
+
+# Create executable target to test dense optical flow.
+add_executable( test_dense_optical_flow
+    test/test_dense_optical_flow.cpp
+)
+target_link_libraries( test_dense_optical_flow
+    lib_dense_optical_flow_tracker
     lib_slam_utility_log
     lib_slam_utility_tick_tock
     lib_2d_visualizor
