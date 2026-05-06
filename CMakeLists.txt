@@ -7,13 +7,16 @@ set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -Wall -lpthread" )
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 20 )
 
-# Add slam utility log and tick_tock.
+# Add slam utility log, tick_tock, and stack backward.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility )
 if( NOT TARGET lib_slam_utility_log )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/log ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_log )
 endif()
 if( NOT TARGET lib_slam_utility_tick_tock )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/tick_tock ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_tick_tock )
+endif()
+if( NOT TARGET lib_stack_backward )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/3rd_libraries/backward ${PROJECT_SOURCE_DIR}/build/lib_stack_backward )
 endif()
 
 # Add visualizor.
@@ -83,6 +86,7 @@ target_link_libraries( test_dense_optical_flow
     lib_slam_utility_log
     lib_slam_utility_tick_tock
     lib_2d_visualizor
+    lib_stack_backward
 )
 
 # Create executable target to test direct method.
