@@ -60,8 +60,7 @@ void TestFeaturePointMatcher() {
     matcher.options().kMethod = feature_tracker::DescriptorMatcher<feature_detector::BriefType>::MatchMethod::kNearby;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
-    // Equivalent to previous hamming distance < 60 on 256-bit descriptors.
-    matcher.options().kMinValidDescriptorSimilarity = 1.0f - 2.0f * 60.0f / 256.0f;
+    matcher.options().kMinValidDescriptorSimilarity = 0.6f;
 
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;
