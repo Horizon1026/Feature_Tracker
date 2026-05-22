@@ -57,6 +57,7 @@ void TestFeaturePointMatcher() {
 
     // Match features with descriptors.
     feature_tracker::DescriptorMatcher<feature_detector::BriefType> matcher;
+    matcher.options().kMethod = feature_tracker::DescriptorMatcher<feature_detector::BriefType>::MatchMethod::kNearby;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
     // Equivalent to previous hamming distance < 60 on 256-bit descriptors.
@@ -64,14 +65,16 @@ void TestFeaturePointMatcher() {
 
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;
-    const bool res = matcher.NearbyMatch(ref_desp, cur_desp, ref_features, cur_features, matched_cur_features, status);
+    std::vector<int32_t> index_pairs_in_cur;
+    matcher.Match(ref_desp, cur_desp, ref_features, cur_features, index_pairs_in_cur);
+    matcher.FillMatchedPixelByPairIndices(index_pairs_in_cur, cur_features, matched_cur_features, status);
     ReportInfo("Descriptor matcher cost time " << timer.TockTickInMillisecond() << " ms.");
 
     int32_t cnt = 0;
     for (uint32_t i = 0; i < status.size(); ++i) {
         cnt += status[i] == static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
     }
-    ReportInfo("Match features by descriptors, result is " << res << ", tracked features " << cnt << " / " << status.size());
+    ReportInfo("Match features by descriptors, tracked features number is " << cnt << " / " << status.size());
 
     // Show match result.
     Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,

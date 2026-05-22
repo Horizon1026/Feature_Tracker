@@ -14,7 +14,13 @@ template <typename DescriptorType>
 class DescriptorMatcher {
 
 public:
+    enum class MatchMethod : uint8_t {
+        kForce = 0,
+        kNearby = 1,
+    };
     struct Options {
+        MatchMethod kMethod = MatchMethod::kForce;
+        // Support for nearby match.
         int32_t kMaxValidPredictRowDistance = 40;
         int32_t kMaxValidPredictColDistance = 40;
         // Minimum cosine similarity for a valid match. Default 1.0 rejects all matches.
@@ -25,30 +31,29 @@ public:
     DescriptorMatcher() = default;
     virtual ~DescriptorMatcher() = default;
 
-    bool ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                    std::vector<int32_t> &index_pairs_in_cur);
+    bool Match(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+               std::vector<int32_t> &index_pairs_in_cur);
 
-    bool ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                    const std::vector<Vec2> &pixel_uv_cur, std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
+    bool Match(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+               const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur, std::vector<int32_t> &index_pairs_in_cur);
 
-    bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                     const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur, std::vector<int32_t> &index_pairs_in_cur);
-
-    bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                     const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur, std::vector<Vec2> &matched_pixel_uv_cur,
-                     std::vector<uint8_t> &status);
+    bool FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur, const std::vector<Vec2> &pixel_uv_cur,
+                                       std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
 
     // Reference for member variables.
     Options &options() { return options_; }
     // Const reference for member variables.
     const Options &options() const { return options_; }
 
-protected:
+private:
     virtual float ComputeSimilarity(const DescriptorType &descriptor_ref, const DescriptorType &descriptor_cur);
 
-private:
-    bool FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur, const std::vector<Vec2> &pixel_uv_cur,
-                                       std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
+
+    bool ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+                    std::vector<int32_t> &index_pairs_in_cur);
+
+    bool NearbyMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+                     const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur, std::vector<int32_t> &index_pairs_in_cur);
 
 private:
     Options options_;
@@ -56,14 +61,43 @@ private:
 
 /* Class Descriptor Matcher Definition. */
 template <typename DescriptorType>
-bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                                                   std::vector<int32_t> &index_pairs_in_cur) {
+bool DescriptorMatcher<DescriptorType>::Match(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+                                              std::vector<int32_t> &index_pairs_in_cur) {
     RETURN_FALSE_IF(descriptors_cur.empty());
-
     if (descriptors_ref.size() != index_pairs_in_cur.size()) {
         index_pairs_in_cur.assign(descriptors_ref.size(), -1);
     }
 
+    switch (options_.kMethod) {
+        case MatchMethod::kForce:
+            return ForceMatch(descriptors_ref, descriptors_cur, index_pairs_in_cur);
+        default:
+            return false;
+    }
+}
+
+template <typename DescriptorType>
+bool DescriptorMatcher<DescriptorType>::Match(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+                                              const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur,
+                                              std::vector<int32_t> &index_pairs_in_cur) {
+    RETURN_FALSE_IF(descriptors_cur.empty());
+    RETURN_FALSE_IF(descriptors_ref.size() != pixel_uv_pred_in_cur.size());
+    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size());
+    if (descriptors_ref.size() != index_pairs_in_cur.size()) {
+        index_pairs_in_cur.assign(descriptors_ref.size(), -1);
+    }
+
+    switch (options_.kMethod) {
+        case MatchMethod::kNearby:
+            return NearbyMatch(descriptors_ref, descriptors_cur, pixel_uv_pred_in_cur, pixel_uv_cur, index_pairs_in_cur);
+        default:
+            return false;
+    }
+}
+
+template <typename DescriptorType>
+bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
+                                                   std::vector<int32_t> &index_pairs_in_cur) {
     // For each descriptor in ref, find best pair in cur.
     const int32_t max_i = descriptors_ref.size();
     const int32_t max_j = descriptors_cur.size();
@@ -82,26 +116,9 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
 }
 
 template <typename DescriptorType>
-bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                                                   const std::vector<Vec2> &pixel_uv_cur, std::vector<Vec2> &matched_pixel_uv_cur,
-                                                   std::vector<uint8_t> &status) {
-    std::vector<int32_t> index_pairs_in_cur;
-    RETURN_FALSE_IF_FALSE(ForceMatch(descriptors_ref, descriptors_cur, index_pairs_in_cur));
-    return FillMatchedPixelByPairIndices(index_pairs_in_cur, pixel_uv_cur, matched_pixel_uv_cur, status);
-}
-
-template <typename DescriptorType>
 bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
                                                     const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur,
                                                     std::vector<int32_t> &index_pairs_in_cur) {
-    RETURN_FALSE_IF(descriptors_cur.empty());
-    RETURN_FALSE_IF(descriptors_ref.size() != pixel_uv_pred_in_cur.size());
-    RETURN_FALSE_IF(descriptors_cur.size() != pixel_uv_cur.size());
-
-    if (descriptors_ref.size() != index_pairs_in_cur.size()) {
-        index_pairs_in_cur.assign(descriptors_ref.size(), -1);
-    }
-
     // For each descriptor in ref, find best pair in cur.
     const uint32_t max_i = descriptors_ref.size();
     const uint32_t max_j = descriptors_cur.size();
@@ -124,15 +141,6 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     }
 
     return true;
-}
-
-template <typename DescriptorType>
-bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
-                                                    const std::vector<Vec2> &pixel_uv_pred_in_cur, const std::vector<Vec2> &pixel_uv_cur,
-                                                    std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status) {
-    std::vector<int32_t> index_pairs_in_cur;
-    RETURN_FALSE_IF_FALSE(NearbyMatch(descriptors_ref, descriptors_cur, pixel_uv_pred_in_cur, pixel_uv_cur, index_pairs_in_cur));
-    return FillMatchedPixelByPairIndices(index_pairs_in_cur, pixel_uv_cur, matched_pixel_uv_cur, status);
 }
 
 template <typename DescriptorType>
