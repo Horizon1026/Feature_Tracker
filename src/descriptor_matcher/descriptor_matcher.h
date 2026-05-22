@@ -3,6 +3,7 @@
 
 #include "basic_type.h"
 #include "feature_tracker.h"
+#include "limits"
 #include "slam_basic_math.h"
 #include "slam_operations.h"
 
@@ -16,7 +17,8 @@ public:
     struct Options {
         int32_t kMaxValidPredictRowDistance = 40;
         int32_t kMaxValidPredictColDistance = 40;
-        float kMaxValidDescriptorDistance = 0.0f;
+        // Minimum cosine similarity for a valid match. Default 1.0 rejects all matches.
+        float kMinValidDescriptorSimilarity = 1.0f;
     };
 
 public:
@@ -41,9 +43,10 @@ public:
     // Const reference for member variables.
     const Options &options() const { return options_; }
 
-private:
-    virtual float ComputeDistance(const DescriptorType &descriptor_ref, const DescriptorType &descriptor_cur) = 0;
+protected:
+    virtual float ComputeSimilarity(const DescriptorType &descriptor_ref, const DescriptorType &descriptor_cur);
 
+private:
     bool FillMatchedPixelByPairIndices(const std::vector<int32_t> &index_pairs_in_cur, const std::vector<Vec2> &pixel_uv_cur,
                                        std::vector<Vec2> &matched_pixel_uv_cur, std::vector<uint8_t> &status);
 
@@ -65,11 +68,11 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
     const int32_t max_i = descriptors_ref.size();
     const int32_t max_j = descriptors_cur.size();
     for (int32_t i = 0; i < max_i; ++i) {
-        float min_distance = options_.kMaxValidDescriptorDistance;
+        float best_similarity = -std::numeric_limits<float>::infinity();
         for (int32_t j = 0; j < max_j; ++j) {
-            const float distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
-            if (distance < min_distance && distance < options_.kMaxValidDescriptorDistance) {
-                min_distance = distance;
+            const float similarity = ComputeSimilarity(descriptors_ref[i], descriptors_cur[j]);
+            if (similarity >= options_.kMinValidDescriptorSimilarity && similarity > best_similarity) {
+                best_similarity = similarity;
                 index_pairs_in_cur[i] = j;
             }
         }
@@ -103,20 +106,20 @@ bool DescriptorMatcher<DescriptorType>::NearbyMatch(const std::vector<Descriptor
     const uint32_t max_i = descriptors_ref.size();
     const uint32_t max_j = descriptors_cur.size();
     for (uint32_t i = 0; i < max_i; ++i) {
-        float min_distance = options_.kMaxValidDescriptorDistance;
+        float best_similarity = -std::numeric_limits<float>::infinity();
         for (uint32_t j = 0; j < max_j; ++j) {
             if (std::fabs(pixel_uv_pred_in_cur[i].x() - pixel_uv_cur[j].x()) > options_.kMaxValidPredictColDistance ||
                 std::fabs(pixel_uv_pred_in_cur[i].y() - pixel_uv_cur[j].y()) > options_.kMaxValidPredictRowDistance) {
                 continue;
             }
 
-            const float distance = ComputeDistance(descriptors_ref[i], descriptors_cur[j]);
-            if (distance < min_distance && distance < options_.kMaxValidDescriptorDistance) {
-                min_distance = distance;
+            const float similarity = ComputeSimilarity(descriptors_ref[i], descriptors_cur[j]);
+            if (similarity >= options_.kMinValidDescriptorSimilarity && similarity > best_similarity) {
+                best_similarity = similarity;
                 index_pairs_in_cur[i] = j;
             }
 
-            BREAK_IF(distance == 0);
+            BREAK_IF(similarity >= 1.0f - kZeroFloat);
         }
     }
 

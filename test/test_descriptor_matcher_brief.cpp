@@ -24,27 +24,6 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class BriefMatcher: public feature_tracker::DescriptorMatcher<feature_detector::BriefType> {
-
-public:
-    BriefMatcher(): feature_tracker::DescriptorMatcher<feature_detector::BriefType>() {}
-    virtual ~BriefMatcher() = default;
-
-    virtual float ComputeDistance(const feature_detector::BriefType &descriptor_ref, const feature_detector::BriefType &descriptor_cur) override {
-        if (descriptor_ref.empty() || descriptor_cur.empty()) {
-            return kMaxInt32;
-        }
-
-        int32_t distance = 0;
-        for (uint32_t i = 0; i < descriptor_ref.size(); ++i) {
-            if (descriptor_ref[i] != descriptor_cur[i]) {
-                ++distance;
-            }
-        }
-        return static_cast<float>(distance);
-    }
-};
-
 void TestFeaturePointMatcher() {
     ReportInfo(YELLOW ">> Test Feature Point Matcher with Brief." RESET_COLOR);
 
@@ -77,10 +56,11 @@ void TestFeaturePointMatcher() {
     ReportInfo("Compute descriptor for all features in ref and cur image.");
 
     // Match features with descriptors.
-    BriefMatcher matcher;
+    feature_tracker::DescriptorMatcher<feature_detector::BriefType> matcher;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
-    matcher.options().kMaxValidDescriptorDistance = 60;
+    // Equivalent to previous hamming distance < 60 on 256-bit descriptors.
+    matcher.options().kMinValidDescriptorSimilarity = 1.0f - 2.0f * 60.0f / 256.0f;
 
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;

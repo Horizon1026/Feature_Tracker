@@ -23,17 +23,6 @@ std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
 std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
 }  // namespace
 
-class DiskMatcher: public feature_tracker::DescriptorMatcher<DiskDescriptorType> {
-
-public:
-    DiskMatcher(): feature_tracker::DescriptorMatcher<DiskDescriptorType>() {}
-    virtual ~DiskMatcher() = default;
-
-    virtual float ComputeDistance(const DiskDescriptorType &descriptor_ref, const DiskDescriptorType &descriptor_cur) override {
-        return 0.5f - descriptor_ref.dot(descriptor_cur) / descriptor_ref.norm() / descriptor_cur.norm() * 0.5f;
-    }
-};
-
 void TestFeaturePointMatcher() {
     ReportInfo(YELLOW ">> Test Feature Point Matcher with Disk." RESET_COLOR);
 
@@ -56,16 +45,24 @@ void TestFeaturePointMatcher() {
 
     // Detect features.
     std::vector<Vec2> ref_features, cur_features;
-    std::vector<DiskDescriptorType> ref_desp, cur_desp;
-    detector.DetectGoodFeaturesWithDescriptor(ref_image, ref_features, ref_desp);
-    detector.DetectGoodFeaturesWithDescriptor(cur_image, cur_features, cur_desp);
+    std::vector<DiskDescriptorType> ref_desp_disk, cur_desp_disk;
+    detector.DetectGoodFeaturesWithDescriptor(ref_image, ref_features, ref_desp_disk);
+    detector.DetectGoodFeaturesWithDescriptor(cur_image, cur_features, cur_desp_disk);
     ReportInfo("Detect features with descritors in two images.");
 
+    std::vector<Vec> ref_desp(ref_desp_disk.size());
+    std::vector<Vec> cur_desp(cur_desp_disk.size());
+    for (uint32_t i = 0; i < ref_desp_disk.size(); ++i) {
+        ref_desp[i] = ref_desp_disk[i];
+        cur_desp[i] = cur_desp_disk[i];
+    }
+
     // Match features with descriptors.
-    DiskMatcher matcher;
+    feature_tracker::DescriptorMatcher<Vec> matcher;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
-    matcher.options().kMaxValidDescriptorDistance = 0.1f;
+    // Equivalent to previous distance 0.5 - 0.5 * cosine < 0.1.
+    matcher.options().kMinValidDescriptorSimilarity = 0.8f;
 
     std::vector<Vec2> matched_cur_features;
     std::vector<uint8_t> status;
