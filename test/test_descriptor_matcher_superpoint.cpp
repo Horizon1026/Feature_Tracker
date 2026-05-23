@@ -19,8 +19,8 @@ using namespace feature_detector;
 
 namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
-std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+std::string test_ref_image_file_name = "../example/descriptor_match/ref_image.png";
+std::string test_cur_image_file_name = "../example/descriptor_match/cur_image.png";
 }  // namespace
 
 void TestFeaturePointMatcher() {
@@ -59,7 +59,7 @@ void TestFeaturePointMatcher() {
 
     // Match features with descriptors.
     feature_tracker::DescriptorMatcher<Vec> matcher;
-    matcher.options().kMethod = feature_tracker::DescriptorMatcher<Vec>::MatchMethod::kNearby;
+    matcher.options().kMethod = feature_tracker::DescriptorMatcher<Vec>::MatchMethod::kHungarian;
     matcher.options().kMaxValidPredictRowDistance = 50;
     matcher.options().kMaxValidPredictColDistance = 50;
     // Equivalent to previous distance 0.5 - 0.5 * cosine < 0.1.
