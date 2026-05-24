@@ -33,7 +33,9 @@ void TestFeaturePointMatcher() {
     Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
-    // Initialize feature detector.
+    std::vector<Vec2> ref_features, cur_features;
+    std::vector<Vec> ref_desp;
+    std::vector<Vec> cur_desp;
     NNFeaturePointDetector detector;
     detector.options().kMinResponse = 0.1f;
     detector.options().kMinFeatureDistance = 20;
@@ -43,34 +45,52 @@ void TestFeaturePointMatcher() {
     detector.options().kMaxImageCols = ref_image.cols();
     detector.Initialize();
 
-    // Detect features.
-    std::vector<Vec2> ref_features, cur_features;
     std::vector<DiskDescriptorType> ref_desp_disk, cur_desp_disk;
     detector.DetectGoodFeaturesWithDescriptor(ref_image, ref_features, ref_desp_disk);
     detector.DetectGoodFeaturesWithDescriptor(cur_image, cur_features, cur_desp_disk);
     ReportInfo("Detect features with descritors in two images.");
 
-    std::vector<Vec> ref_desp(ref_desp_disk.size());
-    std::vector<Vec> cur_desp(cur_desp_disk.size());
+    ref_desp.resize(ref_desp_disk.size());
+    cur_desp.resize(cur_desp_disk.size());
     for (uint32_t i = 0; i < ref_desp_disk.size(); ++i) {
         ref_desp[i] = ref_desp_disk[i];
+    }
+    for (uint32_t i = 0; i < cur_desp_disk.size(); ++i) {
         cur_desp[i] = cur_desp_disk[i];
     }
 
     // Match features with descriptors.
-    feature_tracker::DescriptorMatcher<Vec> matcher;
-    matcher.options().kMethod = feature_tracker::DescriptorMatcher<Vec>::MatchMethod::kHungarian;
-    matcher.options().kMaxValidPredictRowDistance = 50;
-    matcher.options().kMaxValidPredictColDistance = 50;
-    // Equivalent to previous distance 0.5 - 0.5 * cosine < 0.1.
-    matcher.options().kMinValidDescriptorSimilarity = 0.8f;
-
-    std::vector<Vec2> matched_cur_features;
-    std::vector<uint8_t> status;
     TickTock timer;
+    feature_tracker::DescriptorMatcher<Vec> matcher;
+    matcher.options().matcher.kMethod = feature_tracker::DescriptorMatcher<Vec>::MatchMethod::kNearby;
+    matcher.options().matcher.kMinValidDescriptorSimilarity = 0.5f;
+    matcher.options().matcher.kMaxDescriptorDistanceRatioBetweenBestAndSecondBest = 0.8f;
+    matcher.options().matcher.kEnableCrossCheck = false;
+    matcher.options().global_translation.kSearchCol = 150;
+    matcher.options().global_translation.kSearchRow = 40;
+    matcher.options().displacement_consensus.kEnabled = true;
+    matcher.options().displacement_consensus.kTolerance = 25.0f;
+
+    const Vec2 global_shift = matcher.EstimateGlobalTranslation(ref_image, cur_image);
+    ReportInfo("Estimated global shift (col, row) = (" << global_shift.x() << ", " << global_shift.y() << ")");
+
+    std::vector<Vec2> pixel_uv_pred_in_cur(ref_features.size());
+    for (uint32_t i = 0; i < ref_features.size(); ++i) {
+        pixel_uv_pred_in_cur[i] = ref_features[i] + global_shift;
+    }
+
     std::vector<int32_t> index_pairs_in_cur;
-    matcher.Match(ref_desp, cur_desp, ref_features, cur_features, index_pairs_in_cur);
-    matcher.FillMatchedPixelByPairIndices(index_pairs_in_cur, cur_features, matched_cur_features, status);
+    matcher.Match(ref_desp, cur_desp, pixel_uv_pred_in_cur, cur_features, index_pairs_in_cur);
+
+    std::vector<Vec2> matched_cur_features(ref_features.size());
+    std::vector<uint8_t> status(ref_features.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kLargeResidual));
+    for (uint32_t i = 0; i < index_pairs_in_cur.size(); ++i) {
+        const int32_t j = index_pairs_in_cur[i];
+        if (j >= 0 && static_cast<size_t>(j) < cur_features.size()) {
+            matched_cur_features[i] = cur_features[static_cast<size_t>(j)];
+            status[i] = static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
+        }
+    }
     ReportInfo("Descriptor matcher cost time " << timer.TockTickInMillisecond() << " ms.");
 
     int32_t cnt = 0;
@@ -79,9 +99,11 @@ void TestFeaturePointMatcher() {
     }
     ReportInfo("Match features by descriptors, tracked features number is " << cnt << " / " << status.size());
 
-    // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Disk descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
-                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
+    RgbImage match_result_image;
+    Visualizor2D::DrawImageWithTrackedFeatures(ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked), RgbColor::kCyan, RgbColor::kRed,
+                                               match_result_image);
+    Visualizor2D::ShowImage("Features matched by Disk descriptor", match_result_image);
     Visualizor2D::WaitKey(0);
 }
 

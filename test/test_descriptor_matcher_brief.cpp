@@ -1,9 +1,5 @@
 #include "cstdint"
-#include "ctime"
-#include "iostream"
-#include "random"
 #include "string"
-#include "thread"
 #include "vector"
 
 #include "descriptor_brief.h"
@@ -12,7 +8,6 @@
 #include "feature_point_harris_detector.h"
 
 #include "slam_log_reporter.h"
-#include "slam_memory.h"
 #include "tick_tock.h"
 #include "visualizor_2d.h"
 
@@ -27,14 +22,12 @@ std::string test_cur_image_file_name = "../example/descriptor_match/cur_image.pn
 void TestFeaturePointMatcher() {
     ReportInfo(YELLOW ">> Test Feature Point Matcher with Brief." RESET_COLOR);
 
-    // Load images.
     GrayImage ref_image;
     GrayImage cur_image;
     Visualizor2D::LoadImage(test_ref_image_file_name, ref_image);
     Visualizor2D::LoadImage(test_cur_image_file_name, cur_image);
     ReportInfo("Load images from " << test_ref_image_file_name << " and " << test_cur_image_file_name);
 
-    // Detect features.
     feature_detector::FeaturePointHarrisDetector detector;
     detector.options().kMinFeatureDistance = 20;
     detector.options().kMinValidResponse = 40.0f;
@@ -44,7 +37,6 @@ void TestFeaturePointMatcher() {
     detector.DetectGoodFeatures(cur_image, kMaxNumberOfFeaturesToTrack, cur_features);
     ReportInfo("Detect features in two images.");
 
-    // Compute descriptors for these features.
     TickTock timer;
     feature_detector::BriefDescriptor descriptor;
     descriptor.options().kLength = 256;
@@ -55,18 +47,37 @@ void TestFeaturePointMatcher() {
     descriptor.Compute(cur_image, cur_features, cur_desp);
     ReportInfo("Compute descriptor for all features in ref and cur image.");
 
-    // Match features with descriptors.
     feature_tracker::DescriptorMatcher<feature_detector::BriefType> matcher;
-    matcher.options().kMethod = feature_tracker::DescriptorMatcher<feature_detector::BriefType>::MatchMethod::kHungarian;
-    matcher.options().kMaxValidPredictRowDistance = 50;
-    matcher.options().kMaxValidPredictColDistance = 50;
-    matcher.options().kMinValidDescriptorSimilarity = 0.6f;
+    matcher.options().matcher.kMethod = feature_tracker::DescriptorMatcher<feature_detector::BriefType>::MatchMethod::kNearby;
+    matcher.options().matcher.kMinValidDescriptorSimilarity = 0.5f;
+    matcher.options().matcher.kMaxDescriptorDistanceRatioBetweenBestAndSecondBest = 0.8f;
+    matcher.options().matcher.kEnableCrossCheck = false;
+    matcher.options().global_translation.kSearchCol = 150;
+    matcher.options().global_translation.kSearchRow = 40;
+    matcher.options().displacement_consensus.kEnabled = true;
+    matcher.options().displacement_consensus.kTolerance = 25.0f;
 
-    std::vector<Vec2> matched_cur_features;
-    std::vector<uint8_t> status;
+    const Vec2 global_shift = matcher.EstimateGlobalTranslation(ref_image, cur_image);
+    ReportInfo("Estimated global shift (col, row) = (" << global_shift.x() << ", " << global_shift.y() << ")");
+
+    std::vector<Vec2> pixel_uv_pred_in_cur(ref_features.size());
+    for (uint32_t i = 0; i < ref_features.size(); ++i) {
+        pixel_uv_pred_in_cur[i] = ref_features[i] + global_shift;
+    }
+
     std::vector<int32_t> index_pairs_in_cur;
-    matcher.Match(ref_desp, cur_desp, ref_features, cur_features, index_pairs_in_cur);
-    matcher.FillMatchedPixelByPairIndices(index_pairs_in_cur, cur_features, matched_cur_features, status);
+    matcher.Match(ref_desp, cur_desp, pixel_uv_pred_in_cur, cur_features, index_pairs_in_cur);
+
+    std::vector<Vec2> matched_cur_features(ref_features.size());
+    std::vector<uint8_t> status(ref_features.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kLargeResidual));
+    for (uint32_t i = 0; i < index_pairs_in_cur.size(); ++i) {
+        const int32_t j = index_pairs_in_cur[i];
+        if (j >= 0 && static_cast<size_t>(j) < cur_features.size()) {
+            matched_cur_features[i] = cur_features[static_cast<size_t>(j)];
+            status[i] = static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
+        }
+    }
+
     ReportInfo("Descriptor matcher cost time " << timer.TockTickInMillisecond() << " ms.");
 
     int32_t cnt = 0;
@@ -75,13 +86,17 @@ void TestFeaturePointMatcher() {
     }
     ReportInfo("Match features by descriptors, tracked features number is " << cnt << " / " << status.size());
 
-    // Show match result.
-    Visualizor2D::ShowImageWithTrackedFeatures("Features matched by Brief descriptor", ref_image, cur_image, ref_features, matched_cur_features, status,
-                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked));
+    RgbImage match_result_image;
+    Visualizor2D::DrawImageWithTrackedFeatures(ref_image, cur_image, ref_features, matched_cur_features, status,
+                                               static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked), RgbColor::kCyan, RgbColor::kRed,
+                                               match_result_image);
+    Visualizor2D::ShowImage("Features matched by Brief descriptor", match_result_image);
     Visualizor2D::WaitKey(0);
 }
 
 int main(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
     TestFeaturePointMatcher();
     return 0;
 }

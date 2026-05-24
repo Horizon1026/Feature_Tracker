@@ -14,6 +14,9 @@ endif()
 if( NOT TARGET lib_slam_utility_log )
     add_subdirectory( ${SLAM_UTILITY_PATH}/src/log ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_log )
 endif()
+if( NOT TARGET lib_image )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/src/data_type/image ${PROJECT_SOURCE_DIR}/build/lib_image )
+endif()
 
 add_library( lib_descriptor_matcher ${AUX_SRC_DESCRIPTOR_MATCHER} )
 target_include_directories( lib_descriptor_matcher PUBLIC
@@ -25,4 +28,5 @@ target_link_libraries( lib_descriptor_matcher
     lib_slam_utility_math
     lib_slam_utility_operate
     lib_slam_utility_log
+    lib_image
 )
