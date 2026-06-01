@@ -93,6 +93,20 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
         Vec2 bias = Vec2::Zero();
         BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
 
+        // Check minimum eigenvalue of Hessian to avoid ill-conditioned tracking.
+        const float trace = hessian(0, 0) + hessian(1, 1);
+        const float det = hessian(0, 0) * hessian(1, 1) - hessian(0, 1) * hessian(1, 0);
+        const float discriminant = trace * trace - 4.0f * det;
+        if (discriminant < kZeroFloat) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+                    const float min_eig = (trace - std::sqrt(discriminant)) / 2.0f;
+        if (min_eig < options().kMinEigenvalueThreshold) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+
         // Solve hessian * v = bias.
         Vec2 v = hessian.ldlt().solve(bias);
         if (Eigen::isnan(v.array()).any()) {

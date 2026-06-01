@@ -103,17 +103,27 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image, const GrayI
         Vec3 bias = Vec3::Zero();
         BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, R_cr, t_cr, hessian, bias) == 0);
 
-        // Solve hessian * v = bias.
-        const Vec3 v = hessian.ldlt().solve(bias);
+        // Apply diagonal regularization for numerical stability.
+        hessian.diagonal().array() += options().kHessianRegularizationLambda;
+
+        // Solve hessian * v = bias using LDLT.
+        const Eigen::LDLT<Mat3> ldlt_solver(hessian);
+        if (ldlt_solver.info() != Eigen::Success) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+        const Vec3 v = ldlt_solver.solve(bias);
         if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
-        // Update rotation and translation.
-        delta_R << 1, -v.x(), v.x(), 1;
-        R_cr *= delta_R;
-        R_cr /= R_cr.col(0).norm();
+        // Update rotation via SO(2) exponential map, and translation.
+        const float theta = v.x();
+        const float cos_theta = std::cos(theta);
+        const float sin_theta = std::sin(theta);
+        delta_R << cos_theta, -sin_theta, sin_theta, cos_theta;
+        R_cr = R_cr * delta_R;
         t_cr += v.tail<2>();
 
         // Check converge status.
@@ -182,6 +192,10 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
     }
     ref_average_value /= static_cast<float>(num_of_valid_pixel);
     cur_average_value /= static_cast<float>(num_of_valid_pixel);
+
+    // Guard against division by zero in luminance normalization.
+    ref_average_value = std::max(ref_average_value, options().kLuminanceNormalizationEpsilon);
+    cur_average_value = std::max(cur_average_value, options().kLuminanceNormalizationEpsilon);
 
     // Compute jacobian of se2.
     Mat2x3 jacobian_se2 = Mat2x3::Zero();

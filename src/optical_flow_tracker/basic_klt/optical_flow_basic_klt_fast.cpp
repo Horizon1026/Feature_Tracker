@@ -25,6 +25,18 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
     PrecomputeJacobianAndHessian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(),
                                  all_dy_in_ref_patch(), hessian);
 
+    // Check minimum eigenvalue of Hessian to avoid ill-conditioned tracking.
+    const float trace = hessian(0, 0) + hessian(1, 1);
+    const float det = hessian(0, 0) * hessian(1, 1) - hessian(0, 1) * hessian(1, 0);
+    const float discriminant = trace * trace - 4.0f * det;
+    if (discriminant >= kZeroFloat) {
+        const float min_eig = (trace - std::sqrt(discriminant)) / 2.0f;
+        if (min_eig < options().kMinEigenvalueThreshold) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            return;
+        }
+    }
+
     // Compute incremental by iteration.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
     float last_squared_step = INFINITY;
@@ -61,7 +73,7 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
     }
 }
 
-void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid,
+void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid,
                                                        int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols, std::vector<float> &all_dx_in_ref_patch,
                                                        std::vector<float> &all_dy_in_ref_patch, Mat2 &hessian) {
     const int32_t patch_rows = ex_ref_patch_rows - 2;
@@ -99,7 +111,7 @@ void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> 
 }
 
 int32_t OpticalFlowBasicKlt::ComputeBias(const GrayImage &cur_image, const Vec2 &cur_pixel_uv, const std::vector<float> &ex_ref_patch,
-                                         const std::vector<bool> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
+                                         const std::vector<uint8_t> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
                                          const std::vector<float> &all_dx_in_ref_patch, const std::vector<float> &all_dy_in_ref_patch, Vec2 &bias) {
     const int32_t patch_rows = ex_ref_patch_rows - 2;
     const int32_t patch_cols = ex_ref_patch_cols - 2;

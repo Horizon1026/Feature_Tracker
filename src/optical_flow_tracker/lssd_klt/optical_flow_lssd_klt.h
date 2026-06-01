@@ -35,14 +35,14 @@ private:
 
     // Support for fast method.
     void TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Mat2 &R_cr, Vec2 &t_cr, uint8_t &status);
-    void PrecomputeJacobian(const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows,
+    void PrecomputeJacobian(const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows,
                             int32_t ex_ref_patch_cols, std::vector<float> &all_dx_in_ref_patch, std::vector<float> &all_dy_in_ref_patch);
     uint32_t ExtractPatchInCurrentImage(const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Mat2 &R_cr, const Vec2 &t_cr, int32_t cur_patch_rows,
-                                        int32_t cur_patch_cols, std::vector<float> &cur_patch, std::vector<bool> &cur_patch_pixel_valid);
+                                        int32_t cur_patch_cols, std::vector<float> &cur_patch, std::vector<uint8_t> &cur_patch_pixel_valid);
     int32_t ComputeHessianAndBias(const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Mat2 &R_cr, const Vec2 &t_cr,
-                                  const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows,
+                                  const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid, int32_t ex_ref_patch_rows,
                                   int32_t ex_ref_patch_cols, const std::vector<float> &all_dx_in_ref_patch, const std::vector<float> &all_dy_in_ref_patch,
-                                  const std::vector<float> &cur_patch, const std::vector<bool> &cur_patch_pixel_valid, Mat3 &hessian, Vec3 &bias);
+                                  const std::vector<float> &cur_patch, const std::vector<uint8_t> &cur_patch_pixel_valid, Mat3 &hessian, Vec3 &bias);
 
     // Support for Sse method.
 

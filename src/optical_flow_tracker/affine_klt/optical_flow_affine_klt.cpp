@@ -99,8 +99,16 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
         // Construct incremental function. Statis average residual and count valid pixel.
         BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, affine, hessian, bias) == 0);
 
+        // Apply diagonal regularization for numerical stability of the 6x6 system.
+        hessian.diagonal().array() += options().kHessianRegularizationLambda;
+
         // Solve hessian * z = bias.
-        const Vec6 z = hessian.ldlt().solve(bias);
+        const Eigen::LDLT<Mat6> ldlt_solver(hessian);
+        if (ldlt_solver.info() != Eigen::Success) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+        const Vec6 z = ldlt_solver.solve(bias);
         const Vec2 v = z.head<2>() * cur_pixel_uv.x() + z.segment<2>(2) * cur_pixel_uv.y() + z.tail<2>();
 
         if (std::isnan(v(0)) || std::isnan(v(1))) {

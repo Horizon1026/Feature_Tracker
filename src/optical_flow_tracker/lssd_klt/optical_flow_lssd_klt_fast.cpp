@@ -32,6 +32,8 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const G
             }
         }
         ref_average_value /= static_cast<float>(valid_pixel_num);
+        // Guard against division by zero in luminance normalization.
+        ref_average_value = std::max(ref_average_value, options().kLuminanceNormalizationEpsilon);
 
         // Scale dx, dy and pixel value in reference patch.
         for (auto &dx: all_dx_in_ref_patch()) {
@@ -70,6 +72,8 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const G
                 }
             }
             cur_average_value /= static_cast<float>(valid_pixel_num);
+            // Guard against division by zero in luminance normalization.
+            cur_average_value = std::max(cur_average_value, options().kLuminanceNormalizationEpsilon);
 
             // Scale pixel value in current patch.
             for (auto &value: cur_patch()) {
@@ -84,17 +88,27 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const G
                                        ex_ref_patch_cols(), all_dx_in_ref_patch(), all_dy_in_ref_patch(), cur_patch(), cur_patch_pixel_valid(), hessian,
                                        bias) == 0);
 
-        // Solve incremental function.
-        const Vec3 v = hessian.ldlt().solve(bias);
+        // Apply diagonal regularization for numerical stability.
+        hessian.diagonal().array() += options().kHessianRegularizationLambda;
+
+        // Solve incremental function using LDLT.
+        const Eigen::LDLT<Mat3> ldlt_solver(hessian);
+        if (ldlt_solver.info() != Eigen::Success) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+        const Vec3 v = ldlt_solver.solve(bias);
         if (Eigen::isnan(v.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
-        // Update rotation and translation.
-        delta_R << 1, -v.x(), v.x(), 1;
-        R_cr *= delta_R;
-        R_cr /= R_cr.col(0).norm();
+        // Update rotation via SO(2) exponential map, and translation.
+        const float theta = v.x();
+        const float cos_theta = std::cos(theta);
+        const float sin_theta = std::sin(theta);
+        delta_R << cos_theta, -sin_theta, sin_theta, cos_theta;
+        R_cr = R_cr * delta_R;
         t_cr += v.tail<2>();
 
         // Check if this step is converged.
@@ -113,7 +127,7 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const G
     }
 }
 
-void OpticalFlowLssdKlt::PrecomputeJacobian(const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid,
+void OpticalFlowLssdKlt::PrecomputeJacobian(const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid,
                                             int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols, std::vector<float> &all_dx_in_ref_patch,
                                             std::vector<float> &all_dy_in_ref_patch) {
     const int32_t patch_rows = ex_ref_patch_rows - 2;
@@ -144,7 +158,7 @@ void OpticalFlowLssdKlt::PrecomputeJacobian(const std::vector<float> &ex_ref_pat
 
 uint32_t OpticalFlowLssdKlt::ExtractPatchInCurrentImage(const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Mat2 &R_cr, const Vec2 &t_cr,
                                                         int32_t cur_patch_rows, int32_t cur_patch_cols, std::vector<float> &cur_patch,
-                                                        std::vector<bool> &cur_patch_pixel_valid) {
+                                                        std::vector<uint8_t> &cur_patch_pixel_valid) {
     // Check if this patch inside of current image.
     const Vec2 cur_pixel_uv = R_cr * ref_pixel_uv + t_cr;
     const int32_t min_cur_pixel_row = static_cast<int32_t>(cur_pixel_uv.y()) - cur_patch_rows;
@@ -166,11 +180,11 @@ uint32_t OpticalFlowLssdKlt::ExtractPatchInCurrentImage(const GrayImage &cur_ima
 
                 if (cur_image.GetPixelValue(row_j, col_j, &temp_value)) {
                     cur_patch.emplace_back(temp_value);
-                    cur_patch_pixel_valid.emplace_back(true);
+                    cur_patch_pixel_valid.emplace_back(1);
                     ++valid_pixel_cnt;
                 } else {
                     cur_patch.emplace_back(0.0f);
-                    cur_patch_pixel_valid.emplace_back(false);
+                    cur_patch_pixel_valid.emplace_back(0);
                 }
             }
         }
@@ -187,7 +201,7 @@ uint32_t OpticalFlowLssdKlt::ExtractPatchInCurrentImage(const GrayImage &cur_ima
                 const float col_j = cur_patch_pixel_uv.x();
 
                 cur_patch.emplace_back(cur_image.GetPixelValueNoCheck(row_j, col_j));
-                cur_patch_pixel_valid.emplace_back(true);
+                cur_patch_pixel_valid.emplace_back(1);
             }
         }
         return cur_patch.size();
@@ -195,10 +209,10 @@ uint32_t OpticalFlowLssdKlt::ExtractPatchInCurrentImage(const GrayImage &cur_ima
 }
 
 int32_t OpticalFlowLssdKlt::ComputeHessianAndBias(const GrayImage &cur_image, const Vec2 &ref_pixel_uv, const Mat2 &R_cr, const Vec2 &t_cr,
-                                                  const std::vector<float> &ex_ref_patch, const std::vector<bool> &ex_ref_patch_pixel_valid,
+                                                  const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid,
                                                   int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols, const std::vector<float> &all_dx_in_ref_patch,
                                                   const std::vector<float> &all_dy_in_ref_patch, const std::vector<float> &cur_patch,
-                                                  const std::vector<bool> &cur_patch_pixel_valid, Mat3 &hessian, Vec3 &bias) {
+                                                  const std::vector<uint8_t> &cur_patch_pixel_valid, Mat3 &hessian, Vec3 &bias) {
     int32_t num_of_valid_pixel = 0;
     Mat1x3 jacobian = Mat1x3::Zero();
 

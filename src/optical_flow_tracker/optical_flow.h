@@ -24,6 +24,9 @@ struct OpticalFlowOptions {
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
     float kMaxConvergeStep = 4e-2f;
+    float kMinEigenvalueThreshold = 1e-4f;
+    float kHessianRegularizationLambda = 1e-6f;
+    float kLuminanceNormalizationEpsilon = 1e-6f;
     OpticalFlowMethod kMethod = OpticalFlowMethod::kFast;
 };
 
@@ -43,16 +46,16 @@ public:
 
     // Support for all subclass's fast method.
     uint32_t ExtractExtendPatchInReferenceImage(const GrayImage &ref_image, const Vec2 &ref_pixel_uv, int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
-                                                std::vector<float> &ex_ref_patch, std::vector<bool> &ex_ref_patch_pixel_valid);
+                                                std::vector<float> &ex_ref_patch, std::vector<uint8_t> &ex_ref_patch_pixel_valid);
 
     // Reference for member variables.
     OpticalFlowOptions &options() { return options_; }
     std::vector<float> &ex_ref_patch() { return ex_ref_patch_; }
-    std::vector<bool> &ex_ref_patch_pixel_valid() { return ex_ref_patch_pixel_valid_; }
+    std::vector<uint8_t> &ex_ref_patch_pixel_valid() { return ex_ref_patch_pixel_valid_; }
     std::vector<float> &all_dx_in_ref_patch() { return all_dx_in_ref_patch_; }
     std::vector<float> &all_dy_in_ref_patch() { return all_dy_in_ref_patch_; }
     std::vector<float> &cur_patch() { return cur_patch_; }
-    std::vector<bool> &cur_patch_pixel_valid() { return cur_patch_pixel_valid_; }
+    std::vector<uint8_t> &cur_patch_pixel_valid() { return cur_patch_pixel_valid_; }
     std::vector<float> &all_dx_in_cur_patch() { return all_dx_in_cur_patch_; }
     std::vector<float> &all_dy_in_cur_patch() { return all_dy_in_cur_patch_; }
     int32_t &patch_rows() { return patch_rows_; }
@@ -65,11 +68,11 @@ public:
     // Const reference for member variables.
     const OpticalFlowOptions &options() const { return options_; }
     const std::vector<float> &ex_ref_patch() const { return ex_ref_patch_; }
-    const std::vector<bool> &ex_ref_patch_pixel_valid() const { return ex_ref_patch_pixel_valid_; }
+    const std::vector<uint8_t> &ex_ref_patch_pixel_valid() const { return ex_ref_patch_pixel_valid_; }
     const std::vector<float> &all_dx_in_ref_patch() const { return all_dx_in_ref_patch_; }
     const std::vector<float> &all_dy_in_ref_patch() const { return all_dy_in_ref_patch_; }
     const std::vector<float> &cur_patch() const { return cur_patch_; }
-    const std::vector<bool> &cur_patch_pixel_valid() const { return cur_patch_pixel_valid_; }
+    const std::vector<uint8_t> &cur_patch_pixel_valid() const { return cur_patch_pixel_valid_; }
     const std::vector<float> &all_dx_in_cur_patch() const { return all_dx_in_cur_patch_; }
     const std::vector<float> &all_dy_in_cur_patch() const { return all_dy_in_cur_patch_; }
     const int32_t &patch_rows() const { return patch_rows_; }
@@ -92,13 +95,13 @@ private:
 
     // Variables of reference patch supporting for fast method.
     std::vector<float> ex_ref_patch_;  // Extended patch with bound size 1.
-    std::vector<bool> ex_ref_patch_pixel_valid_;
+    std::vector<uint8_t> ex_ref_patch_pixel_valid_;
     std::vector<float> all_dx_in_ref_patch_;
     std::vector<float> all_dy_in_ref_patch_;
 
     // Variables of current patch supporting for fast method.
     std::vector<float> cur_patch_;
-    std::vector<bool> cur_patch_pixel_valid_;
+    std::vector<uint8_t> cur_patch_pixel_valid_;
     std::vector<float> all_dx_in_cur_patch_;
     std::vector<float> all_dy_in_cur_patch_;
 
