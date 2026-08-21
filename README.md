@@ -15,18 +15,21 @@ Intergration of some simple sparse feature track method.
     - [x] Direct
     - [x] Inverse
     - [x] Fast
-- [ ] Dense optical flow tracker
+- [x] Dense optical flow tracker
   - [x] RAFT
-  - [ ] Farneback
+  - [x] Farneback
 - [x] Direct method tracker
   - [x] Direct
   - [x] Inverse
-  - [ ] Fast
+  - [x] Fast
 - [x] Descripter matcher
   - [x] Nearby matching
   - [x] Force matching
-- [ ] NN feature matcher
-  - [ ] Lightglue - superpoint
+  - [x] Hungarian matching
+  - [x] Sinkhorn matching
+- [x] NN feature matcher
+  - [x] Lightglue - superpoint
+  - [x] Lightglue - disk
 
 # Dependence (C++)
 
@@ -34,6 +37,7 @@ Intergration of some simple sparse feature track method.
 - Slam_Utility
 - Feature_Detector
 - Visualizor2D
+- Sensor_Model
 
 ### 第三方仓库依赖
 - Eigen3 (>= 3.3.7)（`sudo apt install libeigen3-dev`）
