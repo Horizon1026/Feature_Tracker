@@ -1,3 +1,11 @@
+#include "descriptor_matcher.h"
+
+#include "nn_feature_point_detector.h"
+#include "slam_log_reporter.h"
+#include "slam_memory.h"
+#include "tick_tock.h"
+#include "visualizor_2d.h"
+
 #include "cstdint"
 #include "ctime"
 #include "iostream"
@@ -5,14 +13,6 @@
 #include "string"
 #include "thread"
 #include "vector"
-
-#include "descriptor_matcher.h"
-#include "nn_feature_point_detector.h"
-
-#include "slam_log_reporter.h"
-#include "slam_memory.h"
-#include "tick_tock.h"
-#include "visualizor_2d.h"
 
 using namespace slam_visualizor;
 using namespace feature_detector;

@@ -1,9 +1,10 @@
 #ifndef _DESCRIPTOR_MATCHER_H_
 #define _DESCRIPTOR_MATCHER_H_
 
+#include "feature_tracker.h"
+
 #include "basic_type.h"
 #include "datatype_image.h"
-#include "feature_tracker.h"
 #include "slam_basic_math.h"
 #include "slam_operations.h"
 

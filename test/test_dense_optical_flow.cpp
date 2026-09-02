@@ -1,3 +1,5 @@
+#include "dense_optical_flow.h"
+
 #include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
@@ -5,9 +7,7 @@
 #include "visualizor_2d.h"
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "dense_optical_flow.h"
 #include "image_painter.h"
-
 #include "enable_stack_backward.h"
 
 using namespace slam_visualizor;

@@ -1,21 +1,20 @@
+#include "optical_flow_affine_klt.h"
+#include "optical_flow_basic_klt.h"
+#include "optical_flow_lssd_klt.h"
+
+#include "slam_log_reporter.h"
+#include "slam_memory.h"
+#include "tick_tock.h"
+#include "visualizor_2d.h"
+#include "feature_point_detector.h"
+#include "feature_point_harris_detector.h"
+
 #include "cstdint"
 #include "ctime"
 #include "iostream"
 #include "string"
 #include "thread"
 #include "vector"
-
-#include "slam_log_reporter.h"
-#include "slam_memory.h"
-#include "tick_tock.h"
-#include "visualizor_2d.h"
-
-#include "feature_point_detector.h"
-#include "feature_point_harris_detector.h"
-
-#include "optical_flow_affine_klt.h"
-#include "optical_flow_basic_klt.h"
-#include "optical_flow_lssd_klt.h"
 
 using namespace slam_visualizor;
 

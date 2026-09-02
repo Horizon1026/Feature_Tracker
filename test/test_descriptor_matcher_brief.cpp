@@ -1,15 +1,15 @@
-#include "cstdint"
-#include "string"
-#include "vector"
+#include "descriptor_matcher.h"
 
 #include "descriptor_brief.h"
-#include "descriptor_matcher.h"
 #include "feature_point_detector.h"
 #include "feature_point_harris_detector.h"
-
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 #include "visualizor_2d.h"
+
+#include "cstdint"
+#include "string"
+#include "vector"
 
 using namespace slam_visualizor;
 

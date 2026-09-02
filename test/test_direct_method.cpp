@@ -1,9 +1,11 @@
 #include "direct_method_tracker.h"
-#include "iostream"
+
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
 #include "tick_tock.h"
 #include "visualizor_2d.h"
+
+#include "iostream"
 
 using namespace slam_visualizor;
 

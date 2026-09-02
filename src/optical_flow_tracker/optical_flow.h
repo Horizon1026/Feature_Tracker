@@ -1,10 +1,11 @@
 #ifndef _OPTICAL_FLOW_TRACKER_H_
 #define _OPTICAL_FLOW_TRACKER_H_
 
+#include "feature_tracker.h"
+
 #include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
-#include "feature_tracker.h"
 #include "slam_basic_math.h"
 
 namespace feature_tracker {

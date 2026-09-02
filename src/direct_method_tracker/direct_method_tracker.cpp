@@ -1,4 +1,5 @@
 #include "direct_method_tracker.h"
+
 #include "camera_pinhole.h"
 #include "slam_log_reporter.h"
 #include "slam_operations.h"

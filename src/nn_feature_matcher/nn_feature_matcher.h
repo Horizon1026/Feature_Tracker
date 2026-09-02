@@ -1,8 +1,9 @@
 #ifndef _NN_FEATURE_MATCHER_H_
 #define _NN_FEATURE_MATCHER_H_
 
-#include "basic_type.h"
 #include "feature_tracker.h"
+
+#include "basic_type.h"
 #include "onnx_run_time.h"
 #include "slam_basic_math.h"
 #include "slam_operations.h"
