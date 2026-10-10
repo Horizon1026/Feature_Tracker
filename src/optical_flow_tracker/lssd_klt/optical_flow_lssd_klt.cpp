@@ -84,6 +84,8 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image, const Gray
                 break;
         }
 
+        // Sync tracked result.
+        cur_pixel_uv[feature_id] = t_cr + R_cr * ref_pixel_uv[feature_id];
         // If feature is outside, mark it.
         const auto &feature = cur_pixel_uv[feature_id];
         if (feature.x() < 0 || feature.x() > cur_image.cols() - 1 || feature.y() < 0 || feature.y() > cur_image.rows() - 1) {
@@ -96,8 +98,10 @@ bool OpticalFlowLssdKlt::TrackSingleLevel(const GrayImage &ref_image, const Gray
 
 void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Mat2 &R_cr, Vec2 &t_cr,
                                          uint8_t &status) {
-    Mat2 delta_R;
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
 
+    Mat2 delta_R = Mat2::Identity();
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create hessian * v = bias
         Mat3 hessian = Mat3::Zero();
@@ -128,7 +132,7 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image, const GrayI
         t_cr += v.tail<2>();
 
         // Check converge status.
-        if (v.squaredNorm() < options().kMaxConvergeStep) {
+        if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -221,7 +225,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                     temp_value[4] = ref_image.GetPixelValueNoCheck(row_i, col_i);
                     temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
 
-                    const Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / ref_average_value;
+                    const Mat1x2 jacobian_pixel = 0.5f * Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / ref_average_value;
                     jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                     const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
                     const Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);
@@ -249,7 +253,7 @@ int32_t OpticalFlowLssdKlt::ConstructIncrementalFunction(const GrayImage &ref_im
                     temp_value[4] = ref_image.GetPixelValueNoCheck(row_i, col_i);
                     temp_value[5] = cur_image.GetPixelValueNoCheck(row_j, col_j);
 
-                    const Mat1x2 jacobian_pixel = Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / cur_average_value;
+                    const Mat1x2 jacobian_pixel = 0.5f * Mat1x2(temp_value[1] - temp_value[0], temp_value[3] - temp_value[2]) / cur_average_value;
                     jacobian_se2.block<2, 1>(0, 0) = R_cr * Vec2(-row_i, col_i);
                     const Mat1x3 jacobian = jacobian_pixel * jacobian_se2;
                     const Vec1 residual = Vec1(temp_value[5] / cur_average_value - temp_value[4] / ref_average_value);

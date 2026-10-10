@@ -7,6 +7,9 @@ namespace feature_tracker {
 
 void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv,
                                                Mat2 &affine, uint8_t &status) {
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+
     // Confirm extended patch size. Extract it from reference image.
     ex_ref_patch().clear();
     ex_ref_patch_pixel_valid().clear();
@@ -70,7 +73,7 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const
             ++large_step_cnt;
             BREAK_IF(large_step_cnt >= options().kMaxToleranceLargeStep);
         }
-        if (squared_step < options().kMaxConvergeStep) {
+        if (squared_step < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -95,8 +98,8 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
             if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] && ex_ref_patch_pixel_valid[ex_index_top] &&
                 ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
-                const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
-                const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
+                const float dx = 0.5f * (ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left]);
+                const float dy = 0.5f * (ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top]);
                 all_dx_in_ref_patch.emplace_back(dx);
                 all_dy_in_ref_patch.emplace_back(dy);
 
@@ -138,7 +141,7 @@ void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float>
 
     hessian(1, 2) = hessian(0, 3);
     hessian(1, 4) = hessian(0, 5);
-    hessian(3, 4) = hessian(2, 3);
+    hessian(3, 4) = hessian(2, 5);
     for (uint32_t i = 0; i < 6; ++i) {
         for (uint32_t j = i + 1; j < 6; ++j) {
             hessian(j, i) = hessian(i, j);

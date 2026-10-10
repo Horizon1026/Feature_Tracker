@@ -88,6 +88,9 @@ bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image, const Gra
 
 void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv,
                                           uint8_t &status) {
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create hessian * v = bias
         Mat2 hessian = Mat2::Zero();
@@ -95,14 +98,7 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
         BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, hessian, bias) == 0);
 
         // Check minimum eigenvalue of Hessian to avoid ill-conditioned tracking.
-        const float trace = hessian(0, 0) + hessian(1, 1);
-        const float det = hessian(0, 0) * hessian(1, 1) - hessian(0, 1) * hessian(1, 0);
-        const float discriminant = trace * trace - 4.0f * det;
-        if (discriminant < kZeroFloat) {
-            status = static_cast<uint8_t>(TrackStatus::kNumericError);
-            break;
-        }
-                    const float min_eig = (trace - std::sqrt(discriminant)) / 2.0f;
+        const float min_eig = Utility::MinEigenValue(hessian);
         if (min_eig < options().kMinEigenvalueThreshold) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
@@ -123,7 +119,7 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
             status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
-        if (v.squaredNorm() < options().kMaxConvergeStep) {
+        if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -147,8 +143,8 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) && ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) && ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
+                    const float fx = 0.5f * (temp_value[1] - temp_value[0]);
+                    const float fy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float ft = temp_value[5] - temp_value[4];
 
                     hessian(0, 0) += fx * fx;
@@ -174,8 +170,8 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
                 if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) && cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
                     cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) && cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float fx = temp_value[1] - temp_value[0];
-                    const float fy = temp_value[3] - temp_value[2];
+                    const float fx = 0.5f * (temp_value[1] - temp_value[0]);
+                    const float fy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float ft = temp_value[5] - temp_value[4];
 
                     hessian(0, 0) += fx * fx;

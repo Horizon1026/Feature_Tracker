@@ -7,6 +7,9 @@ namespace feature_tracker {
 
 void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Mat2 &R_cr, Vec2 &t_cr,
                                              uint8_t &status) {
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+
     // Confirm extended patch size. Extract it from reference image.
     ex_ref_patch().clear();
     ex_ref_patch_pixel_valid().clear();
@@ -121,7 +124,7 @@ void OpticalFlowLssdKlt::TrackOneFeatureFast(const GrayImage &ref_image, const G
             ++large_step_cnt;
             BREAK_IF(large_step_cnt >= options().kMaxToleranceLargeStep);
         }
-        if (squared_step < options().kMaxConvergeStep) {
+        if (squared_step < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -145,8 +148,8 @@ void OpticalFlowLssdKlt::PrecomputeJacobian(const std::vector<float> &ex_ref_pat
             if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] && ex_ref_patch_pixel_valid[ex_index_top] &&
                 ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
-                const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
-                const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
+                const float dx = 0.5f * (ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left]);
+                const float dy = 0.5f * (ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top]);
                 all_dx_in_ref_patch.emplace_back(dx);
                 all_dy_in_ref_patch.emplace_back(dy);
             } else {

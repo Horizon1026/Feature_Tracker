@@ -93,9 +93,11 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image, const Gr
 
 void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv, Mat2 &affine,
                                            uint8_t &status) {
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+
     Mat6 hessian = Mat6::Zero();
     Vec6 bias = Vec6::Zero();
-
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.
         BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, affine, hessian, bias) == 0);
@@ -130,7 +132,7 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
             status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
-        if (v.squaredNorm() < options().kMaxConvergeStep) {
+        if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -159,8 +161,8 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 if (cur_image.GetPixelValue(row_j, col_j - 1.0f, &temp_value[0]) && cur_image.GetPixelValue(row_j, col_j + 1.0f, &temp_value[1]) &&
                     cur_image.GetPixelValue(row_j - 1.0f, col_j, &temp_value[2]) && cur_image.GetPixelValue(row_j + 1.0f, col_j, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float dx = temp_value[1] - temp_value[0];
-                    const float dy = temp_value[3] - temp_value[2];
+                    const float dx = 0.5f * (temp_value[1] - temp_value[0]);
+                    const float dy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
@@ -189,7 +191,7 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     hessian(2, 4) += y * dxdx;
                     hessian(2, 5) += y * dxdy;
                     hessian(3, 3) += yy * dydy;
-                    hessian(3, 4) += yy * dxdy;
+                    hessian(3, 4) += y * dxdy;
                     hessian(3, 5) += y * dydy;
                     hessian(4, 4) += dxdx;
                     hessian(4, 5) += dxdy;
@@ -221,8 +223,8 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                 if (ref_image.GetPixelValue(row_i, col_i - 1.0f, &temp_value[0]) && ref_image.GetPixelValue(row_i, col_i + 1.0f, &temp_value[1]) &&
                     ref_image.GetPixelValue(row_i - 1.0f, col_i, &temp_value[2]) && ref_image.GetPixelValue(row_i + 1.0f, col_i, &temp_value[3]) &&
                     ref_image.GetPixelValue(row_i, col_i, &temp_value[4]) && cur_image.GetPixelValue(row_j, col_j, &temp_value[5])) {
-                    const float dx = temp_value[1] - temp_value[0];
-                    const float dy = temp_value[3] - temp_value[2];
+                    const float dx = 0.5f * (temp_value[1] - temp_value[0]);
+                    const float dy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float dt = temp_value[5] - temp_value[4];
 
                     const float &x = col_j;
@@ -251,7 +253,7 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     hessian(2, 4) += y * dxdx;
                     hessian(2, 5) += y * dxdy;
                     hessian(3, 3) += yy * dydy;
-                    hessian(3, 4) += yy * dxdy;
+                    hessian(3, 4) += y * dxdy;
                     hessian(3, 5) += y * dydy;
                     hessian(4, 4) += dxdx;
                     hessian(4, 5) += dxdy;

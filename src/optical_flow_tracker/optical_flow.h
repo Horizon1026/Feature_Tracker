@@ -24,7 +24,7 @@ struct OpticalFlowOptions {
     uint32_t kMaxToleranceLargeStep = 3;
     int32_t kPatchRowHalfSize = 6;
     int32_t kPatchColHalfSize = 6;
-    float kMaxConvergeStep = 4e-2f;
+    float kMaxSquaredConvergeStep = 4e-4f;
     float kMinEigenvalueThreshold = 1e-4f;
     float kHessianRegularizationLambda = 1e-6f;
     float kLuminanceNormalizationEpsilon = 1e-6f;

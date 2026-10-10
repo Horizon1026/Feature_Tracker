@@ -7,6 +7,9 @@ namespace feature_tracker {
 
 void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv, Vec2 &cur_pixel_uv,
                                               uint8_t &status) {
+    // Clear status firstly, then try to track.
+    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
+
     // Confirm extended patch size. Extract it from reference image.
     ex_ref_patch().clear();
     ex_ref_patch_pixel_valid().clear();
@@ -27,15 +30,10 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
                                  all_dy_in_ref_patch(), hessian);
 
     // Check minimum eigenvalue of Hessian to avoid ill-conditioned tracking.
-    const float trace = hessian(0, 0) + hessian(1, 1);
-    const float det = hessian(0, 0) * hessian(1, 1) - hessian(0, 1) * hessian(1, 0);
-    const float discriminant = trace * trace - 4.0f * det;
-    if (discriminant >= kZeroFloat) {
-        const float min_eig = (trace - std::sqrt(discriminant)) / 2.0f;
-        if (min_eig < options().kMinEigenvalueThreshold) {
-            status = static_cast<uint8_t>(TrackStatus::kNumericError);
-            return;
-        }
+    const float min_eig = Utility::MinEigenValue(hessian);
+    if (min_eig < options().kMinEigenvalueThreshold) {
+        status = static_cast<uint8_t>(TrackStatus::kNumericError);
+        return;
     }
 
     // Compute incremental by iteration.
@@ -67,7 +65,7 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
             ++large_step_cnt;
             BREAK_IF(large_step_cnt >= options().kMaxToleranceLargeStep);
         }
-        if (squared_step < options().kMaxConvergeStep) {
+        if (squared_step < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -92,8 +90,8 @@ void OpticalFlowBasicKlt::PrecomputeJacobianAndHessian(const std::vector<float> 
             if (ex_ref_patch_pixel_valid[ex_index_left] && ex_ref_patch_pixel_valid[ex_index_right] && ex_ref_patch_pixel_valid[ex_index_top] &&
                 ex_ref_patch_pixel_valid[ex_index_bottom]) {
                 // Compute dx and dy for jacobian.
-                const float dx = ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left];
-                const float dy = ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top];
+                const float dx = 0.5f * (ex_ref_patch[ex_index_right] - ex_ref_patch[ex_index_left]);
+                const float dy = 0.5f * (ex_ref_patch[ex_index_bottom] - ex_ref_patch[ex_index_top]);
                 all_dx_in_ref_patch.emplace_back(dx);
                 all_dy_in_ref_patch.emplace_back(dy);
 

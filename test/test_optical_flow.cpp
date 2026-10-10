@@ -24,11 +24,11 @@ namespace {
 constexpr int32_t kMaxNumberOfFeaturesToTrack = 300;
 constexpr int32_t kHalfPatchSize = 6;
 constexpr feature_tracker::OpticalFlowMethod kDefaultMethod = feature_tracker::OpticalFlowMethod::kFast;
-constexpr int32_t kMaxPyramidLevel = 4;
+constexpr int32_t kMaxPyramidLevel = 5;
 }  // namespace
 
-std::string test_ref_image_file_name = "../example/optical_flow/ref_image.png";
-std::string test_cur_image_file_name = "../example/optical_flow/cur_image.png";
+std::string test_ref_image_file_name = "../example/optical_flow/synthetic_ref.png";
+std::string test_cur_image_file_name = "../example/optical_flow/synthetic_cur.png";
 
 void DetectFeatures(const GrayImage &image, std::vector<Vec2> &pixel_uv) {
     feature_detector::FeaturePointHarrisDetector detector;
