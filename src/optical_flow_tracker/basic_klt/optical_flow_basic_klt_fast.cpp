@@ -29,7 +29,7 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
     PrecomputeJacobianAndHessian(ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(), all_dx_in_ref_patch(),
                                  all_dy_in_ref_patch(), hessian);
 
-    // Check minimum eigenvalue of Hessian to avoid ill-conditioned tracking.
+    // Validate observablility.
     const float min_eig = Utility::MinEigenValue(hessian);
     if (min_eig < options().kMinEigenvalueThreshold) {
         status = static_cast<uint8_t>(TrackStatus::kNumericError);
@@ -47,17 +47,17 @@ void OpticalFlowBasicKlt::TrackOneFeatureFast(const GrayImage &ref_image, const 
                              all_dx_in_ref_patch(), all_dy_in_ref_patch(), bias) == 0);
 
         // Solve incremental function.
-        const Vec2 v = hessian.ldlt().solve(bias);
-        if (Eigen::isnan(v.array()).any()) {
+        const Vec2 dx = hessian.ldlt().solve(bias);
+        if (Eigen::isnan(dx.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
         // Update cur_pixel_uv.
-        cur_pixel_uv += v;
+        cur_pixel_uv += dx;
 
         // Check if this step is converged.
-        const float squared_step = v.squaredNorm();
+        const float squared_step = dx.squaredNorm();
         if (squared_step < last_squared_step) {
             last_squared_step = squared_step;
             large_step_cnt = 0;

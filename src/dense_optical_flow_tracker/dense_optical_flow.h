@@ -26,7 +26,7 @@ public:
     bool Track(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, std::array<Mat, 2> &flow_rc);
     bool Track(const GrayImage &ref_image, const GrayImage &cur_image, std::array<Mat, 2> &flow_rc);
 
-    std::string OpticalFlowMethodName() const { return "Gunnar Farneback"; }
+    std::string MethodName() const { return "Gunnar Farneback"; }
 
     // Reference for parameters.
     Options &options() { return options_; }

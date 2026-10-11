@@ -19,7 +19,7 @@ bool OpticalFlowAffineKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, c
         Vec2 scaled_cur_pixel_uv = cur_pixel_uv[feature_id] / scale;
 
         // Define affine transform matrix.
-        Mat2 affine = Mat2::Identity();
+        Mat2 affine = sub_options_.kPredictionAffine;
 
         for (int32_t level_idx = ref_pyramid.level() - 1; level_idx > -1; --level_idx) {
             const GrayImage &ref_image = ref_pyramid.GetImageConst(level_idx);
@@ -27,11 +27,11 @@ bool OpticalFlowAffineKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, c
 
             // Track this feature in one pyramid level.
             switch (options().kMethod) {
-                case OpticalFlowMethod::kInverse:
-                case OpticalFlowMethod::kDirect:
+                case OpticalFlow::Method::kInverse:
+                case OpticalFlow::Method::kDirect:
                     TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, affine, status[feature_id]);
                     break;
-                case OpticalFlowMethod::kFast:
+                case OpticalFlow::Method::kFast:
                 default:
                     TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, affine, status[feature_id]);
                     break;
@@ -68,14 +68,14 @@ bool OpticalFlowAffineKlt::TrackSingleLevel(const GrayImage &ref_image, const Gr
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
         // Define affine transform matrix.
-        Mat2 affine = predict_affine_;
+        Mat2 affine = sub_options_.kPredictionAffine;
 
         switch (options().kMethod) {
-            case OpticalFlowMethod::kInverse:
-            case OpticalFlowMethod::kDirect:
+            case OpticalFlow::Method::kInverse:
+            case OpticalFlow::Method::kDirect:
                 TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], affine, status[feature_id]);
                 break;
-            case OpticalFlowMethod::kFast:
+            case OpticalFlow::Method::kFast:
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], affine, status[feature_id]);
                 break;
@@ -100,43 +100,76 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
     Vec6 bias = Vec6::Zero();
     for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.
-        BREAK_IF(ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, affine, hessian, bias) == 0);
+        if (ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, affine, hessian, bias) == 0) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
+
+        // Validate observation.
+        const float min_eig = Utility::MinEigenValue(Mat(hessian));
+        if (min_eig < options().kMinEigenvalueThreshold) {
+            status = static_cast<uint8_t>(TrackStatus::kNumericError);
+            break;
+        }
 
         // Apply diagonal regularization for numerical stability of the 6x6 system.
         hessian.diagonal().array() += options().kHessianRegularizationLambda;
 
-        // Solve hessian * z = bias.
+        // Solve hessian * dx = bias.
         const Eigen::LDLT<Mat6> ldlt_solver(hessian);
         if (ldlt_solver.info() != Eigen::Success) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
-        const Vec6 z = ldlt_solver.solve(bias);
-        const Vec2 v = z.head<2>() * cur_pixel_uv.x() + z.segment<2>(2) * cur_pixel_uv.y() + z.tail<2>();
-
-        if (std::isnan(v(0)) || std::isnan(v(1))) {
+        const Vec6 dx = ldlt_solver.solve(bias);
+        if (!UpdateAffineWarp(dx, cur_pixel_uv, affine)) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
-
-        // Update cur_pixel_uv.
-        cur_pixel_uv.x() += v(0);
-        cur_pixel_uv.y() += v(1);
-
-        // Update affine translation matrix.
-        affine.col(0) += z.head<2>();
-        affine.col(1) += z.segment<2>(2);
 
         // Check converge status.
         if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 || cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
             status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
-        if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
+        if (dx.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
     }
+}
+
+bool OpticalFlowAffineKlt::UpdateAffineWarp(const Vec6 &dx, Vec2 &cur_pixel_uv, Mat2 &affine) const {
+    RETURN_FALSE_IF (!dx.allFinite()) ;
+
+    Mat2 increment = Mat2::Zero();
+    increment.col(0) = dx.head<2>();
+    increment.col(1) = dx.segment<2>(2);
+    Mat2 updated_affine = Mat2::Zero();
+    Vec2 pixel_step = Vec2::Zero();
+    if (options().kMethod == OpticalFlow::Method::kDirect) {
+        // Forward additive: W(d) = A*d + p, with delta W(d) = increment*d + dx.tail<2>().
+        updated_affine = affine + increment;
+        pixel_step = dx.tail<2>();
+    } else {
+        // Inverse compositional: bias = -J_ref^T*(I_cur(W(d)) - I_ref(d)), so delta = -dx.
+        // Compose W with Delta^{-1}, where Delta(d) = (I - increment)*d - dx.tail<2>().
+        const Mat2 delta_affine = Mat2::Identity() - increment;
+        const Eigen::FullPivLU<Mat2> delta_solver(delta_affine);
+        if (!delta_solver.isInvertible()) {
+            return false;
+        }
+        updated_affine = affine * delta_solver.inverse();
+        pixel_step = updated_affine * dx.tail<2>();
+    }
+
+    const Vec2 updated_pixel_uv = cur_pixel_uv + pixel_step;
+    if (!updated_affine.allFinite() || !updated_pixel_uv.allFinite()) {
+        return false;
+    }
+    affine = updated_affine;
+    cur_pixel_uv = updated_pixel_uv;
+    return true;
 }
 
 int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_image, const GrayImage &cur_image, const Vec2 &ref_pixel_uv,
@@ -146,7 +179,7 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
     std::array<float, 6> temp_value;
     int32_t num_of_valid_pixel = 0;
 
-    if (options().kMethod == OpticalFlowMethod::kDirect) {
+    if (options().kMethod == OpticalFlow::Method::kDirect) {
         // For direct optical flow, use current image to compute gradient.
         for (int32_t drow = -options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = -options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {
@@ -165,8 +198,9 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     const float dy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float dt = temp_value[5] - temp_value[4];
 
-                    const float &x = col_j;
-                    const float &y = row_j;
+                    // Parameters act on offsets from the reference patch center.
+                    const float x = static_cast<float>(dcol);
+                    const float y = static_cast<float>(drow);
 
                     const float xx = x * x;
                     const float yy = y * y;
@@ -227,8 +261,9 @@ int32_t OpticalFlowAffineKlt::ConstructIncrementalFunction(const GrayImage &ref_
                     const float dy = 0.5f * (temp_value[3] - temp_value[2]);
                     const float dt = temp_value[5] - temp_value[4];
 
-                    const float &x = col_j;
-                    const float &y = row_j;
+                    // Parameters act on offsets from the reference patch center.
+                    const float x = static_cast<float>(dcol);
+                    const float y = static_cast<float>(drow);
 
                     const float xx = x * x;
                     const float yy = y * y;

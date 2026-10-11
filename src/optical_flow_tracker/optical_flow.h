@@ -10,34 +10,35 @@
 
 namespace feature_tracker {
 
-enum class OpticalFlowMethod : uint8_t {
-    kInverse = 0,
-    kDirect = 1,
-    kFast = 2,
-    kSse = 3,
-    kNeon = 4,
-};
-
-struct OpticalFlowOptions {
-    uint32_t kMaxTrackPointsNumber = 500;
-    uint32_t kMaxIteration = 15;
-    uint32_t kMaxToleranceLargeStep = 3;
-    int32_t kPatchRowHalfSize = 6;
-    int32_t kPatchColHalfSize = 6;
-    float kMaxSquaredConvergeStep = 4e-4f;
-    float kMinEigenvalueThreshold = 1e-4f;
-    float kHessianRegularizationLambda = 1e-6f;
-    float kLuminanceNormalizationEpsilon = 1e-6f;
-    OpticalFlowMethod kMethod = OpticalFlowMethod::kFast;
-};
-
 class OpticalFlow {
+
+public:
+    enum class Method : uint8_t {
+        kInverse = 0,
+        kDirect = 1,
+        kFast = 2,
+        kSse = 3,
+        kNeon = 4,
+    };
+
+    struct Options {
+        uint32_t kMaxTrackPointsNumber = 500;
+        uint32_t kMaxIteration = 15;
+        uint32_t kMaxToleranceLargeStep = 3;
+        int32_t kPatchRowHalfSize = 6;
+        int32_t kPatchColHalfSize = 6;
+        float kMaxSquaredConvergeStep = 9e-4f;
+        float kMinEigenvalueThreshold = 1e-4f;
+        float kHessianRegularizationLambda = 1e-6f;
+        float kLuminanceNormalizationEpsilon = 1e-6f;
+        OpticalFlow::Method kMethod = OpticalFlow::Method::kFast;
+    };
 
 public:
     OpticalFlow() = default;
     virtual ~OpticalFlow() = default;
 
-    virtual std::string OpticalFlowMethodName() const { return "None"; }
+    virtual std::string MethodName() const { return "None"; }
 
     bool TrackFeatures(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv, std::vector<Vec2> &cur_pixel_uv,
                        std::vector<uint8_t> &status);
@@ -50,7 +51,7 @@ public:
                                                 std::vector<float> &ex_ref_patch, std::vector<uint8_t> &ex_ref_patch_pixel_valid);
 
     // Reference for member variables.
-    OpticalFlowOptions &options() { return options_; }
+    Options &options() { return options_; }
     std::vector<float> &ex_ref_patch() { return ex_ref_patch_; }
     std::vector<uint8_t> &ex_ref_patch_pixel_valid() { return ex_ref_patch_pixel_valid_; }
     std::vector<float> &all_dx_in_ref_patch() { return all_dx_in_ref_patch_; }
@@ -67,7 +68,7 @@ public:
     int32_t &ex_patch_size() { return ex_patch_size_; }
 
     // Const reference for member variables.
-    const OpticalFlowOptions &options() const { return options_; }
+    const Options &options() const { return options_; }
     const std::vector<float> &ex_ref_patch() const { return ex_ref_patch_; }
     const std::vector<uint8_t> &ex_ref_patch_pixel_valid() const { return ex_ref_patch_pixel_valid_; }
     const std::vector<float> &all_dx_in_ref_patch() const { return all_dx_in_ref_patch_; }
@@ -92,7 +93,7 @@ private:
 
 private:
     // General options for optical flow trackers.
-    OpticalFlowOptions options_;
+    Options options_;
 
     // Variables of reference patch supporting for fast method.
     std::vector<float> ex_ref_patch_;  // Extended patch with bound size 1.

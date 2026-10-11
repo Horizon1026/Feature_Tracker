@@ -25,11 +25,11 @@ bool OpticalFlowBasicKlt::TrackMultipleLevel(const ImagePyramid &ref_pyramid, co
 
             // Track this feature in one pyramid level.
             switch (options().kMethod) {
-                case OpticalFlowMethod::kInverse:
-                case OpticalFlowMethod::kDirect:
+                case OpticalFlow::Method::kInverse:
+                case OpticalFlow::Method::kDirect:
                     TrackOneFeature(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
                     break;
-                case OpticalFlowMethod::kFast:
+                case OpticalFlow::Method::kFast:
                 default:
                     TrackOneFeatureFast(ref_image, cur_image, scaled_ref_pixel_uv, scaled_cur_pixel_uv, status[feature_id]);
                     break;
@@ -66,11 +66,11 @@ bool OpticalFlowBasicKlt::TrackSingleLevel(const GrayImage &ref_image, const Gra
         CONTINUE_IF(status[feature_id] > static_cast<uint8_t>(TrackStatus::kTracked));
 
         switch (options().kMethod) {
-            case OpticalFlowMethod::kInverse:
-            case OpticalFlowMethod::kDirect:
+            case OpticalFlow::Method::kInverse:
+            case OpticalFlow::Method::kDirect:
                 TrackOneFeature(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
-            case OpticalFlowMethod::kFast:
+            case OpticalFlow::Method::kFast:
             default:
                 TrackOneFeatureFast(ref_image, cur_image, ref_pixel_uv[feature_id], cur_pixel_uv[feature_id], status[feature_id]);
                 break;
@@ -104,22 +104,22 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
             break;
         }
 
-        // Solve hessian * v = bias.
-        Vec2 v = hessian.ldlt().solve(bias);
-        if (Eigen::isnan(v.array()).any()) {
+        // Solve hessian * dx = bias.
+        Vec2 dx = hessian.ldlt().solve(bias);
+        if (Eigen::isnan(dx.array()).any()) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
         // Update cur_pixel_uv.
-        cur_pixel_uv += v;
+        cur_pixel_uv += dx;
 
         // Check converge status.
         if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 || cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
             status = static_cast<uint8_t>(TrackStatus::kOutside);
             break;
         }
-        if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
+        if (dx.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
@@ -131,7 +131,7 @@ int32_t OpticalFlowBasicKlt::ConstructIncrementalFunction(const GrayImage &ref_i
     std::array<float, 6> temp_value = {};
     int32_t num_of_valid_pixel = 0;
 
-    if (options().kMethod == OpticalFlowMethod::kInverse) {
+    if (options().kMethod == OpticalFlow::Method::kInverse) {
         // For inverse optical flow, use reference image to compute gradient.
         for (int32_t drow = -options().kPatchRowHalfSize; drow <= options().kPatchRowHalfSize; ++drow) {
             for (int32_t dcol = -options().kPatchColHalfSize; dcol <= options().kPatchColHalfSize; ++dcol) {

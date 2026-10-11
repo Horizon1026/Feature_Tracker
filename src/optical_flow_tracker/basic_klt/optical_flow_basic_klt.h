@@ -13,7 +13,7 @@ public:
     OpticalFlowBasicKlt(): OpticalFlow() {}
     virtual ~OpticalFlowBasicKlt() = default;
 
-    virtual std::string OpticalFlowMethodName() const override { return "Basic-Klt"; }
+    virtual std::string MethodName() const override { return "Basic-Klt"; }
 
 private:
     virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,
