@@ -1,7 +1,7 @@
 #include "dense_optical_flow.h"
 
-#include "slam_operations.h"
 #include "slam_log_reporter.h"
+#include "slam_operations.h"
 
 namespace feature_tracker {
 

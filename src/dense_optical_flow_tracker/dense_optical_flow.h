@@ -64,4 +64,4 @@ private:
 
 }  // namespace feature_tracker
 
-#endif // end of _DENSE_OPTICAL_FLOW_TRACKER_H_
+#endif  // end of _DENSE_OPTICAL_FLOW_TRACKER_H_

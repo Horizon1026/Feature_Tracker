@@ -3,12 +3,12 @@
 #include "basic_type.h"
 #include "datatype_image.h"
 #include "datatype_image_pyramid.h"
+#include "enable_stack_backward.h"
+#include "image_painter.h"
 #include "slam_basic_math.h"
-#include "visualizor_2d.h"
 #include "slam_log_reporter.h"
 #include "slam_memory.h"
-#include "image_painter.h"
-#include "enable_stack_backward.h"
+#include "visualizor_2d.h"
 
 using namespace slam_visualizor;
 
@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
 
     // Initialize Farneback dense optical flow processor
     feature_tracker::DenseOpticalFlow dense_optical_flow;
-    dense_optical_flow.options().kHalfPatchSize = 2;       // 5x5 local patch
-    dense_optical_flow.options().kMaxIteration = 20;      // More iterations for accuracy
+    dense_optical_flow.options().kHalfPatchSize = 2;  // 5x5 local patch
+    dense_optical_flow.options().kMaxIteration = 20;  // More iterations for accuracy
 
     // Compute dense optical flow between image pyramids
     std::array<Mat, 2> flow_rc;

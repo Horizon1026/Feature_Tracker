@@ -98,7 +98,7 @@ private:
     // Match dispatch and geometry-Match post-processing.
     bool ExecuteMatchWithoutGeometry(const std::vector<DescriptorType> &descriptors_ref, const std::vector<DescriptorType> &descriptors_cur,
                                      std::vector<int32_t> &index_pairs_in_cur);  // Route to kForce / kHungarian / kSinkhorn.
-    static float ComputeMedian(std::vector<float> values);  // Helper for displacement-consensus filtering.
+    static float ComputeMedian(std::vector<float> values);                       // Helper for displacement-consensus filtering.
     bool FilterMatchesByDisplacementConsensus(const std::vector<Vec2> &ref_pixel_uv, const std::vector<Vec2> &pixel_uv_cur,
                                               std::vector<int32_t> &index_pairs_in_cur);  // Post-filter after geometry Match.
 

@@ -140,7 +140,7 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
 }
 
 bool OpticalFlowAffineKlt::UpdateAffineWarp(const Vec6 &dx, Vec2 &cur_pixel_uv, Mat2 &affine) const {
-    RETURN_FALSE_IF (!dx.allFinite()) ;
+    RETURN_FALSE_IF(!dx.allFinite());
 
     Mat2 increment = Mat2::Zero();
     increment.col(0) = dx.head<2>();

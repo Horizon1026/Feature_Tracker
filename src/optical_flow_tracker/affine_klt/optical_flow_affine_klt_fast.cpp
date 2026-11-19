@@ -79,8 +79,8 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const
 }
 
 void OpticalFlowAffineKlt::PrecomputeJacobianAndHessian(const std::vector<float> &ex_ref_patch, const std::vector<uint8_t> &ex_ref_patch_pixel_valid,
-                                                        int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols,
-                                                        std::vector<float> &all_dx_in_ref_patch, std::vector<float> &all_dy_in_ref_patch, Mat6 &hessian) {
+                                                        int32_t ex_ref_patch_rows, int32_t ex_ref_patch_cols, std::vector<float> &all_dx_in_ref_patch,
+                                                        std::vector<float> &all_dy_in_ref_patch, Mat6 &hessian) {
     const int32_t patch_rows = ex_ref_patch_rows - 2;
     const int32_t patch_cols = ex_ref_patch_cols - 2;
     hessian.setZero();
