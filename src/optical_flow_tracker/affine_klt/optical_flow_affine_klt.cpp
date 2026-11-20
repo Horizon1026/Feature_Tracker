@@ -98,7 +98,10 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
 
     Mat6 hessian = Mat6::Zero();
     Vec6 bias = Vec6::Zero();
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+    Mat2 previous_linear_step = Mat2::Zero();
+    Vec2 previous_center_step = Vec2::Zero();
+    uint32_t iter = 0;
+    for (; iter < options().kMaxIteration; ++iter) {
         // Construct incremental function. Statis average residual and count valid pixel.
         if (ConstructIncrementalFunction(ref_image, cur_image, ref_pixel_uv, cur_pixel_uv, affine, hessian, bias) == 0) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
@@ -122,10 +125,15 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
             break;
         }
         const Vec6 dx = ldlt_solver.solve(bias);
+        const Mat2 old_affine = affine;
+        const Vec2 old_center = cur_pixel_uv;
         if (!UpdateAffineWarp(dx, cur_pixel_uv, affine)) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
+
+        const Mat2 linear_step = affine - old_affine;
+        const Vec2 center_step = cur_pixel_uv - old_center;
 
         // Check converge status.
         if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 || cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
@@ -136,6 +144,18 @@ void OpticalFlowAffineKlt::TrackOneFeature(const GrayImage &ref_image, const Gra
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
+        if (iter > 0 && IsOscillatingWarpStep(linear_step, center_step, previous_linear_step, previous_center_step)) {
+            affine = old_affine + 0.5f * linear_step;
+            cur_pixel_uv = old_center + 0.5f * center_step;
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+        previous_linear_step = linear_step;
+        previous_center_step = center_step;
+    }
+    // Exhausting the iteration budget is successful unless tracking exited early with a failure.
+    if (iter == options().kMaxIteration) {
+        status = static_cast<uint8_t>(TrackStatus::kTracked);
     }
 }
 

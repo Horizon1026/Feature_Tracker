@@ -91,7 +91,10 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
     // Clear status firstly, then try to track.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
 
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+    Mat2 previous_linear_step = Mat2::Zero();
+    Vec2 previous_center_step = Vec2::Zero();
+    uint32_t iter = 0;
+    for (; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create hessian * v = bias
         Mat2 hessian = Mat2::Zero();
         Vec2 bias = Vec2::Zero();
@@ -113,6 +116,8 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
 
         // Update cur_pixel_uv.
         cur_pixel_uv += dx;
+        const Mat2 linear_step = Mat2::Zero();
+        const Vec2 center_step = dx;
 
         // Check converge status.
         if (cur_pixel_uv.x() < 0 || cur_pixel_uv.x() > cur_image.cols() - 1 || cur_pixel_uv.y() < 0 || cur_pixel_uv.y() > cur_image.rows() - 1) {
@@ -123,6 +128,17 @@ void OpticalFlowBasicKlt::TrackOneFeature(const GrayImage &ref_image, const Gray
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
+        if (iter > 0 && IsOscillatingWarpStep(linear_step, center_step, previous_linear_step, previous_center_step)) {
+            cur_pixel_uv -= 0.5f * center_step;
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+        previous_linear_step = linear_step;
+        previous_center_step = center_step;
+    }
+    // Exhausting the iteration budget is successful unless tracking exited early with a failure.
+    if (iter == options().kMaxIteration) {
+        status = static_cast<uint8_t>(TrackStatus::kTracked);
     }
 }
 

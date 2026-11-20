@@ -24,10 +24,10 @@ public:
     struct Options {
         uint32_t kMaxTrackPointsNumber = 500;
         uint32_t kMaxIteration = 15;
-        uint32_t kMaxToleranceLargeStep = 3;
         int32_t kPatchRowHalfSize = 6;
         int32_t kPatchColHalfSize = 6;
         float kMaxSquaredConvergeStep = 9e-4f;
+        float kMaxOscillationPixelStepSum = 0.01f;
         float kMinEigenvalueThreshold = 1e-4f;
         float kHessianRegularizationLambda = 1e-6f;
         float kLuminanceNormalizationEpsilon = 1e-6f;
@@ -83,6 +83,10 @@ public:
     const int32_t &ex_ref_patch_rows() const { return ex_patch_rows_; }
     const int32_t &ex_ref_patch_cols() const { return ex_patch_cols_; }
     const int32_t &ex_patch_size() const { return ex_patch_size_; }
+
+protected:
+    // Successive warp displacements nearly cancel at every patch corner.
+    bool IsOscillatingWarpStep(const Mat2 &linear_step, const Vec2 &center_step, const Mat2 &previous_linear_step, const Vec2 &previous_center_step) const;
 
 private:
     virtual bool TrackMultipleLevel(const ImagePyramid &ref_pyramid, const ImagePyramid &cur_pyramid, const std::vector<Vec2> &ref_pixel_uv,

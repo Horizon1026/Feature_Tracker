@@ -102,6 +102,25 @@ uint32_t OpticalFlow::ExtractExtendPatchInReferenceImage(const GrayImage &ref_im
     }
 }
 
+bool OpticalFlow::IsOscillatingWarpStep(const Mat2 &linear_step, const Vec2 &center_step, const Mat2 &previous_linear_step,
+                                        const Vec2 &previous_center_step) const {
+    if (!linear_step.allFinite() || !center_step.allFinite() || !previous_linear_step.allFinite() || !previous_center_step.allFinite()) {
+        return false;
+    }
+    const Mat2 linear_sum = linear_step + previous_linear_step;
+    const Vec2 center_sum = center_step + previous_center_step;
+    // An affine displacement reaches its per-axis extrema at the rectangle's corners.
+    for (const float x_sign: {-1.0f, 1.0f}) {
+        for (const float y_sign: {-1.0f, 1.0f}) {
+            const Vec2 offset(x_sign * options_.kPatchColHalfSize, y_sign * options_.kPatchRowHalfSize);
+            if (!((linear_sum * offset + center_sum).cwiseAbs().array() < options_.kMaxOscillationPixelStepSum).all()) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool OpticalFlow::PrepareForTracking() {
     patch_rows_ = (options_.kPatchRowHalfSize << 1) + 1;
     patch_cols_ = (options_.kPatchColHalfSize << 1) + 1;

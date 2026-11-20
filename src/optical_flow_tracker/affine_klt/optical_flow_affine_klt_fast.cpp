@@ -41,11 +41,10 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const
 
     // Compute incremental by iteration.
     Vec6 bias = Vec6::Zero();
-    float last_squared_step = INFINITY;
-    uint32_t large_step_cnt = 0;
-    status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
-
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+    Mat2 previous_linear_step = Mat2::Zero();
+    Vec2 previous_center_step = Vec2::Zero();
+    uint32_t iter = 0;
+    for (; iter < options().kMaxIteration; ++iter) {
         // Compute bias.
         BREAK_IF(ComputeBias(cur_image, cur_pixel_uv, ex_ref_patch(), ex_ref_patch_pixel_valid(), ex_ref_patch_rows(), ex_ref_patch_cols(),
                              all_dx_in_ref_patch(), all_dy_in_ref_patch(), affine, bias) == 0);
@@ -57,24 +56,34 @@ void OpticalFlowAffineKlt::TrackOneFeatureFast(const GrayImage &ref_image, const
             break;
         }
         const Vec6 dx = ldlt_solver.solve(bias);
+        const Mat2 old_affine = affine;
+        const Vec2 old_center = cur_pixel_uv;
         if (!UpdateAffineWarp(dx, cur_pixel_uv, affine)) {
             status = static_cast<uint8_t>(TrackStatus::kNumericError);
             break;
         }
 
+        const Mat2 linear_step = affine - old_affine;
+        const Vec2 center_step = cur_pixel_uv - old_center;
+
         // Check if this step is converged.
         const float squared_step = dx.squaredNorm();
-        if (squared_step < last_squared_step) {
-            last_squared_step = squared_step;
-            large_step_cnt = 0;
-        } else {
-            ++large_step_cnt;
-            BREAK_IF(large_step_cnt >= options().kMaxToleranceLargeStep);
-        }
         if (squared_step < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
+        if (iter > 0 && IsOscillatingWarpStep(linear_step, center_step, previous_linear_step, previous_center_step)) {
+            affine = old_affine + 0.5f * linear_step;
+            cur_pixel_uv = old_center + 0.5f * center_step;
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+        previous_linear_step = linear_step;
+        previous_center_step = center_step;
+    }
+    // Exhausting the iteration budget is successful unless tracking exited early with a failure.
+    if (iter == options().kMaxIteration) {
+        status = static_cast<uint8_t>(TrackStatus::kTracked);
     }
 }
 

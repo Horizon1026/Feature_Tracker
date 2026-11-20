@@ -101,7 +101,10 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image, const GrayI
     // Clear status firstly, then try to track.
     status = static_cast<uint8_t>(TrackStatus::kLargeResidual);
 
-    for (uint32_t iter = 0; iter < options().kMaxIteration; ++iter) {
+    Mat2 previous_linear_step = Mat2::Zero();
+    Vec2 previous_center_step = Vec2::Zero();
+    uint32_t iter = 0;
+    for (; iter < options().kMaxIteration; ++iter) {
         // Compute each pixel in the patch, create hessian * v = bias
         Mat3 hessian = Mat3::Zero();
         Vec3 bias = Vec3::Zero();
@@ -132,13 +135,32 @@ void OpticalFlowLssdKlt::TrackOneFeature(const GrayImage &ref_image, const GrayI
             break;
         }
 
+        const Mat2 old_rotation = R_cr;
+        const Vec2 old_translation = t_cr;
+        const Vec2 old_center = R_cr * ref_pixel_uv + t_cr;
         UpdateWarp(ref_pixel_uv, v, R_cr, t_cr);
+        const Mat2 linear_step = R_cr - old_rotation;
+        const Vec2 center_step = R_cr * ref_pixel_uv + t_cr - old_center;
 
         // Check converge status.
         if (v.squaredNorm() < options().kMaxSquaredConvergeStep) {
             status = static_cast<uint8_t>(TrackStatus::kTracked);
             break;
         }
+        if (iter > 0 && IsOscillatingWarpStep(linear_step, center_step, previous_linear_step, previous_center_step)) {
+            // Reapply half of the last increment to keep the rotation on SO(2).
+            R_cr = old_rotation;
+            t_cr = old_translation;
+            UpdateWarp(ref_pixel_uv, Vec3(0.5f * v), R_cr, t_cr);
+            status = static_cast<uint8_t>(TrackStatus::kTracked);
+            break;
+        }
+        previous_linear_step = linear_step;
+        previous_center_step = center_step;
+    }
+    // Exhausting the iteration budget is successful unless tracking exited early with a failure.
+    if (iter == options().kMaxIteration) {
+        status = static_cast<uint8_t>(TrackStatus::kTracked);
     }
 }
 
