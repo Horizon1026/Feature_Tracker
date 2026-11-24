@@ -167,8 +167,8 @@ bool NNFeatureMatcher::Match(const std::vector<NNFeatureDescriptorType> &descrip
         for (uint32_t i = 0; i < matches_matrices[0].rows(); ++i) {
             const auto idx_ref = matches_matrices[0](i, 0);
             const auto idx_cur = matches_matrices[0](i, 1);
-            if (idx_ref >= 0 && static_cast<size_t>(idx_ref) < matched_pixel_uv_cur.size() && idx_cur >= 0 &&
-                static_cast<size_t>(idx_cur) < pixel_uv_cur.size()) {
+            if (idx_ref >= 0 && static_cast<uint32_t>(idx_ref) < matched_pixel_uv_cur.size() && idx_cur >= 0 &&
+                static_cast<uint32_t>(idx_cur) < pixel_uv_cur.size()) {
                 matched_pixel_uv_cur[idx_ref] = pixel_uv_cur[idx_cur];
                 status[idx_ref] = static_cast<uint8_t>(TrackStatus::kTracked);
             }

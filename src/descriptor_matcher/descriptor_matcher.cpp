@@ -103,18 +103,18 @@ bool DescriptorMatcher<DescriptorType>::SolveSinkhornTransport(const std::vector
     }
 
     for (int32_t i = 0; i < num_ref; ++i) {
-        if (static_cast<int32_t>(kernel[static_cast<size_t>(i)].size()) != num_cur) {
+        if (static_cast<int32_t>(kernel[static_cast<uint32_t>(i)].size()) != num_cur) {
             return false;
         }
     }
 
-    transport.assign(static_cast<size_t>(num_ref), std::vector<float>(static_cast<size_t>(num_cur), 0.0f));
+    transport.assign(static_cast<uint32_t>(num_ref), std::vector<float>(static_cast<uint32_t>(num_cur), 0.0f));
 
     const float inv_num_ref = 1.0f / static_cast<float>(num_ref);
     const float inv_num_cur = 1.0f / static_cast<float>(num_cur);
-    std::vector<float> u(static_cast<size_t>(num_ref), 1.0f);
-    std::vector<float> v(static_cast<size_t>(num_cur), 1.0f);
-    std::vector<float> prev_u(static_cast<size_t>(num_ref), 0.0f);
+    std::vector<float> u(static_cast<uint32_t>(num_ref), 1.0f);
+    std::vector<float> v(static_cast<uint32_t>(num_cur), 1.0f);
+    std::vector<float> prev_u(static_cast<uint32_t>(num_ref), 0.0f);
 
     for (int32_t iter = 0; iter < max_iterations; ++iter) {
         prev_u = u;
@@ -122,22 +122,22 @@ bool DescriptorMatcher<DescriptorType>::SolveSinkhornTransport(const std::vector
         for (int32_t i = 0; i < num_ref; ++i) {
             float sum = 0.0f;
             for (int32_t j = 0; j < num_cur; ++j) {
-                sum += kernel[static_cast<size_t>(i)][static_cast<size_t>(j)] * v[static_cast<size_t>(j)];
+                sum += kernel[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] * v[static_cast<uint32_t>(j)];
             }
-            u[static_cast<size_t>(i)] = (sum > kZeroFloat) ? (inv_num_ref / sum) : 0.0f;
+            u[static_cast<uint32_t>(i)] = (sum > kZeroFloat) ? (inv_num_ref / sum) : 0.0f;
         }
 
         for (int32_t j = 0; j < num_cur; ++j) {
             float sum = 0.0f;
             for (int32_t i = 0; i < num_ref; ++i) {
-                sum += kernel[static_cast<size_t>(i)][static_cast<size_t>(j)] * u[static_cast<size_t>(i)];
+                sum += kernel[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] * u[static_cast<uint32_t>(i)];
             }
-            v[static_cast<size_t>(j)] = (sum > kZeroFloat) ? (inv_num_cur / sum) : 0.0f;
+            v[static_cast<uint32_t>(j)] = (sum > kZeroFloat) ? (inv_num_cur / sum) : 0.0f;
         }
 
         float max_u_change = 0.0f;
         for (int32_t i = 0; i < num_ref; ++i) {
-            max_u_change = std::max(max_u_change, std::fabs(u[static_cast<size_t>(i)] - prev_u[static_cast<size_t>(i)]));
+            max_u_change = std::max(max_u_change, std::fabs(u[static_cast<uint32_t>(i)] - prev_u[static_cast<uint32_t>(i)]));
         }
         if (max_u_change < convergence_tolerance) {
             break;
@@ -146,8 +146,8 @@ bool DescriptorMatcher<DescriptorType>::SolveSinkhornTransport(const std::vector
 
     for (int32_t i = 0; i < num_ref; ++i) {
         for (int32_t j = 0; j < num_cur; ++j) {
-            transport[static_cast<size_t>(i)][static_cast<size_t>(j)] =
-                u[static_cast<size_t>(i)] * kernel[static_cast<size_t>(i)][static_cast<size_t>(j)] * v[static_cast<size_t>(j)];
+            transport[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] =
+                u[static_cast<uint32_t>(i)] * kernel[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] * v[static_cast<uint32_t>(j)];
         }
     }
 

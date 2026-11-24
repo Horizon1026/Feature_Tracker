@@ -117,7 +117,7 @@ float DescriptorMatcher<DescriptorType>::ComputeMedian(std::vector<float> values
     if (values.empty()) {
         return 0.0f;
     }
-    const size_t mid = values.size() / 2;
+    const uint32_t mid = values.size() / 2;
     std::nth_element(values.begin(), values.begin() + static_cast<std::ptrdiff_t>(mid), values.end());
     return values[mid];
 }
@@ -178,11 +178,11 @@ bool DescriptorMatcher<DescriptorType>::FilterMatchesByDisplacementConsensus(con
 
     for (uint32_t i = 0; i < index_pairs_in_cur.size(); ++i) {
         const int32_t j = index_pairs_in_cur[i];
-        if (j < 0 || static_cast<size_t>(j) >= pixel_uv_cur.size()) {
+        if (j < 0 || static_cast<uint32_t>(j) >= pixel_uv_cur.size()) {
             continue;
         }
-        dxs.push_back(pixel_uv_cur[static_cast<size_t>(j)].x() - ref_pixel_uv[i].x());
-        dys.push_back(pixel_uv_cur[static_cast<size_t>(j)].y() - ref_pixel_uv[i].y());
+        dxs.push_back(pixel_uv_cur[static_cast<uint32_t>(j)].x() - ref_pixel_uv[i].x());
+        dys.push_back(pixel_uv_cur[static_cast<uint32_t>(j)].y() - ref_pixel_uv[i].y());
     }
 
     if (!options_.displacement_consensus.kEnabled || dxs.size() < options_.displacement_consensus.kMinMatches) {
@@ -194,11 +194,11 @@ bool DescriptorMatcher<DescriptorType>::FilterMatchesByDisplacementConsensus(con
     const float tolerance = options_.displacement_consensus.kTolerance;
     for (uint32_t i = 0; i < index_pairs_in_cur.size(); ++i) {
         const int32_t j = index_pairs_in_cur[i];
-        if (j < 0 || static_cast<size_t>(j) >= pixel_uv_cur.size()) {
+        if (j < 0 || static_cast<uint32_t>(j) >= pixel_uv_cur.size()) {
             continue;
         }
-        const float dx = pixel_uv_cur[static_cast<size_t>(j)].x() - ref_pixel_uv[i].x();
-        const float dy = pixel_uv_cur[static_cast<size_t>(j)].y() - ref_pixel_uv[i].y();
+        const float dx = pixel_uv_cur[static_cast<uint32_t>(j)].x() - ref_pixel_uv[i].x();
+        const float dy = pixel_uv_cur[static_cast<uint32_t>(j)].y() - ref_pixel_uv[i].y();
         if (std::fabs(dx - median_dx) > tolerance || std::fabs(dy - median_dy) > tolerance) {
             index_pairs_in_cur[i] = -1;
         }
@@ -285,12 +285,12 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
     const int32_t max_i = descriptors_ref.size();
     const int32_t max_j = descriptors_cur.size();
     for (int32_t i = 0; i < max_i; ++i) {
-        index_pairs_in_cur[static_cast<size_t>(i)] = -1;
+        index_pairs_in_cur[static_cast<uint32_t>(i)] = -1;
         float best_similarity = -std::numeric_limits<float>::infinity();
         float second_best_similarity = -std::numeric_limits<float>::infinity();
         int32_t best_j = -1;
         for (int32_t j = 0; j < max_j; ++j) {
-            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<size_t>(i)], descriptors_cur[static_cast<size_t>(j)]);
+            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<uint32_t>(i)], descriptors_cur[static_cast<uint32_t>(j)]);
             if (similarity > best_similarity) {
                 second_best_similarity = best_similarity;
                 best_similarity = similarity;
@@ -302,7 +302,7 @@ bool DescriptorMatcher<DescriptorType>::ForceMatch(const std::vector<DescriptorT
 
         if (best_j >= 0 && best_similarity >= options_.matcher.kMinValidDescriptorSimilarity &&
             PassDescriptorRatioTest(best_similarity, second_best_similarity)) {
-            index_pairs_in_cur[static_cast<size_t>(i)] = best_j;
+            index_pairs_in_cur[static_cast<uint32_t>(i)] = best_j;
         }
     }
 
@@ -319,30 +319,30 @@ void DescriptorMatcher<DescriptorType>::ApplyCrossCheck(const std::vector<Descri
 
     const int32_t num_ref = static_cast<int32_t>(descriptors_ref.size());
     const int32_t num_cur = static_cast<int32_t>(descriptors_cur.size());
-    std::vector<int32_t> index_pairs_in_ref(static_cast<size_t>(num_cur), -1);
+    std::vector<int32_t> index_pairs_in_ref(static_cast<uint32_t>(num_cur), -1);
 
     for (int32_t j = 0; j < num_cur; ++j) {
         float best_similarity = -std::numeric_limits<float>::infinity();
         int32_t best_i = -1;
         for (int32_t i = 0; i < num_ref; ++i) {
-            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<size_t>(i)], descriptors_cur[static_cast<size_t>(j)]);
+            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<uint32_t>(i)], descriptors_cur[static_cast<uint32_t>(j)]);
             if (similarity > best_similarity) {
                 best_similarity = similarity;
                 best_i = i;
             }
         }
         if (best_i >= 0 && best_similarity >= options_.matcher.kMinValidDescriptorSimilarity) {
-            index_pairs_in_ref[static_cast<size_t>(j)] = best_i;
+            index_pairs_in_ref[static_cast<uint32_t>(j)] = best_i;
         }
     }
 
     for (int32_t i = 0; i < num_ref; ++i) {
-        const int32_t j = index_pairs_in_cur[static_cast<size_t>(i)];
+        const int32_t j = index_pairs_in_cur[static_cast<uint32_t>(i)];
         if (j < 0 || j >= num_cur) {
             continue;
         }
-        if (index_pairs_in_ref[static_cast<size_t>(j)] != i) {
-            index_pairs_in_cur[static_cast<size_t>(i)] = -1;
+        if (index_pairs_in_ref[static_cast<uint32_t>(j)] != i) {
+            index_pairs_in_cur[static_cast<uint32_t>(i)] = -1;
         }
     }
 }
@@ -358,13 +358,13 @@ bool DescriptorMatcher<DescriptorType>::HungarianMatch(const std::vector<Descrip
 
     const int32_t matrix_size = std::max(num_ref, num_cur);
     constexpr float kInvalidPairCost = 1e6f;
-    std::vector<std::vector<float>> cost(static_cast<size_t>(matrix_size), std::vector<float>(static_cast<size_t>(matrix_size), kInvalidPairCost));
+    std::vector<std::vector<float>> cost(static_cast<uint32_t>(matrix_size), std::vector<float>(static_cast<uint32_t>(matrix_size), kInvalidPairCost));
 
     for (int32_t i = 0; i < num_ref; ++i) {
         for (int32_t j = 0; j < num_cur; ++j) {
             const float similarity = ComputeSimilarity(descriptors_ref[i], descriptors_cur[j]);
             if (similarity >= options_.matcher.kMinValidDescriptorSimilarity) {
-                cost[static_cast<size_t>(i)][static_cast<size_t>(j)] = -similarity;
+                cost[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] = -similarity;
             }
         }
     }
@@ -373,15 +373,15 @@ bool DescriptorMatcher<DescriptorType>::HungarianMatch(const std::vector<Descrip
     RETURN_FALSE_IF_FALSE(SolveHungarianAssignment(cost, assignment));
 
     for (int32_t i = 0; i < num_ref; ++i) {
-        index_pairs_in_cur[static_cast<size_t>(i)] = -1;
-        const int32_t j = assignment[static_cast<size_t>(i)];
+        index_pairs_in_cur[static_cast<uint32_t>(i)] = -1;
+        const int32_t j = assignment[static_cast<uint32_t>(i)];
         if (j < 0 || j >= num_cur) {
             continue;
         }
 
-        const float similarity = ComputeSimilarity(descriptors_ref[static_cast<size_t>(i)], descriptors_cur[static_cast<size_t>(j)]);
+        const float similarity = ComputeSimilarity(descriptors_ref[static_cast<uint32_t>(i)], descriptors_cur[static_cast<uint32_t>(j)]);
         if (similarity >= options_.matcher.kMinValidDescriptorSimilarity) {
-            index_pairs_in_cur[static_cast<size_t>(i)] = j;
+            index_pairs_in_cur[static_cast<uint32_t>(i)] = j;
         }
     }
 
@@ -400,12 +400,12 @@ bool DescriptorMatcher<DescriptorType>::SinkhornMatch(const std::vector<Descript
     RETURN_FALSE_IF(options_.sinkhorn.kSinkhornEpsilon < kZeroFloat);
     RETURN_FALSE_IF(options_.sinkhorn.kSinkhornMaxIterations <= 0);
 
-    std::vector<std::vector<float>> kernel(static_cast<size_t>(num_ref), std::vector<float>(static_cast<size_t>(num_cur), 0.0f));
+    std::vector<std::vector<float>> kernel(static_cast<uint32_t>(num_ref), std::vector<float>(static_cast<uint32_t>(num_cur), 0.0f));
     for (int32_t i = 0; i < num_ref; ++i) {
         for (int32_t j = 0; j < num_cur; ++j) {
-            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<size_t>(i)], descriptors_cur[static_cast<size_t>(j)]);
+            const float similarity = ComputeSimilarity(descriptors_ref[static_cast<uint32_t>(i)], descriptors_cur[static_cast<uint32_t>(j)]);
             if (similarity >= options_.matcher.kMinValidDescriptorSimilarity) {
-                kernel[static_cast<size_t>(i)][static_cast<size_t>(j)] = std::exp(similarity / options_.sinkhorn.kSinkhornEpsilon);
+                kernel[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)] = std::exp(similarity / options_.sinkhorn.kSinkhornEpsilon);
             }
         }
     }
@@ -419,10 +419,10 @@ bool DescriptorMatcher<DescriptorType>::SinkhornMatch(const std::vector<Descript
         float mass = 0.0f;
     };
     std::vector<Candidate> candidates;
-    candidates.reserve(static_cast<size_t>(num_ref) * static_cast<size_t>(num_cur));
+    candidates.reserve(static_cast<uint32_t>(num_ref) * static_cast<uint32_t>(num_cur));
     for (int32_t i = 0; i < num_ref; ++i) {
         for (int32_t j = 0; j < num_cur; ++j) {
-            const float mass = transport[static_cast<size_t>(i)][static_cast<size_t>(j)];
+            const float mass = transport[static_cast<uint32_t>(i)][static_cast<uint32_t>(j)];
             if (mass > kZeroFloat) {
                 candidates.push_back({i, j, mass});
             }
@@ -433,26 +433,26 @@ bool DescriptorMatcher<DescriptorType>::SinkhornMatch(const std::vector<Descript
         return lhs.mass > rhs.mass;
     });
 
-    std::vector<uint8_t> ref_assigned(static_cast<size_t>(num_ref), 0);
-    std::vector<uint8_t> cur_assigned(static_cast<size_t>(num_cur), 0);
+    std::vector<uint8_t> ref_assigned(static_cast<uint32_t>(num_ref), 0);
+    std::vector<uint8_t> cur_assigned(static_cast<uint32_t>(num_cur), 0);
     for (int32_t i = 0; i < num_ref; ++i) {
-        index_pairs_in_cur[static_cast<size_t>(i)] = -1;
+        index_pairs_in_cur[static_cast<uint32_t>(i)] = -1;
     }
 
     for (const Candidate &candidate: candidates) {
-        if (ref_assigned[static_cast<size_t>(candidate.ref_id)] || cur_assigned[static_cast<size_t>(candidate.cur_id)]) {
+        if (ref_assigned[static_cast<uint32_t>(candidate.ref_id)] || cur_assigned[static_cast<uint32_t>(candidate.cur_id)]) {
             continue;
         }
 
         const float similarity =
-            ComputeSimilarity(descriptors_ref[static_cast<size_t>(candidate.ref_id)], descriptors_cur[static_cast<size_t>(candidate.cur_id)]);
+            ComputeSimilarity(descriptors_ref[static_cast<uint32_t>(candidate.ref_id)], descriptors_cur[static_cast<uint32_t>(candidate.cur_id)]);
         if (similarity < options_.matcher.kMinValidDescriptorSimilarity) {
             continue;
         }
 
-        index_pairs_in_cur[static_cast<size_t>(candidate.ref_id)] = candidate.cur_id;
-        ref_assigned[static_cast<size_t>(candidate.ref_id)] = 1;
-        cur_assigned[static_cast<size_t>(candidate.cur_id)] = 1;
+        index_pairs_in_cur[static_cast<uint32_t>(candidate.ref_id)] = candidate.cur_id;
+        ref_assigned[static_cast<uint32_t>(candidate.ref_id)] = 1;
+        cur_assigned[static_cast<uint32_t>(candidate.cur_id)] = 1;
     }
 
     return true;

@@ -86,8 +86,8 @@ void TestFeaturePointMatcher() {
     std::vector<uint8_t> status(ref_features.size(), static_cast<uint8_t>(feature_tracker::TrackStatus::kLargeResidual));
     for (uint32_t i = 0; i < index_pairs_in_cur.size(); ++i) {
         const int32_t j = index_pairs_in_cur[i];
-        if (j >= 0 && static_cast<size_t>(j) < cur_features.size()) {
-            matched_cur_features[i] = cur_features[static_cast<size_t>(j)];
+        if (j >= 0 && static_cast<uint32_t>(j) < cur_features.size()) {
+            matched_cur_features[i] = cur_features[static_cast<uint32_t>(j)];
             status[i] = static_cast<uint8_t>(feature_tracker::TrackStatus::kTracked);
         }
     }
